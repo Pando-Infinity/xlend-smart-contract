@@ -5,7 +5,7 @@ use crate::LendOrderStatus;
 #[account]
 #[derive(InitSpace)]
 pub struct LendOrderAccount {
-  pub interest: u64,
+  pub interest: f64,
   pub lender_fee: u64,
   #[max_len(50)]
   pub order_id: String,
