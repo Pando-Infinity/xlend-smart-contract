@@ -118,6 +118,9 @@ describe("smart-contract", () => {
       const orderId = "12345abc";
       const interest = 2.1;
       const lenderFee = 2;
+      const beforeColdWalletBalance = await connection.getTokenAccountBalance(
+        coldWalletAtaUSDC
+      );
 
       const seedLendOrder = [
         Buffer.from("enso"),
@@ -154,7 +157,81 @@ describe("smart-contract", () => {
       const balanceCw = await connection.getTokenAccountBalance(
         coldWalletAtaUSDC
       );
-      assert.equal(balanceCw.value.amount, amount.toString());
+      assert.equal(
+        parseInt(balanceCw.value.amount) -
+          parseInt(beforeColdWalletBalance.value.amount),
+        amount
+      );
+    });
+
+    it("Create multiple lend order successfully", async () => {
+      const amount = 1e3;
+      const orderId = "12345abc";
+      const interest = 2.1;
+      const lenderFee = 2;
+      const beforeColdWalletBalance = await connection.getTokenAccountBalance(
+        coldWalletAtaUSDC
+      );
+
+      const seedLendOrder = [
+        Buffer.from("enso"),
+        lender.publicKey.toBuffer(),
+        Buffer.from(orderId),
+      ];
+
+      const lendOrder = PublicKey.findProgramAddressSync(
+        seedLendOrder,
+        program.programId
+      )[0];
+
+      await program.methods
+        .createLendOrder(
+          orderId,
+          new anchor.BN(amount),
+          interest,
+          new anchor.BN(lenderFee)
+        )
+        .accounts({
+          lender: lender.publicKey,
+          lenderAtaAsset: lenderAtaUSDC,
+          cwVault: coldWalletAtaUSDC,
+          lendOrder,
+          mintAsset: usdcMint.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .postInstructions([
+          await program.methods
+            .createLendOrder(
+              orderId,
+              new anchor.BN(amount),
+              interest,
+              new anchor.BN(lenderFee)
+            )
+            .accounts({
+              lender: lender.publicKey,
+              lenderAtaAsset: lenderAtaUSDC,
+              cwVault: coldWalletAtaUSDC,
+              lendOrder,
+              mintAsset: usdcMint.publicKey,
+              tokenProgram: TOKEN_PROGRAM_ID,
+              systemProgram: SystemProgram.programId,
+            })
+            .instruction(),
+        ])
+        .signers([lender])
+        .rpc()
+        .then(confirm)
+        .then(log);
+
+      const balanceCw = await connection.getTokenAccountBalance(
+        coldWalletAtaUSDC
+      );
+      assert.equal(
+        parseInt(balanceCw.value.amount) -
+          parseInt(beforeColdWalletBalance.value.amount),
+        amount * 2
+      );
     });
 
     it("Should throw an error if Lender is not enough assets", async () => {
@@ -194,11 +271,11 @@ describe("smart-contract", () => {
           .signers([lender])
           .rpc()
           .then(confirm);
-      } catch (error) { 
+      } catch (error) {
         assert.strictEqual(
           error.error.errorMessage,
-          'Lender does not have enough assets'
-        )
+          "Lender does not have enough assets"
+        );
       }
     });
   });
