@@ -28,6 +28,7 @@ pub mod smart_contract {
             interest,
             lender_fee,
         )?;
-        ctx.accounts.deposit(amount)
+        let _ = ctx.accounts.deposit(amount);
+        ctx.accounts.emit_event_create_lend_order("Lend order created.".to_string())
     }
 }

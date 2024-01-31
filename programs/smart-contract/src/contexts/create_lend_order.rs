@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
 
-use crate::{LendOrderAccount, LendOrderStatus, LendOrderError};
+use crate::{LendOrderAccount, LendOrderStatus, LendOrderError, CreateLendOrderEvent};
 
 #[derive(Accounts)]
 #[instruction(order_id: String, amount: u64, interest: f64, lender_fee: u64)]
@@ -69,5 +69,19 @@ impl<'info> CreateLendOrder<'info> {
             authority: self.lender.to_account_info(),
         };
         CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
+    }
+
+    pub fn emit_event_create_lend_order(&mut self, label: String) -> Result<()> {
+        emit!(CreateLendOrderEvent {
+            owner: self.lender.key(),
+            interest: self.lend_order.interest,
+            lender_fee: self.lend_order.lender_fee,
+            order_id: self.lend_order.order_id.clone(),
+            amount: self.lend_order.amount
+        });
+        
+        msg!(&label.clone());
+        
+        Ok(())
     }
 }
