@@ -118,6 +118,7 @@ describe("smart-contract", () => {
       const orderId = "12345abc";
       const interest = 2.1;
       const lenderFee = 2;
+      const duration = 14;
       const beforeColdWalletBalance = await connection.getTokenAccountBalance(
         coldWalletAtaUSDC
       );
@@ -138,7 +139,8 @@ describe("smart-contract", () => {
           orderId,
           new anchor.BN(amount),
           interest,
-          new anchor.BN(lenderFee)
+          new anchor.BN(lenderFee),
+          new anchor.BN(duration)
         )
         .accounts({
           lender: lender.publicKey,
@@ -169,6 +171,7 @@ describe("smart-contract", () => {
       const orderId = "12345abc";
       const interest = 2.1;
       const lenderFee = 2;
+      const duration = 14;
       const beforeColdWalletBalance = await connection.getTokenAccountBalance(
         coldWalletAtaUSDC
       );
@@ -189,7 +192,8 @@ describe("smart-contract", () => {
           orderId,
           new anchor.BN(amount),
           interest,
-          new anchor.BN(lenderFee)
+          new anchor.BN(lenderFee),
+          new anchor.BN(duration)
         )
         .accounts({
           lender: lender.publicKey,
@@ -206,7 +210,8 @@ describe("smart-contract", () => {
               orderId,
               new anchor.BN(amount),
               interest,
-              new anchor.BN(lenderFee)
+              new anchor.BN(lenderFee),
+              new anchor.BN(duration)
             )
             .accounts({
               lender: lender.publicKey,
@@ -239,6 +244,7 @@ describe("smart-contract", () => {
       const orderId = "12345abc";
       const interest = 2.1;
       const lenderFee = 2;
+      const duration = 14;
 
       const seedLendOrder = [
         Buffer.from("enso"),
@@ -257,7 +263,8 @@ describe("smart-contract", () => {
             orderId,
             new anchor.BN(amount),
             interest,
-            new anchor.BN(lenderFee)
+            new anchor.BN(lenderFee),
+            new anchor.BN(duration)
           )
           .accounts({
             lender: lender.publicKey,

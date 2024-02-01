@@ -4,7 +4,7 @@ use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChe
 use crate::{LendOrderAccount, LendOrderStatus, LendOrderError};
 
 #[derive(Accounts)]
-#[instruction(order_id: String, amount: u64, interest: f64, lender_fee: u64)]
+#[instruction(order_id: String, amount: u64, interest: f64, lender_fee: u64, duration: u64)]
 pub struct CreateLendOrder<'info> {
     #[account(mut)]
     pub lender: Signer<'info>,
@@ -38,9 +38,11 @@ impl<'info> CreateLendOrder<'info> {
         amount: u64,
         interest: f64,
         lender_fee: u64,
+        duration: u64
     ) -> Result<()> {
             self.lend_order.set_inner(LendOrderAccount {
                 amount,
+                duration,
                 bump: bumps.lend_order,
                 interest,
                 lender_fee,

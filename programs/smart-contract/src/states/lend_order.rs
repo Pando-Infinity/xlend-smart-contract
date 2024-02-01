@@ -7,6 +7,7 @@ use crate::LendOrderStatus;
 pub struct LendOrderAccount {
   pub interest: f64,
   pub lender_fee: u64,
+  pub duration: u64,
   #[max_len(50)]
   pub order_id: String,
   pub lender_pubkey: Pubkey,
