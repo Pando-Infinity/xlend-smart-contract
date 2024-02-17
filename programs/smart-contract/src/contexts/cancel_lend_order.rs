@@ -8,7 +8,7 @@ use crate::utils::verify_account_empty;
 pub struct CancelLendOrder<'info> {
     #[account(mut)]
     pub lender: Signer<'info>,
-    /// The account that store the loan notes
+
     #[account(mut)]
     pub lend_order: AccountInfo<'info>,
 
@@ -33,7 +33,7 @@ impl<'info> CancelLendOrder<'info> {
     }
 }
 
-/// Close a collateral account that stores deposit notes
+
 pub fn handler(ctx: Context<CancelLendOrder>, _bump: u8) -> ProgramResult {
     let lender = ctx.accounts.lender.load()?;
     let account = ctx.accounts.lend_order.key();
@@ -41,7 +41,6 @@ pub fn handler(ctx: Context<CancelLendOrder>, _bump: u8) -> ProgramResult {
     // Verify if collateral is empty, then proceed
     verify_account_empty(&ctx.accounts.lend_order)?;
 
-    // Account should now be empty and unregistered from the obligation aaccount, so we can close it out
     token::close_account(
         ctx.accounts
             .close_context()
