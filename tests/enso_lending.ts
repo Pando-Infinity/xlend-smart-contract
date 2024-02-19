@@ -20,7 +20,7 @@ import {
 import { SmartContract } from "../target/types/smart_contract";
 import { assert } from "chai";
 
-describe("smart-contract", () => {
+describe("enso_lending", () => {
   // Set provider, connection and program
   anchor.setProvider(anchor.AnchorProvider.env());
   const provider = anchor.getProvider();
