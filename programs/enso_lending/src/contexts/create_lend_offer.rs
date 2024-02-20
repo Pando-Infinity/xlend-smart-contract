@@ -1,17 +1,17 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
 
-use crate::{LendOrderAccount, LendOrderStatus, LendOrderError, CreateLendOrderEvent};
+use crate::{LendOfferAccount, LendOfferStatus, LendOfferError, CreateLendOfferEvent};
 
 #[derive(Accounts)]
-#[instruction(order_id: String, amount: u64, interest: f64, lender_fee: u64, duration: u64)]
-pub struct CreateLendOrder<'info> {
+#[instruction(offer_id: String, amount: u64, interest: f64, lender_fee: u64, duration: u64)]
+pub struct CreateLendOffer<'info> {
     #[account(mut)]
     pub lender: Signer<'info>,
     pub mint_asset: Account<'info, Mint>,
     #[account(
         mut,
-        constraint = lender_ata_asset.amount >= amount @ LendOrderError::NotEnoughAmount,
+        constraint = lender_ata_asset.amount >= amount @ LendOfferError::NotEnoughAmount,
         associated_token::mint = mint_asset,
         associated_token::authority = lender
     )]
@@ -19,28 +19,28 @@ pub struct CreateLendOrder<'info> {
     #[account(
         init_if_needed,
         payer = lender,
-        space = LendOrderAccount::INIT_SPACE,
-        seeds = [b"enso".as_ref(), lender.key().as_ref(), order_id.as_bytes()],
+        space = LendOfferAccount::INIT_SPACE,
+        seeds = [b"enso".as_ref(), lender.key().as_ref(), offer_id.as_bytes()],
         bump
     )]
-    pub lend_order: Account<'info, LendOrderAccount>,
+    pub lend_order: Account<'info, LendOfferAccount>,
     #[account(mut)]
     pub cw_vault: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> CreateLendOrder<'info> {
+impl<'info> CreateLendOffer<'info> {
     pub fn initialize_lend_order(
         &mut self,
-        bumps: &CreateLendOrderBumps,
-        order_id: String,
+        bumps: &CreateLendOfferBumps,
+        offer_id: String,
         amount: u64,
         interest: f64,
         lender_fee: u64,
         duration: u64
     ) -> Result<()> {
-            self.lend_order.set_inner(LendOrderAccount {
+            self.lend_order.set_inner(LendOfferAccount {
                 amount,
                 duration,
                 bump: bumps.lend_order,
@@ -48,8 +48,8 @@ impl<'info> CreateLendOrder<'info> {
                 lender_fee,
                 lender_pubkey: self.lender.key(),
                 loan_mint_token: self.mint_asset.key(),
-                order_id: order_id.clone(),
-                status: LendOrderStatus::Created,
+                offer_id: offer_id.clone(),
+                status: LendOfferStatus::Created,
             });
 
         Ok(())
@@ -74,12 +74,13 @@ impl<'info> CreateLendOrder<'info> {
     }
 
     pub fn emit_event_create_lend_order(&mut self, label: String) -> Result<()> {
-        emit!(CreateLendOrderEvent {
-            owner: self.lender.key(),
+        emit!(CreateLendOfferEvent {
+            lender: self.lender.key(),
             interest: self.lend_order.interest,
             lender_fee: self.lend_order.lender_fee,
-            order_id: self.lend_order.order_id.clone(),
-            amount: self.lend_order.amount
+            amount: self.lend_order.amount,
+            duration: self.lend_order.duration,
+            offer_id: self.lend_order.offer_id.clone(),
         });
         
         msg!(&label.clone());
