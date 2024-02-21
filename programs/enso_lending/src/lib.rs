@@ -30,6 +30,7 @@ pub mod smart_contract {
         ctx: Context<CancelLendOffer>,
         order_id: String,
     ) -> Result<()> {
-        ctx.accounts.close_lend_offer(order_id)
+        let _ = ctx.accounts.close_lend_offer();
+        ctx.accounts.emit_event_cancel_lend_offer("cancel_lend_offer".to_string(), order_id)
     }
 }

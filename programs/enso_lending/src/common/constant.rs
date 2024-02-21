@@ -26,3 +26,10 @@ pub struct CreateLendOrderEvent {
     pub order_id: String,
     pub amount: u64
 }
+
+#[event]
+// #[derive(Clone, Debug, Default)]
+pub struct CancelLendOfferEvent {
+    pub lender: Pubkey,
+    pub order_id: String
+}

@@ -2,6 +2,7 @@ use anchor_lang::__private::CLOSED_ACCOUNT_DISCRIMINATOR;
 use anchor_lang::{prelude::*};
 use std::io::{Cursor, Write};
 use std::ops::DerefMut;
+use crate::common::constant::CancelLendOfferEvent;
 use crate::{LendOrderAccount, LendOrderStatus, LendOrderError};
 
 #[derive(Accounts)]
@@ -24,7 +25,7 @@ pub struct CancelLendOffer<'info> {
 }
 
 impl<'info> CancelLendOffer<'info> {
-    pub fn close_lend_offer(&mut self, _order_id: String) -> Result<()>  {
+    pub fn close_lend_offer(&mut self) -> Result<()>  {
         let dest_starting_lamports = self.lender.lamports();
         let lend_order_account = self.lend_order.to_account_info();
 
@@ -42,6 +43,17 @@ impl<'info> CancelLendOffer<'info> {
         let mut cursor = Cursor::new(dst);
         cursor.write_all(&CLOSED_ACCOUNT_DISCRIMINATOR).unwrap();
 
+        Ok(())
+    }
+
+    pub fn emit_event_cancel_lend_offer(&mut self, label: String, order_id: String) -> Result<()> {
+        emit!(CancelLendOfferEvent {
+            lender: self.lender.key(),
+            order_id
+        });
+        
+        msg!(&label.clone());
+        
         Ok(())
     }
 }
