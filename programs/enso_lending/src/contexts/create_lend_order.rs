@@ -46,7 +46,7 @@ impl<'info> CreateLendOrder<'info> {
                 bump: bumps.lend_order,
                 interest,
                 lender_fee,
-                lender_pubkey: self.lender.key(),
+                lender: self.lender.key(),
                 loan_mint_token: self.mint_asset.key(),
                 order_id: order_id.clone(),
                 status: LendOrderStatus::Created,

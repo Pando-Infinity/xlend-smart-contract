@@ -10,7 +10,7 @@ pub struct LendOrderAccount {
   pub duration: u64,
   #[max_len(50)]
   pub order_id: String,
-  pub lender_pubkey: Pubkey,
+  pub lender: Pubkey,
   pub loan_mint_token: Pubkey,
   pub amount: u64,
   pub bump: u8,

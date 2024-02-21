@@ -55,6 +55,20 @@ describe("enso_lending", () => {
     return signature;
   };
 
+  async function checkWalletBalance(tokenAccount: PublicKey): Promise<number> {
+		let info = await provider.connection.getAccountInfo(tokenAccount);
+		let amount = info.lamports;
+
+		return amount;
+	}
+
+  function getAmountDifference(
+		beforeAmount: number,
+		afterAmount: number
+	): number {
+		return afterAmount - beforeAmount;
+	}
+
   it("Airdrop and create mints", async () => {
     let lamports = await getMinimumBalanceForRentExemptMint(connection);
     let tx = new Transaction();
@@ -285,5 +299,125 @@ describe("enso_lending", () => {
         );
       }
     });
+
+    it('Cancel Lend offer successfully', async () => {
+			const orderId = '12345abc';
+			const dataSize = 152; // Replace with the desired account size in bytes
+			const lendOfferRent =
+				await program.provider.connection.getMinimumBalanceForRentExemption(
+					dataSize
+				);
+
+			const seedLendOrder = [
+				Buffer.from('enso'),
+				lender.publicKey.toBuffer(),
+				Buffer.from(orderId),
+			];
+
+			const lendOrder = PublicKey.findProgramAddressSync(
+				seedLendOrder,
+				program.programId
+			)[0];
+
+			const walletBalanceBeforeCloseLoan = await checkWalletBalance(
+				lender.publicKey
+			);
+
+			await program.methods
+				.cancelLendOffer(orderId)
+				.accounts({
+					lender: lender.publicKey,
+					lendOrder,
+					tokenProgram: TOKEN_PROGRAM_ID,
+					systemProgram: SystemProgram.programId,
+				})
+				.signers([lender])
+				.rpc()
+				.then(confirm)
+				.then(log);
+
+			const walletBalanceAfterCloseLoan = await checkWalletBalance(
+				lender.publicKey
+			);
+
+			const actualLoanRentReturned = getAmountDifference(
+				walletBalanceBeforeCloseLoan,
+				walletBalanceAfterCloseLoan
+			);
+
+			const expectedLoanRentReturned = lendOfferRent;
+
+			assert.equal(
+				actualLoanRentReturned.toString(),
+				expectedLoanRentReturned.toString()
+			);
+
+			// Lend offer account closed
+			const checkLendOfferAccountInfo =
+				await provider.connection.getAccountInfo(lendOrder);
+			assert.equal(checkLendOfferAccountInfo, null);
+		});
+
+    it('Cancel Lend offer return constraint error', async () => {
+			const amount = 1e6;
+			const orderId = '123abc';
+			const anotherOrderId = '123abc!@#';
+			const interest = 2.1;
+			const lenderFee = 2;
+			const duration = 14;
+
+			const seedLendOrder = [
+				Buffer.from('enso'),
+				lender.publicKey.toBuffer(),
+				Buffer.from(orderId),
+			];
+
+			const lendOrder = PublicKey.findProgramAddressSync(
+				seedLendOrder,
+				program.programId
+			)[0];
+
+			await program.methods
+				.createLendOrder(
+					orderId,
+					new anchor.BN(amount),
+					interest,
+					new anchor.BN(lenderFee),
+					new anchor.BN(duration)
+				)
+				.accounts({
+					lender: lender.publicKey,
+					lenderAtaAsset: lenderAtaUSDC,
+					cwVault: coldWalletAtaUSDC,
+					lendOrder,
+					mintAsset: usdcMint.publicKey,
+					tokenProgram: TOKEN_PROGRAM_ID,
+					systemProgram: SystemProgram.programId,
+				})
+				.signers([lender])
+				.rpc()
+				.then(confirm)
+				.then(log);
+
+      try {
+				await program.methods
+					.cancelLendOffer(anotherOrderId)
+					.accounts({
+						lender: lender.publicKey,
+						lendOrder,
+						tokenProgram: TOKEN_PROGRAM_ID,
+						systemProgram: SystemProgram.programId,
+					})
+					.signers([lender])
+					.rpc()
+					.then(confirm)
+					.then(log);
+			} catch (error) {
+				assert.strictEqual(
+					error.error.errorMessage,
+					'A seeds constraint was violated'
+				);
+			}
+		});
   });
 });

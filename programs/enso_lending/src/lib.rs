@@ -25,4 +25,11 @@ pub mod smart_contract {
             .initialize_lend_order(&ctx.bumps, order_id, amount, interest, lender_fee, duration)?;
         ctx.accounts.deposit(amount)
     }
+
+    pub fn cancel_lend_offer(
+        ctx: Context<CancelLendOffer>,
+        order_id: String,
+    ) -> Result<()> {
+        ctx.accounts.close_lend_offer(order_id)
+    }
 }

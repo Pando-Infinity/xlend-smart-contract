@@ -8,7 +8,13 @@ pub enum LendOrderStatus {
 #[error_code]
 pub enum LendOrderError {
     #[msg("Lender does not have enough assets")]
-    NotEnoughAmount
+    NotEnoughAmount,
+    #[msg("Lend order status is invalid")]
+    InvalidOrderStatus,
+    #[msg("Invalid order id")]
+    InvalidOrderId,
+    #[msg("Invalid pda address")]
+    InvalidPdaAddress
 }
 
 #[event]
