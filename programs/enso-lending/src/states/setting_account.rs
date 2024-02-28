@@ -11,5 +11,6 @@ pub struct SettingAccount {
   pub collateral_mint_asset: Pubkey,
   #[max_len(50)]
   pub tier_id: String,
+  pub lender_fee_percent: f64,
   pub bump: u8
 }

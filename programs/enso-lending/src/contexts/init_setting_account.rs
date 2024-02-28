@@ -29,7 +29,7 @@ pub struct InitSettingAccount<'info> {
 }
 
 impl<'info> InitSettingAccount<'info> {
-    pub fn init_setting_account(&mut self, bumps: &InitSettingAccountBumps, tier_id: String, amount: f64, duration: u64 ) -> Result<()> {
+    pub fn init_setting_account(&mut self, bumps: &InitSettingAccountBumps, tier_id: String, amount: f64, duration: u64, lender_fee_percent: f64  ) -> Result<()> {
       self.setting_account.set_inner(SettingAccount {
         amount,
         duration,
@@ -38,7 +38,8 @@ impl<'info> InitSettingAccount<'info> {
         lend_mint_asset: self.lend_mint_asset.key(),
         collateral_mint_asset: self.collateral_mint_asset.key(),
         tier_id,
-        bump: bumps.setting_account
+        bump: bumps.setting_account,
+        lender_fee_percent
       });
 
       msg!("Init Setting Account: {:?}", self.setting_account);

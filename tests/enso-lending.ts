@@ -94,6 +94,7 @@ describe("enso-lending", () => {
       const amount = 200;
       const duration = 14;
       const tier_id = "1234_tier_1";
+      const lender_fee_percent = 0.01
 
       const seedSettingAccount = [
         Buffer.from("enso"),
@@ -108,7 +109,7 @@ describe("enso-lending", () => {
       )[0];
 
       await program.methods
-        .initSettingAccount(tier_id, amount, new anchor.BN(duration))
+        .initSettingAccount(tier_id, amount, new anchor.BN(duration), lender_fee_percent)
         .accounts({
           owner: ownerAccountSetting.publicKey,
           receiver: hotWallet.publicKey,
@@ -131,9 +132,11 @@ describe("enso-lending", () => {
         receiver,
         tierId,
         duration: fetchDuration,
+        lenderFeePercent
       } = await program.account.settingAccount.fetch(settingAccount);
       assert.equal(tier_id, tierId);
       assert.equal(amount, fetchAmount);
+      assert.equal(lender_fee_percent, lenderFeePercent);
       assert.equal(duration, fetchDuration.toNumber());
       assert.equal(ownerAccountSetting.publicKey.toString(), owner.toString());
       assert.equal(hotWallet.publicKey.toString(), receiver.toString());

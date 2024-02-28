@@ -18,9 +18,10 @@ pub mod enso_lending {
         tier_id: String,
         amount: f64,
         duration: u64,
+        lender_fee_percent: f64 
     ) -> Result<()> {
         ctx.accounts
-            .init_setting_account(&ctx.bumps, tier_id.clone(), amount, duration)?;
+            .init_setting_account(&ctx.bumps, tier_id.clone(), amount, duration, lender_fee_percent)?;
         ctx.accounts
             .emit_init_setting_account_event(String::from("Emit event init setting account"))?;
 
