@@ -33,4 +33,13 @@ pub mod smart_contract {
         let _ = ctx.accounts.close_lend_offer();
         ctx.accounts.emit_event_cancel_lend_offer("cancel_lend_offer".to_string(), order_id)
     }
+
+    pub fn edit_lend_offer(
+        ctx: Context<EditLendOffer>,
+        order_id: String,
+        interest: f64
+    ) -> Result<()> {
+        let _ = ctx.accounts.edit_lend_offer(interest);
+         ctx.accounts.emit_event_edit_lend_offer("edit_lend_offer".to_string(), order_id)
+    }
 }

@@ -419,5 +419,74 @@ describe("enso_lending", () => {
 				);
 			}
 		});
+
+    it('Edit Lend offer successfully', async () => {
+      const amount = 1000;
+      const orderId = "123abc!@#";
+      const interest = 2.1;
+      const newInterest = 3.1;
+      const lenderFee = 2;
+      const duration = 14;
+
+      const seedLendOrder = [
+        Buffer.from("enso"),
+        lender.publicKey.toBuffer(),
+        Buffer.from(orderId),
+      ];
+
+      const lendOrder = PublicKey.findProgramAddressSync(
+        seedLendOrder,
+        program.programId
+      )[0];
+
+      await program.methods
+        .createLendOrder(
+          orderId,
+          new anchor.BN(amount),
+          interest,
+          new anchor.BN(lenderFee),
+          new anchor.BN(duration)
+        )
+        .accounts({
+          lender: lender.publicKey,
+          lenderAtaAsset: lenderAtaUSDC,
+          cwVault: coldWalletAtaUSDC,
+          lendOrder,
+          mintAsset: usdcMint.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([lender])
+        .rpc()
+        .then(confirm)
+        .then(log);
+      
+      const previousLendOrderInfor = await program.account.lendOrderAccount.fetch(
+				lendOrder
+			);
+
+      assert.equal(previousLendOrderInfor.interest, interest);
+
+      await program.methods
+				.editLendOffer(
+          orderId,
+          newInterest,
+				)
+				.accounts({
+					lender: lender.publicKey,
+					lendOrder,
+					tokenProgram: TOKEN_PROGRAM_ID,
+					systemProgram: SystemProgram.programId,
+				})
+				.signers([lender])
+				.rpc()
+				.then(confirm)
+				.then(log);
+
+      const currentLendOrderInfor =
+				await program.account.lendOrderAccount.fetch(lendOrder);
+
+      assert.equal(currentLendOrderInfor.interest, newInterest);
+    });
   });
 });

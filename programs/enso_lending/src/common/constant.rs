@@ -14,7 +14,9 @@ pub enum LendOrderError {
     #[msg("Invalid order id")]
     InvalidOrderId,
     #[msg("Invalid pda address")]
-    InvalidPdaAddress
+    InvalidPdaAddress,
+    #[msg("Invalid interest rate")]
+    InvalidInterestRate
 }
 
 #[event]
@@ -32,4 +34,12 @@ pub struct CreateLendOrderEvent {
 pub struct CancelLendOfferEvent {
     pub lender: Pubkey,
     pub order_id: String
+}
+
+#[event]
+// #[derive(Clone, Debug, Default)]
+pub struct EditLendOfferEvent {
+    pub lender: Pubkey,
+    pub order_id: String,
+    pub interest: f64
 }
