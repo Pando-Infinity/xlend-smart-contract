@@ -46,9 +46,15 @@ impl<'info> InitSettingAccount<'info> {
       Ok(())
     }
 
-    pub fn emit_init_setting_account_event(&mut self, tier_id: String, label: String) -> Result<()> {
+    pub fn emit_init_setting_account_event(&mut self, label: String) -> Result<()> {
       emit!(InitSettingAccountEvent {
-          tier_id
+          tier_id: self.setting_account.tier_id.clone(),
+          amount: self.setting_account.amount,
+          duration: self.setting_account.duration,
+          collateral_mint_asset: self.setting_account.collateral_mint_asset,
+          lend_mint_asset: self.setting_account.lend_mint_asset,
+          owner: self.setting_account.owner,
+          receiver: self.setting_account.receiver
       });
       
       msg!(&label.clone());
