@@ -19,9 +19,10 @@ pub mod enso_lending {
         amount: f64,
         duration: u64,
     ) -> Result<()> {
-        ctx.accounts.init_setting_account(amount, duration)?;
+        ctx.accounts
+            .init_setting_account(&ctx.bumps, tier_id.clone(), amount, duration )?;
         ctx.accounts.emit_init_setting_account_event(
-            tier_id,
+            tier_id.clone(),
             String::from("Emit event init setting account"),
         )?;
 

@@ -1,5 +1,5 @@
 pub use anchor_lang::prelude::*;
-use anchor_spl::token::TokenAccount;
+use anchor_spl::token::Mint;
 
 use crate::{InitSettingAccountEvent, SettingAccount};
 
@@ -9,9 +9,9 @@ pub struct InitSettingAccount<'info> {
   #[account(mut)]
   pub owner: Signer<'info>,
   /// CHECK: This is the account used to make a seeds to create ata account for transfer asset from lender to how wallet
-  pub receiver: UncheckedAccount<'info>,
-  pub lend_mint_asset: Account<'info, TokenAccount>,
-  pub collateral_mint_asset: Account<'info, TokenAccount>,
+  pub receiver: AccountInfo<'info>,
+  pub lend_mint_asset: Account<'info, Mint>,
+  pub collateral_mint_asset: Account<'info, Mint>,
   #[account(
     init_if_needed,
     payer = owner,
@@ -29,7 +29,7 @@ pub struct InitSettingAccount<'info> {
 }
 
 impl<'info> InitSettingAccount<'info> {
-    pub fn init_setting_account(&mut self, amount: f64, duration: u64) -> Result<()> {
+    pub fn init_setting_account(&mut self, bumps: &InitSettingAccountBumps, tier_id: String, amount: f64, duration: u64 ) -> Result<()> {
       self.setting_account.set_inner(SettingAccount {
         amount,
         duration,
@@ -37,6 +37,8 @@ impl<'info> InitSettingAccount<'info> {
         receiver: self.receiver.key(),
         lend_mint_asset: self.lend_mint_asset.key(),
         collateral_mint_asset: self.collateral_mint_asset.key(),
+        tier_id,
+        bump: bumps.setting_account
       });
 
       msg!("Init Setting Account: {:?}", self.setting_account);

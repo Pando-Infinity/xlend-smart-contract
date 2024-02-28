@@ -8,5 +8,8 @@ pub struct SettingAccount {
   pub owner: Pubkey,
   pub receiver: Pubkey,
   pub lend_mint_asset: Pubkey,
-  pub collateral_mint_asset: Pubkey
+  pub collateral_mint_asset: Pubkey,
+  #[max_len(50)]
+  pub tier_id: String,
+  pub bump: u8
 }

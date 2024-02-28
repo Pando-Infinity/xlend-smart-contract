@@ -5,7 +5,6 @@ import {
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
-  SOLANA_SCHEMA,
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
@@ -13,9 +12,22 @@ import {
   MINT_SIZE,
   TOKEN_PROGRAM_ID,
   getMinimumBalanceForRentExemptMint,
+  createInitializeMint2Instruction,
 } from "@solana/spl-token";
+import * as borsh from '@coral-xyz/borsh'
 
 import { confirm, log } from "./utils";
+
+const borshSettingAccountSchema = borsh.struct([
+  borsh.f64('amount'),
+  borsh.u64('duration'),
+  borsh.publicKey('owner'),
+  borsh.publicKey('receiver'),
+  borsh.publicKey('lend_mint_asset'),
+  borsh.publicKey('collateral_mint_asset'),
+  borsh.str('tier_id'),
+  borsh.str('bump')
+])
 
 describe("enso-lending", () => {
   // Set provider, connection and program
@@ -27,8 +39,8 @@ describe("enso-lending", () => {
 
   // Boilerplate
   // Determine dummy token mints and token account address
-  const [ownerAccountSetting, hotWallet, usdcMint] = Array.from(
-    { length: 3 },
+  const [ownerAccountSetting, hotWallet, usdcMint, wrappedSOLTest] = Array.from(
+    { length: 4 },
     () => Keypair.generate()
   );
 
@@ -44,6 +56,12 @@ describe("enso-lending", () => {
         lamports: 0.01 * LAMPORTS_PER_SOL,
       }),
 
+      SystemProgram.transfer({
+        fromPubkey: provider.publicKey,
+        toPubkey: hotWallet.publicKey,
+        lamports: 0.01 * LAMPORTS_PER_SOL,
+      }),
+
       // create USDC token mint
       SystemProgram.createAccount({
         fromPubkey: provider.publicKey,
@@ -52,10 +70,33 @@ describe("enso-lending", () => {
         space: MINT_SIZE,
         programId: TOKEN_PROGRAM_ID,
       }),
+
+      createInitializeMint2Instruction(
+        usdcMint.publicKey,
+        6,
+        provider.publicKey,
+        null
+      ),
+
+      // create Wrapped SOL
+      SystemProgram.createAccount({
+        fromPubkey: provider.publicKey,
+        newAccountPubkey: wrappedSOLTest.publicKey,
+        lamports,
+        space: MINT_SIZE,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+
+      createInitializeMint2Instruction(
+        wrappedSOLTest.publicKey,
+        6,
+        provider.publicKey,
+        null
+      ),
     ];
 
     await provider
-      .sendAndConfirm(tx, [usdcMint])
+      .sendAndConfirm(tx, [usdcMint, wrappedSOLTest])
       .then((sig) => log(connection, sig));
   });
 
@@ -84,13 +125,19 @@ describe("enso-lending", () => {
           receiver: hotWallet.publicKey,
           settingAccount,
           lendMintAsset: usdcMint.publicKey,
-          collateralMintAsset: SOLANA_SCHEMA
+          collateralMintAsset: wrappedSOLTest.publicKey,
           systemProgram: SystemProgram.programId,
         })
         .signers([ownerAccountSetting])
-        .rpc()
+        .rpc({ skipPreflight: true })
         .then((sig) => confirm(connection, sig))
         .then((sig) => log(connection, sig));
+
+      
+      const accountInfo = await connection.getAccountInfo(settingAccount)
+      console.log(borshSettingAccountSchema)
+      const data = borshSettingAccountSchema.decode(accountInfo.data)
+      console.log(data)
     });
   });
 });
