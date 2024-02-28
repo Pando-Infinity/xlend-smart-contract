@@ -14,20 +14,9 @@ import {
   getMinimumBalanceForRentExemptMint,
   createInitializeMint2Instruction,
 } from "@solana/spl-token";
-import * as borsh from '@coral-xyz/borsh'
 
 import { confirm, log } from "./utils";
-
-const borshSettingAccountSchema = borsh.struct([
-  borsh.f64('amount'),
-  borsh.u64('duration'),
-  borsh.publicKey('owner'),
-  borsh.publicKey('receiver'),
-  borsh.publicKey('lend_mint_asset'),
-  borsh.publicKey('collateral_mint_asset'),
-  borsh.str('tier_id'),
-  borsh.str('bump')
-])
+import { assert } from "chai";
 
 describe("enso-lending", () => {
   // Set provider, connection and program
@@ -133,11 +122,26 @@ describe("enso-lending", () => {
         .then((sig) => confirm(connection, sig))
         .then((sig) => log(connection, sig));
 
-      
-      const accountInfo = await connection.getAccountInfo(settingAccount)
-      console.log(borshSettingAccountSchema)
-      const data = borshSettingAccountSchema.decode(accountInfo.data)
-      console.log(data)
+      // Read data from PDA account
+      const {
+        amount: fetchAmount,
+        collateralMintAsset,
+        lendMintAsset,
+        owner,
+        receiver,
+        tierId,
+        duration: fetchDuration,
+      } = await program.account.settingAccount.fetch(settingAccount);
+      assert.equal(tier_id, tierId);
+      assert.equal(amount, fetchAmount);
+      assert.equal(duration, fetchDuration.toNumber());
+      assert.equal(ownerAccountSetting.publicKey.toString(), owner.toString());
+      assert.equal(hotWallet.publicKey.toString(), receiver.toString());
+      assert.equal(usdcMint.publicKey.toString(), lendMintAsset.toString());
+      assert.equal(
+        wrappedSOLTest.publicKey.toString(),
+        collateralMintAsset.toString()
+      );
     });
   });
 });
