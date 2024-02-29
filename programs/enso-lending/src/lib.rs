@@ -27,4 +27,40 @@ pub mod enso_lending {
 
         Ok(())
     }
+
+    pub fn edit_setting_account(
+        ctx: Context<EditSettingAccount>,
+        tier_id: String,
+        amount: Option<f64>,
+        duration: Option<u64>,
+        lender_fee_percent: Option<f64>
+    ) -> Result<()> {
+        ctx.accounts
+            .edit_setting_account(tier_id.clone(), amount, duration, lender_fee_percent)?;
+
+        ctx.accounts.emit_event_edit_setting_account(
+          String::from("edit_setting_account"),
+          tier_id.clone(),
+          amount,
+          duration ,
+          lender_fee_percent
+        )?;
+
+        Ok(())
+    }
+
+    pub fn close_setting_account(
+        ctx: Context<CloseSettingAccount>,
+        tier_id: String
+    ) -> Result<()> {
+        ctx.accounts
+            .close_setting_account()?;
+
+        ctx.accounts.emit_event_close_setting_account(
+          String::from("edit_setting_account"),
+          tier_id.clone(),
+        )?;
+
+        Ok(())
+    }
 }
