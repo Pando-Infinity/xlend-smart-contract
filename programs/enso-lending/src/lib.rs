@@ -35,7 +35,7 @@ pub mod enso_lending {
 
     pub fn edit_setting_account(
         ctx: Context<EditSettingAccount>,
-        tier_id: String,
+        _tier_id: String,
         amount: Option<f64>,
         duration: Option<u64>,
         lender_fee_percent: Option<f64>,
