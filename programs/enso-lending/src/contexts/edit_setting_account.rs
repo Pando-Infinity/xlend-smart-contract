@@ -1,4 +1,4 @@
-use anchor_lang::{prelude::*};
+use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 
 use crate::{SettingAccount, EditSettingAccountEvent, SettingAccountError};
@@ -30,13 +30,12 @@ pub struct EditSettingAccount<'info> {
 
 impl<'info> EditSettingAccount<'info> {
   pub fn edit_setting_account(
-    &mut self, tier_id: String,
+    &mut self,
     amount: Option<f64>,
     duration: Option<u64>,
     lender_fee_percent: Option<f64>
   ) -> Result<()>  {
     let setting_account = &mut self.setting_account;
-    setting_account.tier_id = tier_id;
     if let Some(amount) = amount {
       setting_account.amount = amount;
     }
@@ -55,19 +54,15 @@ impl<'info> EditSettingAccount<'info> {
   pub fn emit_event_edit_setting_account(
     &mut self,
     label: String,
-    tier_id: String,
-    amount: Option<f64>,
-    duration: Option<u64>,
-    lender_fee_percent: Option<f64>
   ) -> Result<()> {
     emit!(EditSettingAccountEvent {
       receiver: self.receiver.key(),
       lend_mint_asset: self.lend_mint_asset.key(),
       collateral_mint_asset: self.collateral_mint_asset.key(),
-      tier_id,
-      amount,
-      duration,
-      lender_fee_percent
+      tier_id: self.setting_account.tier_id.clone(),
+      amount: self.setting_account.amount,
+      duration: self.setting_account.duration,
+      lender_fee_percent: self.setting_account.lender_fee_percent
     });
 
     msg!(&label.clone());

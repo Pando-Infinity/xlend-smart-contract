@@ -12,6 +12,7 @@ pub struct InitSettingAccountEvent {
     pub lend_mint_asset: Pubkey,
     pub collateral_mint_asset: Pubkey,
     pub tier_id: String,
+    pub lender_fee_percent: f64
 }
 
 #[event]
@@ -20,9 +21,9 @@ pub struct EditSettingAccountEvent {
     pub lend_mint_asset: Pubkey,
     pub collateral_mint_asset: Pubkey,
     pub tier_id: String,
-    pub amount: Option<f64>,
-    pub duration: Option<u64>,
-    pub lender_fee_percent: Option<f64>
+    pub amount: f64,
+    pub duration: u64,
+    pub lender_fee_percent: f64
 }
 
 #[event]

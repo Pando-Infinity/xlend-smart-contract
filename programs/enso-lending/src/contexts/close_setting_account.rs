@@ -1,4 +1,4 @@
-use anchor_lang::{prelude::*};
+use anchor_lang::prelude::*;
 use anchor_lang::__private::CLOSED_ACCOUNT_DISCRIMINATOR;
 use std::io::{Cursor, Write};
 use std::ops::DerefMut;

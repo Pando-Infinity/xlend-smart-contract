@@ -55,7 +55,8 @@ impl<'info> InitSettingAccount<'info> {
           collateral_mint_asset: self.setting_account.collateral_mint_asset,
           lend_mint_asset: self.setting_account.lend_mint_asset,
           owner: self.setting_account.owner,
-          receiver: self.setting_account.receiver
+          receiver: self.setting_account.receiver,
+          lender_fee_percent: self.setting_account.lender_fee_percent
       });
       
       msg!(&label.clone());
