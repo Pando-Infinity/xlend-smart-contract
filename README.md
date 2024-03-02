@@ -1,1 +1,1 @@
-# xlend-smart-contract
+# xlend-enso-lending
