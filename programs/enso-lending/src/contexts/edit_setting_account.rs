@@ -4,7 +4,7 @@ use anchor_spl::token::Mint;
 use crate::{SettingAccount, EditSettingAccountEvent, SettingAccountError};
 
 #[derive(Accounts)]
-#[instruction(_tier_id: String, amount: Option<f64>, duration: Option<u64>, lender_fee_percent: Option<f64>)]
+#[instruction(tier_id: String, amount: Option<f64>, duration: Option<u64>, lender_fee_percent: Option<f64>)]
 pub struct EditSettingAccount<'info> {
   #[account(mut)]
   pub owner: Signer<'info>,
@@ -15,12 +15,12 @@ pub struct EditSettingAccount<'info> {
   #[account(
     mut,
     has_one = owner,
-    constraint = setting_account.tier_id == _tier_id @ SettingAccountError::InvalidTierId,
+    constraint = setting_account.tier_id == tier_id @ SettingAccountError::InvalidTierId,
     seeds = [
       b"enso".as_ref(), 
-      _tier_id.as_bytes(), 
+      b"setting_account".as_ref(),
+      tier_id.as_bytes(), 
       crate::ID.key().as_ref(), 
-      owner.key().as_ref()
     ],
     bump
   )]
