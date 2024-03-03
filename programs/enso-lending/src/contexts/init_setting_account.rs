@@ -4,7 +4,7 @@ use anchor_spl::token::Mint;
 use crate::{InitSettingAccountEvent, SettingAccount};
 
 #[derive(Accounts)]
-#[instruction(tier_id: String, amount: f64, duration: u64)]
+#[instruction(tier_id: String, amount: u64, duration: u64)]
 pub struct InitSettingAccount<'info> {
   #[account(mut)]
   pub owner: Signer<'info>,
@@ -29,7 +29,7 @@ pub struct InitSettingAccount<'info> {
 }
 
 impl<'info> InitSettingAccount<'info> {
-    pub fn init_setting_account(&mut self, bumps: &InitSettingAccountBumps, tier_id: String, amount: f64, duration: u64, lender_fee_percent: f64  ) -> Result<()> {
+    pub fn init_setting_account(&mut self, bumps: &InitSettingAccountBumps, tier_id: String, amount: u64, duration: u64, lender_fee_percent: f64  ) -> Result<()> {
       self.setting_account.set_inner(SettingAccount {
         amount,
         duration,

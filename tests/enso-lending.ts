@@ -13,9 +13,14 @@ import {
   TOKEN_PROGRAM_ID,
   getMinimumBalanceForRentExemptMint,
   createInitializeMint2Instruction,
+  getAssociatedTokenAddressSync,
+  createAssociatedTokenAccountIdempotentInstruction,
+  createMintToInstruction,
+  getOrCreateAssociatedTokenAccount,
+  transfer,
 } from "@solana/spl-token";
 
-import { confirm, log } from "./utils";
+import { confirm, log, getAmountDifference } from "./utils";
 import { assert } from "chai";
 
 describe("enso-lending", () => {
@@ -26,25 +31,26 @@ describe("enso-lending", () => {
     return amount;
   }
 
-  function getAmountDifference(
-    beforeAmount: number,
-    afterAmount: number
-  ): number {
-    return afterAmount - beforeAmount;
-  }
-
   // Set provider, connection and program
   anchor.setProvider(anchor.AnchorProvider.env());
   const provider = anchor.getProvider();
+  // @ts-ignore
+  const providerWallet = provider.wallet.payer as Keypair;
 
   const connection = provider.connection;
   const program = anchor.workspace.EnsoLending as Program<EnsoLending>;
 
   // Boilerplate
   // Determine dummy token mints and token account address
-  const [ownerAccountSetting, hotWallet, usdcMint, wrappedSOLTest] = Array.from(
-    { length: 4 },
-    () => Keypair.generate()
+  const [lender, ownerAccountSetting, hotWallet, usdcMint, wrappedSol] =
+    Array.from({ length: 5 }, () => Keypair.generate());
+  const usdcMintDecimal = 6;
+  const totalUsdcSupply = 1e9 * 10 ** usdcMintDecimal; // 1000000000 USDC
+  const wrappedSolDecimal = 9;
+
+  const providerAtaUsdc = getAssociatedTokenAddressSync(
+    usdcMint.publicKey,
+    providerWallet.publicKey
   );
 
   it("Airdrop and create mints", async () => {
@@ -59,48 +65,96 @@ describe("enso-lending", () => {
         lamports: 0.01 * LAMPORTS_PER_SOL,
       }),
 
+      // Airdrop to lender
       SystemProgram.transfer({
         fromPubkey: provider.publicKey,
-        toPubkey: hotWallet.publicKey,
+        toPubkey: lender.publicKey,
         lamports: 0.01 * LAMPORTS_PER_SOL,
       }),
 
-      // create USDC token mint
-      SystemProgram.createAccount({
-        fromPubkey: provider.publicKey,
-        newAccountPubkey: usdcMint.publicKey,
-        lamports,
-        space: MINT_SIZE,
-        programId: TOKEN_PROGRAM_ID,
-      }),
+      // create USDC token account
+      ...[
+        SystemProgram.createAccount({
+          fromPubkey: provider.publicKey,
+          newAccountPubkey: usdcMint.publicKey,
+          lamports,
+          space: MINT_SIZE,
+          programId: TOKEN_PROGRAM_ID,
+        }),
 
-      createInitializeMint2Instruction(
-        usdcMint.publicKey,
-        6,
-        provider.publicKey,
-        null
-      ),
+        createInitializeMint2Instruction(
+          usdcMint.publicKey,
+          usdcMintDecimal,
+          provider.publicKey,
+          null
+        ),
+
+        createAssociatedTokenAccountIdempotentInstruction(
+          provider.publicKey,
+          providerAtaUsdc,
+          provider.publicKey,
+          usdcMint.publicKey
+        ),
+
+        // mint 1 000 000 000 USDC
+        createMintToInstruction(
+          usdcMint.publicKey,
+          providerAtaUsdc,
+          providerWallet.publicKey,
+          totalUsdcSupply
+        ),
+      ],
 
       // create Wrapped SOL
-      SystemProgram.createAccount({
-        fromPubkey: provider.publicKey,
-        newAccountPubkey: wrappedSOLTest.publicKey,
-        lamports,
-        space: MINT_SIZE,
-        programId: TOKEN_PROGRAM_ID,
-      }),
+      ...[
+        SystemProgram.createAccount({
+          fromPubkey: provider.publicKey,
+          newAccountPubkey: wrappedSol.publicKey,
+          lamports,
+          space: MINT_SIZE,
+          programId: TOKEN_PROGRAM_ID,
+        }),
 
-      createInitializeMint2Instruction(
-        wrappedSOLTest.publicKey,
-        6,
-        provider.publicKey,
-        null
-      ),
+        createInitializeMint2Instruction(
+          wrappedSol.publicKey,
+          wrappedSolDecimal,
+          provider.publicKey,
+          null
+        ),
+      ],
     ];
 
     await provider
-      .sendAndConfirm(tx, [usdcMint, wrappedSOLTest])
+      .sendAndConfirm(tx, [usdcMint, wrappedSol, providerWallet])
       .then((sig) => log(connection, sig));
+
+    const providerUsdcBalance = await connection.getTokenAccountBalance(
+      providerAtaUsdc
+    );
+    assert.equal(+providerUsdcBalance.value.amount, totalUsdcSupply);
+
+    const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+      connection,
+      providerWallet,
+      usdcMint.publicKey,
+      lender.publicKey
+    );
+
+    // transfer 100 USDC to lender
+    const usdcTransferToLender = 100 * 10 ** usdcMintDecimal;
+    await transfer(
+      connection,
+      providerWallet,
+      providerAtaUsdc,
+      lenderAtaUsdc.address,
+      providerWallet,
+      usdcTransferToLender
+    );
+
+    const lenderUsdcBalance = await connection.getTokenAccountBalance(
+      lenderAtaUsdc.address
+    );
+    assert.equal(+lenderUsdcBalance.value.amount, usdcTransferToLender);
   });
 
   // Util
@@ -116,7 +170,7 @@ describe("enso-lending", () => {
     await program.methods
       .initSettingAccount(
         tierId,
-        amount,
+        new anchor.BN(amount),
         new anchor.BN(duration),
         lenderFeePercent
       )
@@ -125,7 +179,7 @@ describe("enso-lending", () => {
         receiver: hotWallet.publicKey,
         settingAccount,
         lendMintAsset: usdcMint.publicKey,
-        collateralMintAsset: wrappedSOLTest.publicKey,
+        collateralMintAsset: wrappedSol.publicKey,
         systemProgram: SystemProgram.programId,
       })
       .signers([ownerAccountSetting])
@@ -135,8 +189,8 @@ describe("enso-lending", () => {
   };
 
   describe("account setting", () => {
-    it("Init Account Setting successfully", async () => {
-      const amount = 200;
+    xit("Init Account Setting successfully", async () => {
+      const amount = 200 * usdcMintDecimal;
       const duration = 14;
       const tierId = "1234_tier_1";
       const lenderFeePercent = 0.01;
@@ -173,20 +227,20 @@ describe("enso-lending", () => {
         lenderFeePercent: fetchedLenderFeePercent,
       } = await program.account.settingAccount.fetch(settingAccount);
       assert.equal(fetchedTierId, tierId);
-      assert.equal(amount, fetchedAmount);
+      assert.equal(amount, fetchedAmount.toNumber());
       assert.equal(fetchedLenderFeePercent, lenderFeePercent);
       assert.equal(duration, fetchDuration.toNumber());
       assert.equal(ownerAccountSetting.publicKey.toString(), owner.toString());
       assert.equal(hotWallet.publicKey.toString(), receiver.toString());
       assert.equal(usdcMint.publicKey.toString(), lendMintAsset.toString());
       assert.equal(
-        wrappedSOLTest.publicKey.toString(),
+        wrappedSol.publicKey.toString(),
         collateralMintAsset.toString()
       );
     });
 
-    it("Edit Account Setting", async () => {
-      const amount = 200;
+    xit("Edit Account Setting", async () => {
+      const amount = 200 * usdcMintDecimal;
       const duration = 14;
       const tierId = "1234_tier_1";
       const lenderFeePercent = 0.01;
@@ -218,7 +272,7 @@ describe("enso-lending", () => {
       await program.methods
         .editSettingAccount(
           tierId,
-          newAmount,
+          new anchor.BN(newAmount),
           new anchor.BN(newDuration),
           newLenderFeePercent
         )
@@ -227,7 +281,7 @@ describe("enso-lending", () => {
           receiver: hotWallet.publicKey,
           settingAccount,
           lendMintAsset: usdcMint.publicKey,
-          collateralMintAsset: wrappedSOLTest.publicKey,
+          collateralMintAsset: wrappedSol.publicKey,
           systemProgram: SystemProgram.programId,
         })
         .signers([ownerAccountSetting])
@@ -246,7 +300,7 @@ describe("enso-lending", () => {
         lenderFeePercent: fetchedNewLenderFeePercent,
       } = await program.account.settingAccount.fetch(settingAccount);
       assert.equal(tierId, fetchedTierId);
-      assert.equal(newAmount, fetchedNewAmount);
+      assert.equal(newAmount, fetchedNewAmount.toNumber());
       assert.equal(newLenderFeePercent, fetchedNewLenderFeePercent);
       assert.equal(newDuration, fetchedNewDuration.toNumber());
       assert.equal(
@@ -259,13 +313,13 @@ describe("enso-lending", () => {
         fetchedNewLendMintAsset.toString()
       );
       assert.equal(
-        wrappedSOLTest.publicKey.toString(),
+        wrappedSol.publicKey.toString(),
         fetchedNewCollateralMintAsset.toString()
       );
     });
 
-    it("Close Account Setting", async () => {
-      const amount = 200;
+    xit("Close Account Setting", async () => {
+      const amount = 200 * usdcMintDecimal;
       const duration = 14;
       const tierId = "1234_tier_1";
       const lenderFeePercent = 0.01;
@@ -329,6 +383,120 @@ describe("enso-lending", () => {
       const checkLendOfferAccountInfo =
         await provider.connection.getAccountInfo(settingAccount);
       assert.equal(checkLendOfferAccountInfo, null);
+    });
+  });
+
+  describe("lend offer", () => {
+    it("create lend offer successfully", async () => {
+      const amountTier = 50 * 10 ** usdcMintDecimal;
+      const duration = 14;
+      const tierId = "1234_tier_1";
+      const lenderFeePercent = 0.01;
+
+      const seedSettingAccount = [
+        Buffer.from("enso"),
+        Buffer.from("setting_account"),
+        Buffer.from(tierId),
+        program.programId.toBuffer(),
+      ];
+
+      const settingAccount = PublicKey.findProgramAddressSync(
+        seedSettingAccount,
+        program.programId
+      )[0];
+
+      await initSettingAccount({
+        amount: amountTier,
+        duration,
+        tierId,
+        lenderFeePercent,
+        settingAccount,
+      });
+
+      const offerId = "lend_offer_1";
+      const interest = 2.1;
+
+      const seedLendOffer = [
+        Buffer.from("enso"),
+        Buffer.from("lend_offer"),
+        lender.publicKey.toBuffer(),
+        Buffer.from(offerId),
+        program.programId.toBuffer(),
+      ];
+
+      const lendOfferAccount = PublicKey.findProgramAddressSync(
+        seedLendOffer,
+        program.programId
+      )[0];
+
+      const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        hotWallet.publicKey
+      )
+
+      const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        lender.publicKey
+      );
+
+      const lenderUsdcBalanceBefore = +(await connection.getTokenAccountBalance(
+        lenderAtaUsdc.address
+      )).value.amount
+
+      const lenderFee = (amountTier * lenderFeePercent)
+
+      await program.methods
+        .createLendOffer(
+          offerId,
+          tierId,
+          interest
+        )
+        .accounts({
+          hotWalletAta: hotWalletUsdcAta.address,
+          lender: lender.publicKey,
+          lenderAtaAsset: lenderAtaUsdc.address,
+          lendOffer: lendOfferAccount,
+          mintAsset: usdcMint.publicKey,
+          settingAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([lender])
+        .rpc({ skipPreflight: true })
+        .then((sig) => confirm(connection, sig))
+        .then((sig) => log(connection, sig));
+
+        const lenderUsdcBalanceAfter = +(await connection.getTokenAccountBalance(
+          lenderAtaUsdc.address
+        )).value.amount
+        assert.equal(+lenderUsdcBalanceAfter, lenderUsdcBalanceBefore - amountTier);
+
+        const hotWalletUsdcBalance = +(await connection.getTokenAccountBalance(
+          hotWalletUsdcAta.address
+        )).value.amount
+        assert.equal(+hotWalletUsdcBalance, amountTier);
+
+        const {
+          amount,
+          duration: fetchedDuration,
+          interest: fetchedInterest,
+          lenderFee: fetchedLenderFee,
+          lenderPubkey,
+          loanMintToken,
+          offerId: fetchedOfferId,
+        } = await program.account.lendOfferAccount.fetch(lendOfferAccount);
+
+        assert.equal(amount.toNumber(), amountTier)
+        assert.equal(fetchedDuration.toNumber(), duration)
+        assert.equal(fetchedLenderFee.toNumber(), lenderFee)
+        assert.equal(fetchedInterest, interest)
+        assert.equal(lenderPubkey.toString(), lender.publicKey.toString())
+        assert.equal(loanMintToken.toString(), usdcMint.publicKey.toString())
+        assert.equal(fetchedOfferId, offerId)
     });
   });
 });

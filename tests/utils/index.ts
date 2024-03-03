@@ -21,3 +21,10 @@ export const log = async (
   );
   return signature;
 };
+
+export const getAmountDifference = (
+  beforeAmount: number,
+  afterAmount: number
+): number => {
+  return afterAmount - beforeAmount;
+};
