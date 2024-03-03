@@ -18,9 +18,9 @@ pub struct CloseSettingAccount<'info> {
     constraint = setting_account.tier_id == tier_id @ SettingAccountError::InvalidTierId,
     seeds = [
       b"enso".as_ref(), 
+      b"setting_account".as_ref(),
       tier_id.as_bytes(), 
       crate::ID.key().as_ref(), 
-      owner.key().as_ref()
     ],
     bump
   )]

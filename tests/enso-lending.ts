@@ -19,9 +19,7 @@ import { confirm, log } from "./utils";
 import { assert } from "chai";
 
 describe("enso-lending", () => {
-  async function checkWalletBalance(
-    tokenAccount: PublicKey
-  ): Promise<number> {
+  async function checkWalletBalance(tokenAccount: PublicKey): Promise<number> {
     let info = await provider.connection.getAccountInfo(tokenAccount);
     let amount = info.lamports;
 
@@ -34,7 +32,6 @@ describe("enso-lending", () => {
   ): number {
     return afterAmount - beforeAmount;
   }
-
 
   // Set provider, connection and program
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -106,18 +103,49 @@ describe("enso-lending", () => {
       .then((sig) => log(connection, sig));
   });
 
+  // Util
+  const initSettingAccount = async (params: {
+    amount: number;
+    duration: number;
+    tierId: string;
+    lenderFeePercent: number;
+    settingAccount: anchor.web3.PublicKey;
+  }): Promise<void> => {
+    const { amount, duration, lenderFeePercent, tierId, settingAccount } =
+      params;
+    await program.methods
+      .initSettingAccount(
+        tierId,
+        amount,
+        new anchor.BN(duration),
+        lenderFeePercent
+      )
+      .accounts({
+        owner: ownerAccountSetting.publicKey,
+        receiver: hotWallet.publicKey,
+        settingAccount,
+        lendMintAsset: usdcMint.publicKey,
+        collateralMintAsset: wrappedSOLTest.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([ownerAccountSetting])
+      .rpc({ skipPreflight: true })
+      .then((sig) => confirm(connection, sig))
+      .then((sig) => log(connection, sig));
+  };
+
   describe("account setting", () => {
     it("Init Account Setting successfully", async () => {
       const amount = 200;
       const duration = 14;
-      const tier_id = "1234_tier_1";
-      const lender_fee_percent = 0.01
+      const tierId = "1234_tier_1";
+      const lenderFeePercent = 0.01;
 
       const seedSettingAccount = [
         Buffer.from("enso"),
-        Buffer.from(tier_id),
+        Buffer.from("setting_account"),
+        Buffer.from(tierId),
         program.programId.toBuffer(),
-        ownerAccountSetting.publicKey.toBuffer(),
       ];
 
       const settingAccount = PublicKey.findProgramAddressSync(
@@ -125,8 +153,75 @@ describe("enso-lending", () => {
         program.programId
       )[0];
 
+      await initSettingAccount({
+        amount,
+        duration,
+        tierId,
+        lenderFeePercent,
+        settingAccount,
+      });
+
+      // Read data from PDA account
+      const {
+        amount: fetchedAmount,
+        collateralMintAsset,
+        lendMintAsset,
+        owner,
+        receiver,
+        tierId: fetchedTierId,
+        duration: fetchDuration,
+        lenderFeePercent: fetchedLenderFeePercent,
+      } = await program.account.settingAccount.fetch(settingAccount);
+      assert.equal(fetchedTierId, tierId);
+      assert.equal(amount, fetchedAmount);
+      assert.equal(fetchedLenderFeePercent, lenderFeePercent);
+      assert.equal(duration, fetchDuration.toNumber());
+      assert.equal(ownerAccountSetting.publicKey.toString(), owner.toString());
+      assert.equal(hotWallet.publicKey.toString(), receiver.toString());
+      assert.equal(usdcMint.publicKey.toString(), lendMintAsset.toString());
+      assert.equal(
+        wrappedSOLTest.publicKey.toString(),
+        collateralMintAsset.toString()
+      );
+    });
+
+    it("Edit Account Setting", async () => {
+      const amount = 200;
+      const duration = 14;
+      const tierId = "1234_tier_1";
+      const lenderFeePercent = 0.01;
+
+      const seedSettingAccount = [
+        Buffer.from("enso"),
+        Buffer.from("setting_account"),
+        Buffer.from(tierId),
+        program.programId.toBuffer(),
+      ];
+
+      const settingAccount = PublicKey.findProgramAddressSync(
+        seedSettingAccount,
+        program.programId
+      )[0];
+
+      await initSettingAccount({
+        amount,
+        duration,
+        tierId,
+        lenderFeePercent,
+        settingAccount,
+      });
+
+      const newAmount = 400;
+      const newDuration = 28;
+      const newLenderFeePercent = 0.02;
+
       await program.methods
-        .initSettingAccount(tier_id, amount, new anchor.BN(duration), lender_fee_percent)
+        .editSettingAccount(
+          tierId,
+          newAmount,
+          new anchor.BN(newDuration),
+          newLenderFeePercent
+        )
         .accounts({
           owner: ownerAccountSetting.publicKey,
           receiver: hotWallet.publicKey,
@@ -140,198 +235,100 @@ describe("enso-lending", () => {
         .then((sig) => confirm(connection, sig))
         .then((sig) => log(connection, sig));
 
-      // Read data from PDA account
       const {
-        amount: fetchAmount,
-        collateralMintAsset,
-        lendMintAsset,
-        owner,
-        receiver,
-        tierId,
-        duration: fetchDuration,
-        lenderFeePercent
+        amount: fetchedNewAmount,
+        collateralMintAsset: fetchedNewCollateralMintAsset,
+        lendMintAsset: fetchedNewLendMintAsset,
+        owner: fetchedOwner,
+        receiver: fetchedReceiver,
+        tierId: fetchedTierId,
+        duration: fetchedNewDuration,
+        lenderFeePercent: fetchedNewLenderFeePercent,
       } = await program.account.settingAccount.fetch(settingAccount);
-      assert.equal(tier_id, tierId);
-      assert.equal(amount, fetchAmount);
-      assert.equal(lender_fee_percent, lenderFeePercent);
-      assert.equal(duration, fetchDuration.toNumber());
-      assert.equal(ownerAccountSetting.publicKey.toString(), owner.toString());
-      assert.equal(hotWallet.publicKey.toString(), receiver.toString());
-      assert.equal(usdcMint.publicKey.toString(), lendMintAsset.toString());
+      assert.equal(tierId, fetchedTierId);
+      assert.equal(newAmount, fetchedNewAmount);
+      assert.equal(newLenderFeePercent, fetchedNewLenderFeePercent);
+      assert.equal(newDuration, fetchedNewDuration.toNumber());
+      assert.equal(
+        ownerAccountSetting.publicKey.toString(),
+        fetchedOwner.toString()
+      );
+      assert.equal(hotWallet.publicKey.toString(), fetchedReceiver.toString());
+      assert.equal(
+        usdcMint.publicKey.toString(),
+        fetchedNewLendMintAsset.toString()
+      );
       assert.equal(
         wrappedSOLTest.publicKey.toString(),
-        collateralMintAsset.toString()
+        fetchedNewCollateralMintAsset.toString()
       );
     });
 
-    it('Edit Account Setting', async () => {
-			const amount = 200;
-			const duration = 14;
-			const tier_id = '1234_tier_1';
-			const lender_fee_percent = 0.01;
+    it("Close Account Setting", async () => {
+      const amount = 200;
+      const duration = 14;
+      const tierId = "1234_tier_1";
+      const lenderFeePercent = 0.01;
+      const dataSize = 207; // Replace with the desired account size in bytes
+      const expectedLoanRentReturned =
+        await program.provider.connection.getMinimumBalanceForRentExemption(
+          dataSize
+        );
 
-			const seedSettingAccount = [
-				Buffer.from('enso'),
-				Buffer.from(tier_id),
-				program.programId.toBuffer(),
-				ownerAccountSetting.publicKey.toBuffer(),
-			];
+      const seedSettingAccount = [
+        Buffer.from("enso"),
+        Buffer.from("setting_account"),
+        Buffer.from(tierId),
+        program.programId.toBuffer(),
+      ];
 
-			const settingAccount = PublicKey.findProgramAddressSync(
-				seedSettingAccount,
-				program.programId
-			)[0];
+      const settingAccount = PublicKey.findProgramAddressSync(
+        seedSettingAccount,
+        program.programId
+      )[0];
 
-			await program.methods
-				.initSettingAccount(
-					tier_id,
-					amount,
-					new anchor.BN(duration),
-					lender_fee_percent
-				)
-				.accounts({
-					owner: ownerAccountSetting.publicKey,
-					receiver: hotWallet.publicKey,
-					settingAccount,
-					lendMintAsset: usdcMint.publicKey,
-					collateralMintAsset: wrappedSOLTest.publicKey,
-					systemProgram: SystemProgram.programId,
-				})
-				.signers([ownerAccountSetting])
-				.rpc({ skipPreflight: true })
-				.then((sig) => confirm(connection, sig))
-				.then((sig) => log(connection, sig));
+      await initSettingAccount({
+        amount,
+        duration,
+        lenderFeePercent,
+        settingAccount,
+        tierId,
+      });
 
-			const new_amount = 400;
-			const new_duration = 28;
-			const new_lender_fee_percent = 0.02;
+      const walletBalanceBeforeCloseLoan = await checkWalletBalance(
+        ownerAccountSetting.publicKey
+      );
 
-			await program.methods
-				.editSettingAccount(
-					tier_id,
-					new_amount,
-					new anchor.BN(new_duration),
-					new_lender_fee_percent
-				)
-				.accounts({
-					owner: ownerAccountSetting.publicKey,
-					receiver: hotWallet.publicKey,
-					settingAccount,
-					lendMintAsset: usdcMint.publicKey,
-					collateralMintAsset: wrappedSOLTest.publicKey,
-					systemProgram: SystemProgram.programId,
-				})
-				.signers([ownerAccountSetting])
-				.rpc({ skipPreflight: true })
-				.then((sig) => confirm(connection, sig))
-				.then((sig) => log(connection, sig));
+      await program.methods
+        .closeSettingAccount(tierId)
+        .accounts({
+          owner: ownerAccountSetting.publicKey,
+          settingAccount,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([ownerAccountSetting])
+        .rpc({ skipPreflight: true })
+        .then((sig) => confirm(connection, sig))
+        .then((sig) => log(connection, sig));
 
-			const {
-				amount: fetchNewAmount,
-        collateralMintAsset: fetchNewCollateralMintAsset,
-        lendMintAsset: fetchNewLendMintAsset,
-        owner: fetchOwner,
-        receiver: fetchReceiver,
-        tierId: fetchTierId,
-				duration: fetchNewDuration,
-        lenderFeePercent: fetchNewLenderFeePercent,
-			} = await program.account.settingAccount.fetch(settingAccount);
-			assert.equal(tier_id, fetchTierId);
-			assert.equal(new_amount, fetchNewAmount);
-			assert.equal(new_lender_fee_percent, fetchNewLenderFeePercent);
-			assert.equal(new_duration, fetchNewDuration.toNumber());
-			assert.equal(
-				ownerAccountSetting.publicKey.toString(),
-				fetchOwner.toString()
-			);
-			assert.equal(hotWallet.publicKey.toString(), fetchReceiver.toString());
-			assert.equal(
-				usdcMint.publicKey.toString(),
-				fetchNewLendMintAsset.toString()
-			);
-			assert.equal(
-				wrappedSOLTest.publicKey.toString(),
-				fetchNewCollateralMintAsset.toString()
-			);
-		});
+      const walletBalanceAfterCloseLoan = await checkWalletBalance(
+        ownerAccountSetting.publicKey
+      );
 
-    it('Close Account Setting', async () => {
-			const amount = 200;
-			const duration = 14;
-			const tier_id = '1234_tier_1';
-			const lender_fee_percent = 0.01;
-			const dataSize = 207; // Replace with the desired account size in bytes
-			const expectedLoanRentReturned =
-				await program.provider.connection.getMinimumBalanceForRentExemption(
-					dataSize
-				);
+      const actualLoanRentReturned = getAmountDifference(
+        walletBalanceBeforeCloseLoan,
+        walletBalanceAfterCloseLoan
+      );
 
-			const seedSettingAccount = [
-				Buffer.from('enso'),
-				Buffer.from(tier_id),
-				program.programId.toBuffer(),
-				ownerAccountSetting.publicKey.toBuffer(),
-			];
+      assert.equal(
+        actualLoanRentReturned.toString(),
+        expectedLoanRentReturned.toString()
+      );
 
-			const settingAccount = PublicKey.findProgramAddressSync(
-				seedSettingAccount,
-				program.programId
-			)[0];
-
-			await program.methods
-				.initSettingAccount(
-					tier_id,
-					amount,
-					new anchor.BN(duration),
-					lender_fee_percent
-				)
-				.accounts({
-					owner: ownerAccountSetting.publicKey,
-					receiver: hotWallet.publicKey,
-					settingAccount,
-					lendMintAsset: usdcMint.publicKey,
-					collateralMintAsset: wrappedSOLTest.publicKey,
-					systemProgram: SystemProgram.programId,
-				})
-				.signers([ownerAccountSetting])
-				.rpc({ skipPreflight: true })
-				.then((sig) => confirm(connection, sig))
-				.then((sig) => log(connection, sig));
-
-			const walletBalanceBeforeCloseLoan = await checkWalletBalance(
-				ownerAccountSetting.publicKey
-			);
-
-			await program.methods
-				.closeSettingAccount(tier_id)
-				.accounts({
-					owner: ownerAccountSetting.publicKey,
-					settingAccount,
-					systemProgram: SystemProgram.programId,
-				})
-				.signers([ownerAccountSetting])
-				.rpc({ skipPreflight: true })
-				.then((sig) => confirm(connection, sig))
-				.then((sig) => log(connection, sig));
-
-			const walletBalanceAfterCloseLoan = await checkWalletBalance(
-				ownerAccountSetting.publicKey
-			);
-
-			const actualLoanRentReturned = getAmountDifference(
-				walletBalanceBeforeCloseLoan,
-				walletBalanceAfterCloseLoan
-			);
-
-			assert.equal(
-				actualLoanRentReturned.toString(),
-				expectedLoanRentReturned.toString()
-			);
-
-			// Lend offer account closed
-			const checkLendOfferAccountInfo =
-				await provider.connection.getAccountInfo(settingAccount);
-			assert.equal(checkLendOfferAccountInfo, null);
-		});
+      // Lend offer account closed
+      const checkLendOfferAccountInfo =
+        await provider.connection.getAccountInfo(settingAccount);
+      assert.equal(checkLendOfferAccountInfo, null);
+    });
   });
 });

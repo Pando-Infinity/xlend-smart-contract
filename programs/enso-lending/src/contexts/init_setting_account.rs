@@ -18,9 +18,9 @@ pub struct InitSettingAccount<'info> {
     space = SettingAccount::INIT_SPACE,
     seeds = [
       b"enso".as_ref(), 
+      b"setting_account".as_ref(),
       tier_id.as_bytes(), 
       crate::ID.key().as_ref(), 
-      owner.key().as_ref()
     ],
     bump
   )]
