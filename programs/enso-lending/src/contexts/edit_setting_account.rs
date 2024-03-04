@@ -4,7 +4,7 @@ use anchor_spl::token::Mint;
 use crate::{SettingAccount, EditSettingAccountEvent, SettingAccountError};
 
 #[derive(Accounts)]
-#[instruction(tier_id: String, amount: Option<f64>, duration: Option<u64>, lender_fee_percent: Option<f64>)]
+#[instruction(tier_id: String, amount: Option<u64>, duration: Option<u64>, lender_fee_percent: Option<f64>)]
 pub struct EditSettingAccount<'info> {
   #[account(mut)]
   pub owner: Signer<'info>,
@@ -31,7 +31,7 @@ pub struct EditSettingAccount<'info> {
 impl<'info> EditSettingAccount<'info> {
   pub fn edit_setting_account(
     &mut self,
-    amount: Option<f64>,
+    amount: Option<u64>,
     duration: Option<u64>,
     lender_fee_percent: Option<f64>
   ) -> Result<()>  {

@@ -5,7 +5,7 @@ use anchor_lang::{
 
 #[event]
 pub struct InitSettingAccountEvent {
-    pub amount: f64,
+    pub amount: u64,
     pub duration: u64,
     pub owner: Pubkey,
     pub receiver: Pubkey,
@@ -21,12 +21,23 @@ pub struct EditSettingAccountEvent {
     pub lend_mint_asset: Pubkey,
     pub collateral_mint_asset: Pubkey,
     pub tier_id: String,
-    pub amount: f64,
+    pub amount: u64,
     pub duration: u64,
     pub lender_fee_percent: f64
 }
 
 #[event]
 pub struct CloseSettingAccountEvent {
+    pub tier_id: String,
+}
+
+#[event]
+pub struct CreateLendOfferEvent {
+    pub lender: Pubkey,
+    pub interest: f64,
+    pub lender_fee: u64,
+    pub duration: u64,
+    pub amount: u64,
+    pub offer_id: String,
     pub tier_id: String,
 }

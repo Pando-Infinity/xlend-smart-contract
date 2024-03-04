@@ -16,7 +16,7 @@ pub mod enso_lending {
     pub fn init_setting_account(
         ctx: Context<InitSettingAccount>,
         tier_id: String,
-        amount: f64,
+        amount: u64,
         duration: u64,
         lender_fee_percent: f64,
     ) -> Result<()> {
@@ -36,7 +36,7 @@ pub mod enso_lending {
     pub fn edit_setting_account(
         ctx: Context<EditSettingAccount>,
         _tier_id: String,
-        amount: Option<f64>,
+        amount: Option<u64>,
         duration: Option<u64>,
         lender_fee_percent: Option<f64>,
     ) -> Result<()> {
@@ -56,6 +56,14 @@ pub mod enso_lending {
             String::from("edit_setting_account"),
             tier_id.clone(),
         )?;
+
+        Ok(())
+    }
+
+    pub fn create_lend_offer(ctx: Context<CreateLendOffer>, offer_id: String, _tier_id: String, interest: f64) -> Result<()> {
+        ctx.accounts.initialize_lend_offer(&ctx.bumps, offer_id, interest)?;
+        ctx.accounts.deposit()?;
+        ctx.accounts.emit_event_create_lend_offer(String::from("create_lend_offer"))?;
 
         Ok(())
     }
