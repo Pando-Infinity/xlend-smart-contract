@@ -41,6 +41,7 @@ describe("enso-lending", () => {
   const connection = provider.connection;
   const program = anchor.workspace.EnsoLending as Program<EnsoLending>;
 
+
   // Boilerplate
   // Determine dummy token mints and token account address
   const [lender, ownerAccountSetting, hotWallet, usdcMint, wrappedSol] =
@@ -486,7 +487,7 @@ describe("enso-lending", () => {
         interest: fetchedInterest,
         lenderFee: fetchedLenderFee,
         lenderPubkey,
-        loanMintToken,
+        lendMintToken,
         offerId: fetchedOfferId,
       } = await program.account.lendOfferAccount.fetch(lendOfferAccount);
 
@@ -495,7 +496,7 @@ describe("enso-lending", () => {
       assert.equal(fetchedLenderFee.toNumber(), lenderFee);
       assert.equal(fetchedInterest, interest);
       assert.equal(lenderPubkey.toString(), lender.publicKey.toString());
-      assert.equal(loanMintToken.toString(), usdcMint.publicKey.toString());
+      assert.equal(lendMintToken.toString(), usdcMint.publicKey.toString());
       assert.equal(fetchedOfferId, offerId);
     });
 

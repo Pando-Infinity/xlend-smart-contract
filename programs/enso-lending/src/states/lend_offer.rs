@@ -11,7 +11,7 @@ pub struct LendOfferAccount {
   #[max_len(50)]
   pub offer_id: String,
   pub lender_pubkey: Pubkey,
-  pub loan_mint_token: Pubkey,
+  pub lend_mint_token: Pubkey,
   pub amount: u64,
   pub bump: u8,
   pub status: LendOfferStatus
