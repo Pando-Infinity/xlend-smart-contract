@@ -62,6 +62,9 @@ pub mod enso_lending {
 
     pub fn create_lend_offer(ctx: Context<CreateLendOffer>, offer_id: String, _tier_id: String, interest: f64) -> Result<()> {
         ctx.accounts.initialize_lend_offer(&ctx.bumps, offer_id, interest)?;
-        ctx.accounts.deposit()
+        ctx.accounts.deposit()?;
+        ctx.accounts.emit_event_create_lend_offer(String::from("create_lend_offer"))?;
+
+        Ok(())
     }
 }
