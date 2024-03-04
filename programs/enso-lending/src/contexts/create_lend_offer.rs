@@ -73,7 +73,7 @@ impl<'info> CreateLendOffer<'info> {
                 interest,
                 lender_fee,
                 lender_pubkey: self.lender.key(),
-                loan_mint_token: self.mint_asset.key(),
+                lend_mint_token: self.mint_asset.key(),
                 offer_id: offer_id.clone(),
                 status: LendOfferStatus::Created,
             });
