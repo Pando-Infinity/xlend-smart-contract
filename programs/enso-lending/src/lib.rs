@@ -67,4 +67,11 @@ pub mod enso_lending {
 
         Ok(())
     }
+
+    pub fn edit_lend_offer(ctx: Context<EditLendOffer>, _offer_id: String, interest: f64) -> Result<()> {
+        ctx.accounts.edit_lend_offer(interest)?;
+        ctx.accounts.emit_event_edit_lend_offer(String::from("edit_lend_offer"))?;
+
+        Ok(())
+    }
 }

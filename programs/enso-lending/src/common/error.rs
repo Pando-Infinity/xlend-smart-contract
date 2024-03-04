@@ -12,4 +12,10 @@ pub enum LendOfferError {
     NotEnoughAmount,
     #[msg("Invalid mint asset")]
     InvalidMintAsset,
+    #[msg("Interest must be greater than 0")]
+    InterestGreaterThanZero,
+    #[msg("Lend offer is not initialized or not belong to lender")]
+    InvalidLender,
+    #[msg("Lend offer status is invalid")]
+    InvalidOfferStatus,
 }
