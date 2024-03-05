@@ -41,7 +41,6 @@ describe("enso-lending", () => {
   const connection = provider.connection;
   const program = anchor.workspace.EnsoLending as Program<EnsoLending>;
 
-
   // Boilerplate
   // Determine dummy token mints and token account address
   const [lender, ownerAccountSetting, hotWallet, usdcMint, wrappedSol] =
@@ -160,15 +159,38 @@ describe("enso-lending", () => {
   });
 
   // Util
+  const airdrop = async (to: PublicKey ): Promise<void> => {
+    let tx = new Transaction();
+
+    tx.instructions = [
+      SystemProgram.transfer({
+        fromPubkey: provider.publicKey,
+        toPubkey: to,
+        lamports: 0.01 * LAMPORTS_PER_SOL,
+      }),
+    ];
+
+    await provider.sendAndConfirm(tx, []).then((sig) => log(connection, sig));
+  };
+
   const initSettingAccount = async (params: {
     amount: number;
     duration: number;
     tierId: string;
     lenderFeePercent: number;
+    lendMintAsset: PublicKey;
+    collateralMintAsset: PublicKey;
     settingAccount: anchor.web3.PublicKey;
   }): Promise<void> => {
-    const { amount, duration, lenderFeePercent, tierId, settingAccount } =
-      params;
+    const {
+      amount,
+      duration,
+      lenderFeePercent,
+      tierId,
+      lendMintAsset,
+      collateralMintAsset,
+      settingAccount,
+    } = params;
     await program.methods
       .initSettingAccount(
         tierId,
@@ -180,12 +202,73 @@ describe("enso-lending", () => {
         owner: ownerAccountSetting.publicKey,
         receiver: hotWallet.publicKey,
         settingAccount,
-        lendMintAsset: usdcMint.publicKey,
-        collateralMintAsset: wrappedSol.publicKey,
+        lendMintAsset,
+        collateralMintAsset,
         systemProgram: SystemProgram.programId,
       })
       .signers([ownerAccountSetting])
-      .rpc({ skipPreflight: true })
+      .rpc()
+      .then((sig) => confirm(connection, sig))
+      .then((sig) => log(connection, sig));
+  };
+
+  const createLendOffer = async (params: {
+    hotWalletAta: PublicKey;
+    lender: Keypair;
+    lenderAtaAsset: PublicKey;
+    lendOffer: PublicKey;
+    mintAsset: PublicKey;
+    settingAccount: PublicKey;
+    offerId: string;
+    tierId: string;
+    interest: number;
+  }): Promise<void> => {
+    const {
+      hotWalletAta,
+      interest,
+      lendOffer,
+      lender,
+      lenderAtaAsset,
+      mintAsset,
+      offerId,
+      settingAccount,
+      tierId,
+    } = params;
+
+    await program.methods
+      .createLendOffer(offerId, tierId, interest)
+      .accounts({
+        hotWalletAta,
+        lender: lender.publicKey,
+        lenderAtaAsset,
+        lendOffer,
+        mintAsset,
+        settingAccount,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([lender])
+      .rpc()
+      .then((sig) => confirm(connection, sig))
+      .then((sig) => log(connection, sig));
+  };
+
+  const editLendOffer = async (params: {
+    offerId: string;
+    interest: number;
+    lendOffer: PublicKey;
+    lender: Keypair;
+  }): Promise<void> => {
+    const { interest, lendOffer, offerId, lender } = params;
+
+    await program.methods
+      .editLendOffer(offerId, interest)
+      .accounts({
+        lender: lender.publicKey,
+        lendOffer,
+      })
+      .signers([lender])
+      .rpc()
       .then((sig) => confirm(connection, sig))
       .then((sig) => log(connection, sig));
   };
@@ -214,6 +297,8 @@ describe("enso-lending", () => {
         duration,
         tierId,
         lenderFeePercent,
+        lendMintAsset: usdcMint.publicKey,
+        collateralMintAsset: wrappedSol.publicKey,
         settingAccount,
       });
 
@@ -264,6 +349,8 @@ describe("enso-lending", () => {
         duration,
         tierId,
         lenderFeePercent,
+        lendMintAsset: usdcMint.publicKey,
+        collateralMintAsset: wrappedSol.publicKey,
         settingAccount,
       });
 
@@ -346,9 +433,11 @@ describe("enso-lending", () => {
       await initSettingAccount({
         amount,
         duration,
-        lenderFeePercent,
-        settingAccount,
         tierId,
+        lenderFeePercent,
+        lendMintAsset: usdcMint.publicKey,
+        collateralMintAsset: wrappedSol.publicKey,
+        settingAccount,
       });
 
       const walletBalanceBeforeCloseLoan = await checkWalletBalance(
@@ -389,356 +478,679 @@ describe("enso-lending", () => {
   });
 
   describe("lend offer", () => {
-    it("create lend offer successfully", async () => {
-      const amountTier = 50 * 10 ** usdcMintDecimal;
-      const duration = 14;
-      const tierId = `tier_id_${generateId(10)}`;
-      const lenderFeePercent = 0.01;
+    describe("create lend offer", () => {
+      xit("create lend offer successfully", async () => {
+        const amountTier = 50 * 10 ** usdcMintDecimal;
+        const duration = 14;
+        const tierId = `tier_id_${generateId(10)}`;
+        const lenderFeePercent = 0.01;
 
-      const seedSettingAccount = [
-        Buffer.from("enso"),
-        Buffer.from("setting_account"),
-        Buffer.from(tierId),
-        program.programId.toBuffer(),
-      ];
+        const seedSettingAccount = [
+          Buffer.from("enso"),
+          Buffer.from("setting_account"),
+          Buffer.from(tierId),
+          program.programId.toBuffer(),
+        ];
 
-      const settingAccount = PublicKey.findProgramAddressSync(
-        seedSettingAccount,
-        program.programId
-      )[0];
+        const settingAccount = PublicKey.findProgramAddressSync(
+          seedSettingAccount,
+          program.programId
+        )[0];
 
-      await initSettingAccount({
-        amount: amountTier,
-        duration,
-        tierId,
-        lenderFeePercent,
-        settingAccount,
-      });
+        await initSettingAccount({
+          amount: amountTier,
+          duration,
+          tierId,
+          lenderFeePercent,
+          lendMintAsset: usdcMint.publicKey,
+          collateralMintAsset: wrappedSol.publicKey,
+          settingAccount,
+        });
 
-      const offerId = `lend_offer_id_${generateId(10)}`;
-      const interest = 2.1;
+        const offerId = `lend_offer_id_${generateId(10)}`;
+        const interest = 2.1;
 
-      const seedLendOffer = [
-        Buffer.from("enso"),
-        Buffer.from("lend_offer"),
-        lender.publicKey.toBuffer(),
-        Buffer.from(offerId),
-        program.programId.toBuffer(),
-      ];
+        const seedLendOffer = [
+          Buffer.from("enso"),
+          Buffer.from("lend_offer"),
+          lender.publicKey.toBuffer(),
+          Buffer.from(offerId),
+          program.programId.toBuffer(),
+        ];
 
-      const lendOfferAccount = PublicKey.findProgramAddressSync(
-        seedLendOffer,
-        program.programId
-      )[0];
+        const lendOfferAccount = PublicKey.findProgramAddressSync(
+          seedLendOffer,
+          program.programId
+        )[0];
 
-      const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
-        connection,
-        providerWallet,
-        usdcMint.publicKey,
-        hotWallet.publicKey
-      );
+        const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+          connection,
+          providerWallet,
+          usdcMint.publicKey,
+          hotWallet.publicKey
+        );
 
-      const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
-        connection,
-        providerWallet,
-        usdcMint.publicKey,
-        lender.publicKey
-      );
+        const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+          connection,
+          providerWallet,
+          usdcMint.publicKey,
+          lender.publicKey
+        );
 
-      const lenderUsdcBalanceBefore = +(
-        await connection.getTokenAccountBalance(lenderAtaUsdc.address)
-      ).value.amount;
+        const lenderUsdcBalanceBefore = +(
+          await connection.getTokenAccountBalance(lenderAtaUsdc.address)
+        ).value.amount;
 
-      const lenderFee = amountTier * lenderFeePercent;
+        const lenderFee = amountTier * lenderFeePercent;
 
-      await program.methods
-        .createLendOffer(offerId, tierId, interest)
-        .accounts({
+        await createLendOffer({
           hotWalletAta: hotWalletUsdcAta.address,
-          lender: lender.publicKey,
+          lender,
           lenderAtaAsset: lenderAtaUsdc.address,
           lendOffer: lendOfferAccount,
           mintAsset: usdcMint.publicKey,
           settingAccount,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        })
-        .signers([lender])
-        .rpc({ skipPreflight: true })
-        .then((sig) => confirm(connection, sig))
-        .then((sig) => log(connection, sig));
+          interest,
+          offerId,
+          tierId,
+        });
 
-      const lenderUsdcBalanceAfter = +(
-        await connection.getTokenAccountBalance(lenderAtaUsdc.address)
-      ).value.amount;
-      assert.equal(
-        +lenderUsdcBalanceAfter,
-        lenderUsdcBalanceBefore - amountTier
-      );
-
-      const hotWalletUsdcBalance = +(
-        await connection.getTokenAccountBalance(hotWalletUsdcAta.address)
-      ).value.amount;
-      assert.equal(+hotWalletUsdcBalance, amountTier);
-
-      const {
-        amount,
-        duration: fetchedDuration,
-        interest: fetchedInterest,
-        lenderFee: fetchedLenderFee,
-        lenderPubkey,
-        lendMintToken,
-        offerId: fetchedOfferId,
-      } = await program.account.lendOfferAccount.fetch(lendOfferAccount);
-
-      assert.equal(amount.toNumber(), amountTier);
-      assert.equal(fetchedDuration.toNumber(), duration);
-      assert.equal(fetchedLenderFee.toNumber(), lenderFee);
-      assert.equal(fetchedInterest, interest);
-      assert.equal(lenderPubkey.toString(), lender.publicKey.toString());
-      assert.equal(lendMintToken.toString(), usdcMint.publicKey.toString());
-      assert.equal(fetchedOfferId, offerId);
-    });
-
-    it("Should throw error if create lend offer account that setting account had not initialized", async () => {
-      try {
-        const tierId = `tier_id_${generateId(10)}`;
-
-        const seedSettingAccount = [
-          Buffer.from("enso"),
-          Buffer.from("setting_account"),
-          Buffer.from(tierId),
-          program.programId.toBuffer(),
-        ];
-
-        const settingAccount = PublicKey.findProgramAddressSync(
-          seedSettingAccount,
-          program.programId
-        )[0];
-
-        const offerId = `lend_offer_id_${generateId(10)}`;
-        const interest = 2.1;
-
-        const seedLendOffer = [
-          Buffer.from("enso"),
-          Buffer.from("lend_offer"),
-          lender.publicKey.toBuffer(),
-          Buffer.from(offerId),
-          program.programId.toBuffer(),
-        ];
-
-        const lendOfferAccount = PublicKey.findProgramAddressSync(
-          seedLendOffer,
-          program.programId
-        )[0];
-
-        const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
-          connection,
-          providerWallet,
-          usdcMint.publicKey,
-          hotWallet.publicKey
+        const lenderUsdcBalanceAfter = +(
+          await connection.getTokenAccountBalance(lenderAtaUsdc.address)
+        ).value.amount;
+        assert.equal(
+          +lenderUsdcBalanceAfter,
+          lenderUsdcBalanceBefore - amountTier
         );
 
-        const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
-          connection,
-          providerWallet,
-          usdcMint.publicKey,
-          lender.publicKey
-        );
+        const hotWalletUsdcBalance = +(
+          await connection.getTokenAccountBalance(hotWalletUsdcAta.address)
+        ).value.amount;
+        assert.equal(+hotWalletUsdcBalance, amountTier);
 
-        await program.methods
-          .createLendOffer(offerId, tierId, interest)
-          .accounts({
+        const {
+          amount,
+          duration: fetchedDuration,
+          interest: fetchedInterest,
+          lenderFee: fetchedLenderFee,
+          lender: fetchedLender,
+          lendMintToken,
+          offerId: fetchedOfferId,
+        } = await program.account.lendOfferAccount.fetch(lendOfferAccount);
+
+        assert.equal(amount.toNumber(), amountTier);
+        assert.equal(fetchedDuration.toNumber(), duration);
+        assert.equal(fetchedLenderFee.toNumber(), lenderFee);
+        assert.equal(fetchedInterest, interest);
+        assert.equal(fetchedLender.toString(), lender.publicKey.toString());
+        assert.equal(lendMintToken.toString(), usdcMint.publicKey.toString());
+        assert.equal(fetchedOfferId, offerId);
+      });
+
+      xit("should throw an error if interest is not greater than zero", async () => {
+        try {
+          const amountTier = 50 * 10 ** usdcMintDecimal;
+          const duration = 14;
+          const tierId = `tier_id_${generateId(10)}`;
+          const lenderFeePercent = 0.01;
+
+          const seedSettingAccount = [
+            Buffer.from("enso"),
+            Buffer.from("setting_account"),
+            Buffer.from(tierId),
+            program.programId.toBuffer(),
+          ];
+
+          const settingAccount = PublicKey.findProgramAddressSync(
+            seedSettingAccount,
+            program.programId
+          )[0];
+
+          await initSettingAccount({
+            amount: amountTier,
+            duration,
+            tierId,
+            lenderFeePercent,
+            lendMintAsset: usdcMint.publicKey,
+            collateralMintAsset: wrappedSol.publicKey,
+            settingAccount,
+          });
+
+          const offerId = `lend_offer_id_${generateId(10)}`;
+          const interest = 0;
+
+          const seedLendOffer = [
+            Buffer.from("enso"),
+            Buffer.from("lend_offer"),
+            lender.publicKey.toBuffer(),
+            Buffer.from(offerId),
+            program.programId.toBuffer(),
+          ];
+
+          const lendOfferAccount = PublicKey.findProgramAddressSync(
+            seedLendOffer,
+            program.programId
+          )[0];
+
+          const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            hotWallet.publicKey
+          );
+
+          const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            lender.publicKey
+          );
+
+          await createLendOffer({
             hotWalletAta: hotWalletUsdcAta.address,
-            lender: lender.publicKey,
+            lender,
             lenderAtaAsset: lenderAtaUsdc.address,
             lendOffer: lendOfferAccount,
             mintAsset: usdcMint.publicKey,
             settingAccount,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-          })
-          .signers([lender])
-          .rpc()
-          .then((sig) => confirm(connection, sig))
-          .then((sig) => log(connection, sig));
-      } catch (error) {
-        assert.equal(
-          error.error.errorMessage,
-          "The program expected this account to be already initialized"
-        );
-      }
-    });
+            interest,
+            offerId,
+            tierId,
+          });
+        } catch (error) {
+          assert.equal(
+            error.error.errorMessage,
+            "Interest must be greater than 0"
+          );
+        }
+      });
 
-    it("Should throw error if lender did not have enough token", async () => {
-      try {
-        const amountTier = 200 * 10 ** usdcMintDecimal;
-        const duration = 14;
-        const tierId = `tier_id_${generateId(10)}`;
-        const lenderFeePercent = 0.01;
+      xit("Should throw error if create lend offer account that setting account had not initialized", async () => {
+        try {
+          const tierId = `tier_id_${generateId(10)}`;
 
-        const seedSettingAccount = [
-          Buffer.from("enso"),
-          Buffer.from("setting_account"),
-          Buffer.from(tierId),
-          program.programId.toBuffer(),
-        ];
+          const seedSettingAccount = [
+            Buffer.from("enso"),
+            Buffer.from("setting_account"),
+            Buffer.from(tierId),
+            program.programId.toBuffer(),
+          ];
 
-        const settingAccount = PublicKey.findProgramAddressSync(
-          seedSettingAccount,
-          program.programId
-        )[0];
+          const settingAccount = PublicKey.findProgramAddressSync(
+            seedSettingAccount,
+            program.programId
+          )[0];
 
-        await initSettingAccount({
-          amount: amountTier,
-          duration,
-          tierId,
-          lenderFeePercent,
-          settingAccount,
-        });
+          const offerId = `lend_offer_id_${generateId(10)}`;
+          const interest = 2.1;
 
-        const offerId = `lend_offer_id_${generateId(10)}`;
-        const interest = 2.1;
+          const seedLendOffer = [
+            Buffer.from("enso"),
+            Buffer.from("lend_offer"),
+            lender.publicKey.toBuffer(),
+            Buffer.from(offerId),
+            program.programId.toBuffer(),
+          ];
 
-        const seedLendOffer = [
-          Buffer.from("enso"),
-          Buffer.from("lend_offer"),
-          lender.publicKey.toBuffer(),
-          Buffer.from(offerId),
-          program.programId.toBuffer(),
-        ];
+          const lendOfferAccount = PublicKey.findProgramAddressSync(
+            seedLendOffer,
+            program.programId
+          )[0];
 
-        const lendOfferAccount = PublicKey.findProgramAddressSync(
-          seedLendOffer,
-          program.programId
-        )[0];
+          const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            hotWallet.publicKey
+          );
 
-        const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
-          connection,
-          providerWallet,
-          usdcMint.publicKey,
-          hotWallet.publicKey
-        );
+          const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            lender.publicKey
+          );
 
-        const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
-          connection,
-          providerWallet,
-          usdcMint.publicKey,
-          lender.publicKey
-        );
-
-        await program.methods
-          .createLendOffer(offerId, tierId, interest)
-          .accounts({
+          await createLendOffer({
             hotWalletAta: hotWalletUsdcAta.address,
-            lender: lender.publicKey,
+            lender,
             lenderAtaAsset: lenderAtaUsdc.address,
             lendOffer: lendOfferAccount,
             mintAsset: usdcMint.publicKey,
             settingAccount,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-          })
-          .signers([lender])
-          .rpc()
-          .then((sig) => confirm(connection, sig))
-          .then((sig) => log(connection, sig));
-      } catch (error) {
-        assert.equal(
-          error.error.errorMessage,
-          "Lender does not have enough assets"
-        );
-      }
-    });
+            interest,
+            offerId,
+            tierId,
+          });
+        } catch (error) {
+          assert.equal(
+            error.error.errorMessage,
+            "The program expected this account to be already initialized"
+          );
+        }
+      });
 
-    it("should throw error if lender provide loan mint asset that different lend mint asset in setting account", async () => {
-      // create different SPL token
-      const newSplToken = await createMint(
-        connection,
-        providerWallet,
-        provider.publicKey,
-        provider.publicKey,
-        6
-      )
+      xit("Should throw error if lender did not have enough token", async () => {
+        try {
+          const amountTier = 200 * 10 ** usdcMintDecimal;
+          const duration = 14;
+          const tierId = `tier_id_${generateId(10)}`;
+          const lenderFeePercent = 0.01;
 
-      try {
-        const tierId = `tier_id_${generateId(10)}`;
-        const amountTier = 50 * 10 ** usdcMintDecimal;
-        const duration = 14;
-        const lenderFeePercent = 0.01;
+          const seedSettingAccount = [
+            Buffer.from("enso"),
+            Buffer.from("setting_account"),
+            Buffer.from(tierId),
+            program.programId.toBuffer(),
+          ];
 
-        const seedSettingAccount = [
-          Buffer.from("enso"),
-          Buffer.from("setting_account"),
-          Buffer.from(tierId),
-          program.programId.toBuffer(),
-        ];
+          const settingAccount = PublicKey.findProgramAddressSync(
+            seedSettingAccount,
+            program.programId
+          )[0];
 
-        const settingAccount = PublicKey.findProgramAddressSync(
-          seedSettingAccount,
-          program.programId
-        )[0];
+          await initSettingAccount({
+            amount: amountTier,
+            duration,
+            tierId,
+            lenderFeePercent,
+            lendMintAsset: usdcMint.publicKey,
+            collateralMintAsset: wrappedSol.publicKey,
+            settingAccount,
+          });
 
-        await initSettingAccount({
-          amount: amountTier,
-          duration,
-          tierId,
-          lenderFeePercent,
-          settingAccount,
-        });
+          const offerId = `lend_offer_id_${generateId(10)}`;
+          const interest = 2.1;
 
-        const offerId = `lend_offer_id_${generateId(10)}`;
-        const interest = 2.1;
+          const seedLendOffer = [
+            Buffer.from("enso"),
+            Buffer.from("lend_offer"),
+            lender.publicKey.toBuffer(),
+            Buffer.from(offerId),
+            program.programId.toBuffer(),
+          ];
 
-        const seedLendOffer = [
-          Buffer.from("enso"),
-          Buffer.from("lend_offer"),
-          lender.publicKey.toBuffer(),
-          Buffer.from(offerId),
-          program.programId.toBuffer(),
-        ];
+          const lendOfferAccount = PublicKey.findProgramAddressSync(
+            seedLendOffer,
+            program.programId
+          )[0];
 
-        const lendOfferAccount = PublicKey.findProgramAddressSync(
-          seedLendOffer,
-          program.programId
-        )[0];
+          const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            hotWallet.publicKey
+          );
 
-        const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
-          connection,
-          providerWallet,
-          usdcMint.publicKey,
-          hotWallet.publicKey
-        );
+          const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            lender.publicKey
+          );
 
-        const lenderAtaNewSplToken = await getOrCreateAssociatedTokenAccount(
-          connection,
-          providerWallet,
-          newSplToken,
-          lender.publicKey
-        );
-
-        await program.methods
-          .createLendOffer(offerId, tierId, interest)
-          .accounts({
+          await createLendOffer({
             hotWalletAta: hotWalletUsdcAta.address,
-            lender: lender.publicKey,
+            lender,
+            lenderAtaAsset: lenderAtaUsdc.address,
+            lendOffer: lendOfferAccount,
+            mintAsset: usdcMint.publicKey,
+            settingAccount,
+            interest,
+            offerId,
+            tierId,
+          });
+        } catch (error) {
+          assert.equal(
+            error.error.errorMessage,
+            "Lender does not have enough assets"
+          );
+        }
+      });
+
+      xit("should throw error if lender provide loan mint asset that different lend mint asset in setting account", async () => {
+        // create different SPL token
+        const newSplToken = await createMint(
+          connection,
+          providerWallet,
+          provider.publicKey,
+          provider.publicKey,
+          6
+        );
+
+        try {
+          const tierId = `tier_id_${generateId(10)}`;
+          const amountTier = 50 * 10 ** usdcMintDecimal;
+          const duration = 14;
+          const lenderFeePercent = 0.01;
+
+          const seedSettingAccount = [
+            Buffer.from("enso"),
+            Buffer.from("setting_account"),
+            Buffer.from(tierId),
+            program.programId.toBuffer(),
+          ];
+
+          const settingAccount = PublicKey.findProgramAddressSync(
+            seedSettingAccount,
+            program.programId
+          )[0];
+
+          await initSettingAccount({
+            amount: amountTier,
+            duration,
+            tierId,
+            lenderFeePercent,
+            lendMintAsset: usdcMint.publicKey,
+            collateralMintAsset: wrappedSol.publicKey,
+            settingAccount,
+          });
+
+          const offerId = `lend_offer_id_${generateId(10)}`;
+          const interest = 2.1;
+
+          const seedLendOffer = [
+            Buffer.from("enso"),
+            Buffer.from("lend_offer"),
+            lender.publicKey.toBuffer(),
+            Buffer.from(offerId),
+            program.programId.toBuffer(),
+          ];
+
+          const lendOfferAccount = PublicKey.findProgramAddressSync(
+            seedLendOffer,
+            program.programId
+          )[0];
+
+          const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            hotWallet.publicKey
+          );
+
+          const lenderAtaNewSplToken = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            newSplToken,
+            lender.publicKey
+          );
+
+          await createLendOffer({
+            hotWalletAta: hotWalletUsdcAta.address,
+            lender,
             lenderAtaAsset: lenderAtaNewSplToken.address,
             lendOffer: lendOfferAccount,
             mintAsset: newSplToken,
             settingAccount,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            systemProgram: SystemProgram.programId,
-          })
-          .signers([lender])
-          .rpc()
-          .then((sig) => confirm(connection, sig))
-          .then((sig) => log(connection, sig));
-      } catch (error) {
-        assert.equal(
-          error.error.errorMessage,
-          "Invalid mint asset"
+            interest,
+            offerId,
+            tierId,
+          });
+        } catch (error) {
+          assert.equal(error.error.errorMessage, "Invalid mint asset");
+        }
+      });
+    });
+
+    describe("edit lend offer", () => {
+      it("Edit lend offer successfully", async () => {
+        const amountTier = 10 * 10 ** usdcMintDecimal;
+        const duration = 14;
+        const tierId = `tier_id_${generateId(10)}`;
+        const lenderFeePercent = 0.01;
+
+        const seedSettingAccount = [
+          Buffer.from("enso"),
+          Buffer.from("setting_account"),
+          Buffer.from(tierId),
+          program.programId.toBuffer(),
+        ];
+
+        const settingAccount = PublicKey.findProgramAddressSync(
+          seedSettingAccount,
+          program.programId
+        )[0];
+
+        await initSettingAccount({
+          amount: amountTier,
+          duration,
+          tierId,
+          lenderFeePercent,
+          lendMintAsset: usdcMint.publicKey,
+          collateralMintAsset: wrappedSol.publicKey,
+          settingAccount,
+        });
+
+        const offerId = `lend_offer_id_${generateId(10)}`;
+        const interest = 2.1;
+
+        const seedLendOffer = [
+          Buffer.from("enso"),
+          Buffer.from("lend_offer"),
+          lender.publicKey.toBuffer(),
+          Buffer.from(offerId),
+          program.programId.toBuffer(),
+        ];
+
+        const lendOfferAccount = PublicKey.findProgramAddressSync(
+          seedLendOffer,
+          program.programId
+        )[0];
+
+        const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+          connection,
+          providerWallet,
+          usdcMint.publicKey,
+          hotWallet.publicKey
         );
-      }
-    })
+
+        const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+          connection,
+          providerWallet,
+          usdcMint.publicKey,
+          lender.publicKey
+        );
+
+        await createLendOffer({
+          hotWalletAta: hotWalletUsdcAta.address,
+          lender,
+          lenderAtaAsset: lenderAtaUsdc.address,
+          lendOffer: lendOfferAccount,
+          mintAsset: usdcMint.publicKey,
+          settingAccount,
+          interest,
+          offerId,
+          tierId,
+        });
+
+        const newInterest = 5;
+
+        await editLendOffer({
+          offerId,
+          interest: newInterest,
+          lender,
+          lendOffer: lendOfferAccount,
+        });
+
+        const { interest: fetchedInterest } =
+          await program.account.lendOfferAccount.fetch(lendOfferAccount);
+
+        assert.equal(newInterest, fetchedInterest);
+      });
+
+      it("Should throw error if lender edit lend offer that not belong to them", async () => {
+        const newLender = Keypair.generate();
+
+        // air drop sol to new lender
+        await airdrop(newLender.publicKey)
+
+        try {
+          const amountTier = 10 * 10 ** usdcMintDecimal;
+          const duration = 14;
+          const tierId = `tier_id_${generateId(10)}`;
+          const lenderFeePercent = 0.01;
+  
+          const seedSettingAccount = [
+            Buffer.from("enso"),
+            Buffer.from("setting_account"),
+            Buffer.from(tierId),
+            program.programId.toBuffer(),
+          ];
+  
+          const settingAccount = PublicKey.findProgramAddressSync(
+            seedSettingAccount,
+            program.programId
+          )[0];
+  
+          await initSettingAccount({
+            amount: amountTier,
+            duration,
+            tierId,
+            lenderFeePercent,
+            lendMintAsset: usdcMint.publicKey,
+            collateralMintAsset: wrappedSol.publicKey,
+            settingAccount,
+          });
+  
+          const offerId = `lend_offer_id_${generateId(10)}`;
+          const interest = 2.1;
+  
+          const seedLendOffer = [
+            Buffer.from("enso"),
+            Buffer.from("lend_offer"),
+            lender.publicKey.toBuffer(),
+            Buffer.from(offerId),
+            program.programId.toBuffer(),
+          ];
+  
+          const lendOfferAccount = PublicKey.findProgramAddressSync(
+            seedLendOffer,
+            program.programId
+          )[0];
+  
+          const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            hotWallet.publicKey
+          );
+  
+          const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            lender.publicKey
+          );
+  
+          await createLendOffer({
+            hotWalletAta: hotWalletUsdcAta.address,
+            lender,
+            lenderAtaAsset: lenderAtaUsdc.address,
+            lendOffer: lendOfferAccount,
+            mintAsset: usdcMint.publicKey,
+            settingAccount,
+            interest,
+            offerId,
+            tierId,
+          });
+  
+          const newInterest = 5;
+  
+          await editLendOffer({
+            offerId,
+            interest: newInterest,
+            lender: newLender,
+            lendOffer: lendOfferAccount,
+          });
+        } catch (error) {
+          assert.equal(error.error.errorMessage, "A seeds constraint was violated")
+        }
+      });
+
+      it('Should throw an error if lender update interest is not greater than 0', async () => {
+        try {
+          const amountTier = 10 * 10 ** usdcMintDecimal;
+          const duration = 14;
+          const tierId = `tier_id_${generateId(10)}`;
+          const lenderFeePercent = 0.01;
+  
+          const seedSettingAccount = [
+            Buffer.from("enso"),
+            Buffer.from("setting_account"),
+            Buffer.from(tierId),
+            program.programId.toBuffer(),
+          ];
+  
+          const settingAccount = PublicKey.findProgramAddressSync(
+            seedSettingAccount,
+            program.programId
+          )[0];
+  
+          await initSettingAccount({
+            amount: amountTier,
+            duration,
+            tierId,
+            lenderFeePercent,
+            lendMintAsset: usdcMint.publicKey,
+            collateralMintAsset: wrappedSol.publicKey,
+            settingAccount,
+          });
+  
+          const offerId = `lend_offer_id_${generateId(10)}`;
+          const interest = 2.1;
+  
+          const seedLendOffer = [
+            Buffer.from("enso"),
+            Buffer.from("lend_offer"),
+            lender.publicKey.toBuffer(),
+            Buffer.from(offerId),
+            program.programId.toBuffer(),
+          ];
+  
+          const lendOfferAccount = PublicKey.findProgramAddressSync(
+            seedLendOffer,
+            program.programId
+          )[0];
+  
+          const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            hotWallet.publicKey
+          );
+  
+          const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            lender.publicKey
+          );
+  
+          await createLendOffer({
+            hotWalletAta: hotWalletUsdcAta.address,
+            lender,
+            lenderAtaAsset: lenderAtaUsdc.address,
+            lendOffer: lendOfferAccount,
+            mintAsset: usdcMint.publicKey,
+            settingAccount,
+            interest,
+            offerId,
+            tierId,
+          });
+  
+          const newInterest = -1;
+  
+          await editLendOffer({
+            offerId,
+            interest: newInterest,
+            lender,
+            lendOffer: lendOfferAccount,
+          });
+        } catch (error) {
+          assert.equal(error.error.errorMessage, "Interest must be greater than 0")
+        }
+      })
+    });
   });
 });

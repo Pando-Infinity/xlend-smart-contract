@@ -62,6 +62,10 @@ impl<'info> CreateLendOffer<'info> {
         offer_id: String,
         interest: f64,
     ) -> Result<()> {
+            if interest <= (0 as f64) {
+                return err!(LendOfferError::InterestGreaterThanZero);
+            }
+
             let SettingAccount { amount, lender_fee_percent, duration, .. } = self.setting_account.clone().into_inner();
 
             let lender_fee = (lender_fee_percent.mul(amount as f64)) as u64;
@@ -72,7 +76,7 @@ impl<'info> CreateLendOffer<'info> {
                 bump: bumps.lend_offer,
                 interest,
                 lender_fee,
-                lender_pubkey: self.lender.key(),
+                lender: self.lender.key(),
                 lend_mint_token: self.mint_asset.key(),
                 offer_id: offer_id.clone(),
                 status: LendOfferStatus::Created,

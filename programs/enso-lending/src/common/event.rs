@@ -41,3 +41,13 @@ pub struct CreateLendOfferEvent {
     pub offer_id: String,
     pub tier_id: String,
 }
+
+#[event]
+pub struct EditLendOfferEvent {
+    pub lender: Pubkey,
+    pub interest: f64,
+    pub lender_fee: u64,
+    pub duration: u64,
+    pub amount: u64,
+    pub offer_id: String,
+}
