@@ -51,3 +51,9 @@ pub struct EditLendOfferEvent {
     pub amount: u64,
     pub offer_id: String,
 }
+
+#[event]
+pub struct CloseLendOfferEvent {
+    pub lender: Pubkey,
+    pub offer_id: String
+}

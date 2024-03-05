@@ -1,12 +1,14 @@
 {
     "scripts": {
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-        "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+        "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+        "precommit": "anchor test"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",
         "@solana/spl-token": "^0.4.1",
-        "@solana/web3.js": "^1.90.0"
+        "@solana/web3.js": "^1.90.0",
+        "husky": "^9.0.11"
     },
     "devDependencies": {
         "@types/bn.js": "^5.1.0",
@@ -23,5 +25,10 @@
         "npm": "please-use-yarn",
         "pnpm": "please-use-yarn",
         "yarn": "1.22.21"
-    }
+    },
+    "husky": {
+      "hooks": {
+        "pre-commit": "yarn run precommit" 
+      }
+ }
 }
