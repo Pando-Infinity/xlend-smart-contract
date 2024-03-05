@@ -1213,7 +1213,7 @@ describe("enso-lending", () => {
     });
 
     describe('close lend offer', () => {
-      xit('lender should close the lend offer successfully', async () => {
+      it('lender should close the lend offer successfully', async () => {
 				const amountTier = 10 * 10 ** usdcMintDecimal;
 				const duration = 14;
 				const tierId = `tier_id_${generateId(10)}`;
@@ -1319,7 +1319,7 @@ describe("enso-lending", () => {
 
 			});
 
-      xit("Should throw error if lender close lend offer that not belong to them", async () => {
+      it("Should throw error if lender close lend offer that not belong to them", async () => {
         const newLender = Keypair.generate();
 
         // air drop sol to new lender
@@ -1405,7 +1405,7 @@ describe("enso-lending", () => {
         }
       });
 
-      xit('system should close the lend offer successfully', async () => {
+      it('system should close the lend offer successfully', async () => {
 				const amountTier = 10 * 10 ** usdcMintDecimal;
 				const duration = 14;
 				const tierId = `tier_id_${generateId(10)}`;
