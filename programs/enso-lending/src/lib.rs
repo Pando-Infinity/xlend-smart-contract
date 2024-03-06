@@ -75,22 +75,11 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn cancel_lend_offer(ctx: Context<CloseLendOffer>, offer_id: String) -> Result<()> {
-        ctx.accounts.close_lend_offer()?;
+    pub fn cancel_lend_offer(ctx: Context<CancelLendOffer>, offer_id: String) -> Result<()> {
+        ctx.accounts.cancel_lend_offer()?;
 
-        ctx.accounts.emit_event_close_lend_offer(
-            String::from("close_lend_offer"),
-            offer_id.clone(),
-        )?;
-
-        Ok(())
-    }
-
-    pub fn system_close_lend_offer(ctx: Context<SystemCloseLendOffer>, offer_id: String, _tier_id: String) -> Result<()> {
-        ctx.accounts.system_close_lend_offer()?;
-
-        ctx.accounts.emit_event_system_close_lend_offer(
-            String::from("close_lend_offer"),
+        ctx.accounts.emit_event_cancel_lend_offer(
+            String::from("cancel_lend_offer"),
             offer_id.clone(),
         )?;
 

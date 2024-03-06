@@ -53,7 +53,7 @@ pub struct EditLendOfferEvent {
 }
 
 #[event]
-pub struct CloseLendOfferEvent {
+pub struct CancelLendOfferEvent {
     pub lender: Pubkey,
     pub offer_id: String
 }
