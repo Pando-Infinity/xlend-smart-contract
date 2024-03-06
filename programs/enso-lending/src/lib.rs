@@ -75,7 +75,7 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn close_lend_offer(ctx: Context<CloseLendOffer>, offer_id: String) -> Result<()> {
+    pub fn cancel_lend_offer(ctx: Context<CloseLendOffer>, offer_id: String) -> Result<()> {
         ctx.accounts.close_lend_offer()?;
 
         ctx.accounts.emit_event_close_lend_offer(

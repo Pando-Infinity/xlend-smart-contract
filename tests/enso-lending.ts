@@ -297,7 +297,7 @@ describe("enso-lending", () => {
     const { offerId, lendOffer, lender } = params;
 
 		await program.methods
-			.closeLendOffer(offerId)
+			.cancelLendOffer(offerId)
 			.accounts({
 				lender: lender.publicKey,
         lendOffer,
