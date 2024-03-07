@@ -39,7 +39,6 @@ impl<'info> EditLendOffer<'info> {
         lender: self.lender.key(),
         interest: self.lend_offer.interest,
         lender_fee_percent: self.lend_offer.lender_fee_percent,
-        borrower_fee_percent: self.lend_offer.borrower_fee_percent,
         amount: self.lend_offer.amount,
         duration: self.lend_offer.duration,
         offer_id: self.lend_offer.offer_id.clone(),
