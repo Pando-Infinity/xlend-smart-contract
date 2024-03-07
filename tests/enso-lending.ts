@@ -23,6 +23,7 @@ import {
 
 import { confirm, log, getAmountDifference, generateId } from "./utils";
 import { assert } from "chai";
+import { OPERATE_SYSTEM_SECRET_KEY } from "./accounts/operate-system";
 
 describe("enso-lending", () => {
   async function checkWalletBalance(tokenAccount: PublicKey): Promise<number> {
@@ -48,13 +49,7 @@ describe("enso-lending", () => {
   
   // Create account system to test on local network
   const ownerAccountSetting = Keypair.fromSecretKey(
-		Uint8Array.from([
-			191, 91, 111, 114, 39, 4, 204, 157, 37, 100, 161, 243, 80, 228, 194, 8,
-			108, 56, 225, 163, 190, 159, 170, 90, 115, 87, 113, 111, 22, 238, 107,
-			197, 172, 24, 185, 95, 116, 228, 54, 73, 160, 73, 204, 85, 190, 245, 149,
-			192, 168, 231, 25, 135, 55, 161, 68, 173, 14, 3, 99, 84, 200, 134, 73,
-			110,
-		])
+		Uint8Array.from(OPERATE_SYSTEM_SECRET_KEY)
 	);
 
   const usdcMintDecimal = 6;

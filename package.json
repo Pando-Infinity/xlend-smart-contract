@@ -21,7 +21,6 @@
     "engines": {
         "node": ">=18.12.0",
         "npm": "please-use-yarn",
-        "pnpm": "please-use-yarn",
-        "yarn": "1.22.21"
+        "pnpm": "please-use-yarn"
     }
 }
