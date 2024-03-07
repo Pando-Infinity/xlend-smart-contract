@@ -1,7 +1,9 @@
+use std::str::FromStr;
+
 pub use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 
-use crate::{InitSettingAccountEvent, SettingAccount};
+use crate::{InitSettingAccountEvent, SettingAccount, common::{constant::OPERATE_STSTEM_PUBKEY, SettingAccountError}};
 
 #[derive(Accounts)]
 #[instruction(tier_id: String, amount: u64, duration: u64)]
@@ -29,7 +31,11 @@ pub struct InitSettingAccount<'info> {
 }
 
 impl<'info> InitSettingAccount<'info> {
-    pub fn init_setting_account(&mut self, bumps: &InitSettingAccountBumps, tier_id: String, amount: u64, duration: u64, lender_fee_percent: f64  ) -> Result<()> {
+    pub fn init_setting_account(&mut self, bumps: &InitSettingAccountBumps, tier_id: String, amount: u64, duration: u64, lender_fee_percent: f64, borrower_fee_percent: f64  ) -> Result<()> {
+      if self.owner.key() != Pubkey::from_str(OPERATE_STSTEM_PUBKEY).unwrap() {
+        return Err(SettingAccountError::InvalidOwner)?;
+      }
+
       self.setting_account.set_inner(SettingAccount {
         amount,
         duration,
@@ -39,7 +45,8 @@ impl<'info> InitSettingAccount<'info> {
         collateral_mint_asset: self.collateral_mint_asset.key(),
         tier_id,
         bump: bumps.setting_account,
-        lender_fee_percent
+        lender_fee_percent,
+        borrower_fee_percent
       });
 
       msg!("Init Setting Account: {:?}", self.setting_account);
