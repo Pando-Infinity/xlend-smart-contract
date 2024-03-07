@@ -64,7 +64,7 @@ impl<'info> CreateLendOffer<'info> {
                 return err!(LendOfferError::InterestGreaterThanZero);
             }
 
-            let SettingAccount { amount, lender_fee_percent, borrower_fee_percent, duration, .. } = self.setting_account.clone().into_inner();
+            let SettingAccount { amount, lender_fee_percent, duration, .. } = self.setting_account.clone().into_inner();
 
             self.lend_offer.set_inner(LendOfferAccount {
                 amount,
@@ -72,7 +72,6 @@ impl<'info> CreateLendOffer<'info> {
                 bump: bumps.lend_offer,
                 interest,
                 lender_fee_percent,
-                borrower_fee_percent,
                 lender: self.lender.key(),
                 lend_mint_token: self.mint_asset.key(),
                 offer_id: offer_id.clone(),
@@ -105,7 +104,6 @@ impl<'info> CreateLendOffer<'info> {
             lender: self.lender.key(),
             interest: self.lend_offer.interest,
             lender_fee_percent: self.lend_offer.lender_fee_percent,
-            borrower_fee_percent: self.lend_offer.borrower_fee_percent,
             amount: self.lend_offer.amount,
             duration: self.lend_offer.duration,
             offer_id: self.lend_offer.offer_id.clone(),

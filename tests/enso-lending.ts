@@ -595,7 +595,6 @@ describe("enso-lending", () => {
           duration: fetchedDuration,
           interest: fetchedInterest,
           lenderFeePercent: fetchedLenderFee,
-          borrowerFeePercent: fetchedBorrowerFee,
           lender: fetchedLender,
           lendMintToken,
           offerId: fetchedOfferId,
@@ -604,7 +603,6 @@ describe("enso-lending", () => {
         assert.equal(amount.toNumber(), amountTier);
         assert.equal(fetchedDuration.toNumber(), duration);
         assert.equal(fetchedLenderFee, fetchedLenderFee);
-        assert.equal(fetchedBorrowerFee, borrowerFeePercent);
         assert.equal(fetchedInterest, interest);
         assert.equal(fetchedLender.toString(), lender.publicKey.toString());
         assert.equal(lendMintToken.toString(), usdcMint.publicKey.toString());
