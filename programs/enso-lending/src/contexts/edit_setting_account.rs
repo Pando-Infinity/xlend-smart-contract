@@ -4,7 +4,7 @@ use anchor_spl::token::Mint;
 use crate::{SettingAccount, EditSettingAccountEvent, SettingAccountError};
 
 #[derive(Accounts)]
-#[instruction(tier_id: String, amount: Option<u64>, duration: Option<u64>, lender_fee_percent: Option<f64>)]
+#[instruction(tier_id: String, amount: Option<u64>, duration: Option<u64>, lender_fee_percent: Option<f64>, borrower_fee_percent: Option<f64>)]
 pub struct EditSettingAccount<'info> {
   #[account(mut)]
   pub owner: Signer<'info>,
@@ -33,7 +33,8 @@ impl<'info> EditSettingAccount<'info> {
     &mut self,
     amount: Option<u64>,
     duration: Option<u64>,
-    lender_fee_percent: Option<f64>
+    lender_fee_percent: Option<f64>,
+    borrower_fee_percent: Option<f64>
   ) -> Result<()>  {
     let setting_account = &mut self.setting_account;
     if let Some(amount) = amount {
@@ -44,6 +45,9 @@ impl<'info> EditSettingAccount<'info> {
     }
     if let Some(lender_fee_percent) = lender_fee_percent {
       setting_account.lender_fee_percent = lender_fee_percent;
+    }
+    if let Some(borrower_fee_percent) = borrower_fee_percent {
+      setting_account.borrower_fee_percent = borrower_fee_percent;
     }
     setting_account.receiver = self.receiver.key();
     setting_account.lend_mint_asset = self.lend_mint_asset.key();

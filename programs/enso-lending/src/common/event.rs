@@ -35,7 +35,8 @@ pub struct CloseSettingAccountEvent {
 pub struct CreateLendOfferEvent {
     pub lender: Pubkey,
     pub interest: f64,
-    pub lender_fee: u64,
+    pub lender_fee_percent: f64,
+    pub borrower_fee_percent: f64,
     pub duration: u64,
     pub amount: u64,
     pub offer_id: String,
@@ -46,7 +47,8 @@ pub struct CreateLendOfferEvent {
 pub struct EditLendOfferEvent {
     pub lender: Pubkey,
     pub interest: f64,
-    pub lender_fee: u64,
+    pub lender_fee_percent: f64,
+    pub borrower_fee_percent: f64,
     pub duration: u64,
     pub amount: u64,
     pub offer_id: String,

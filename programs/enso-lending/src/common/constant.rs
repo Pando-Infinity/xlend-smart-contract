@@ -4,3 +4,5 @@ use anchor_lang::prelude::{borsh, AnchorDeserialize, AnchorSerialize, InitSpace}
 pub enum LendOfferStatus {
     Created,
 }
+
+pub const OPERATE_STSTEM_PUBKEY: &str = "CanzRrJ6U81DLSRx2vJx3w9s9ssy23vizkTqZyGyevFf";
