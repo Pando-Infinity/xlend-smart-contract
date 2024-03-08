@@ -6,6 +6,8 @@ mod states;
 use states::*;
 mod common;
 use common::*;
+mod utils;
+use utils::*;
 
 declare_id!("CNkCiHgVyh6u1ifYb6YpK9bZAjD7oviJEsR5G1cMmLob");
 
