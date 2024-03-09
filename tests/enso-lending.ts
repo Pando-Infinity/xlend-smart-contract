@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { AnchorError, Program } from "@coral-xyz/anchor";
 import { EnsoLending } from "../target/types/enso_lending";
 import {
   Keypair,
@@ -55,6 +55,8 @@ describe("enso-lending", () => {
   const usdcMintDecimal = 6;
   const totalUsdcSupply = 1e9 * 10 ** usdcMintDecimal; // 1000000000 USDC
   const wrappedSolDecimal = 9;
+  const sol_usd_price_feed_id = 'J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix'
+  const usdc_usd_price_feed_id = '5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7'
 
   const providerAtaUsdc = getAssociatedTokenAddressSync(
     usdcMint.publicKey,
@@ -77,8 +79,15 @@ describe("enso-lending", () => {
       SystemProgram.transfer({
         fromPubkey: provider.publicKey,
         toPubkey: lender.publicKey,
-        lamports: 0.01 * LAMPORTS_PER_SOL,
+        lamports: 0.02 * LAMPORTS_PER_SOL,
       }),
+
+			// Airdrop to hot wallet
+			SystemProgram.transfer({
+				fromPubkey: provider.publicKey,
+				toPubkey: hotWallet.publicKey,
+				lamports: 0.02 * LAMPORTS_PER_SOL,
+			}),
 
       // create USDC token account
       ...[
@@ -189,6 +198,8 @@ describe("enso-lending", () => {
 		lendMintAsset: PublicKey;
 		collateralMintAsset: PublicKey;
 		settingAccount: anchor.web3.PublicKey;
+    collateralPriceFeedAccount: PublicKey;
+    lendPriceFeedAccount: PublicKey;
 	}): Promise<void> => {
 		const {
 			amount,
@@ -199,6 +210,8 @@ describe("enso-lending", () => {
 			lendMintAsset,
 			collateralMintAsset,
 			settingAccount,
+      collateralPriceFeedAccount,
+      lendPriceFeedAccount
 		} = params;
 		await program.methods
 			.initSettingAccount(
@@ -215,6 +228,8 @@ describe("enso-lending", () => {
 				lendMintAsset,
 				collateralMintAsset,
 				systemProgram: SystemProgram.programId,
+        collateralPriceFeedAccount,
+        lendPriceFeedAccount
 			})
 			.signers([ownerAccountSetting])
 			.rpc()
@@ -283,6 +298,25 @@ describe("enso-lending", () => {
       .then((sig) => log(connection, sig));
   };
 
+  const closeLendOffer = async (params: {
+		offerId: string;
+		lendOffer: PublicKey;
+		lender: Keypair;
+	}): Promise<void> => {
+    const { offerId, lendOffer, lender } = params;
+
+		await program.methods
+			.cancelLendOffer(offerId)
+			.accounts({
+				lender: lender.publicKey,
+        lendOffer,
+			})
+			.signers([lender])
+			.rpc()
+			.then((sig) => confirm(connection, sig))
+			.then((sig) => log(connection, sig));
+	};
+
   describe("account setting", () => {
     it("Init Account Setting successfully", async () => {
       const amount = 200 * usdcMintDecimal;
@@ -302,6 +336,8 @@ describe("enso-lending", () => {
         seedSettingAccount,
         program.programId
       )[0];
+      const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+      const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
 
       await initSettingAccount({
 				amount,
@@ -312,6 +348,8 @@ describe("enso-lending", () => {
 				collateralMintAsset: wrappedSol.publicKey,
 				settingAccount,
 				borrowerFeePercent,
+        lendPriceFeedAccount: usdc_usd_price_feed,
+        collateralPriceFeedAccount: sol_usd_price_feed,
 			});
 
       // Read data from PDA account
@@ -325,6 +363,8 @@ describe("enso-lending", () => {
         duration: fetchDuration,
         lenderFeePercent: fetchedLenderFeePercent,
         borrowerFeePercent: fetchedBorrowerFeePercent,
+        collateralPriceFeed,
+        lendPriceFeed,
       } = await program.account.settingAccount.fetch(settingAccount);
       assert.equal(fetchedTierId, tierId);
       assert.equal(amount, fetchedAmount.toNumber());
@@ -338,6 +378,8 @@ describe("enso-lending", () => {
         wrappedSol.publicKey.toString(),
         collateralMintAsset.toString()
       );
+      assert.equal(collateralPriceFeed.toString(), sol_usd_price_feed_id)
+      assert.equal(lendPriceFeed.toString(), usdc_usd_price_feed_id)
     });
 
     it("Edit Account Setting", async () => {
@@ -358,6 +400,8 @@ describe("enso-lending", () => {
         seedSettingAccount,
         program.programId
       )[0];
+      const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+      const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
 
       await initSettingAccount({
 				amount,
@@ -368,6 +412,8 @@ describe("enso-lending", () => {
 				collateralMintAsset: wrappedSol.publicKey,
 				settingAccount,
 				borrowerFeePercent,
+        lendPriceFeedAccount: usdc_usd_price_feed,
+        collateralPriceFeedAccount: sol_usd_price_feed,
 			});
 
       const newAmount = 400;
@@ -390,6 +436,8 @@ describe("enso-lending", () => {
 					lendMintAsset: usdcMint.publicKey,
 					collateralMintAsset: wrappedSol.publicKey,
 					systemProgram: SystemProgram.programId,
+          lendPriceFeedAccount: usdc_usd_price_feed,
+          collateralPriceFeedAccount: sol_usd_price_feed,
 				})
 				.signers([ownerAccountSetting])
 				.rpc({ skipPreflight: true })
@@ -406,6 +454,8 @@ describe("enso-lending", () => {
         duration: fetchedNewDuration,
         lenderFeePercent: fetchedNewLenderFeePercent,
         borrowerFeePercent: fetchedNewBorrowerFeePercent,
+        collateralPriceFeed,
+        lendPriceFeed
       } = await program.account.settingAccount.fetch(settingAccount);
       assert.equal(tierId, fetchedTierId);
       assert.equal(newAmount, fetchedNewAmount.toNumber());
@@ -425,6 +475,8 @@ describe("enso-lending", () => {
         wrappedSol.publicKey.toString(),
         fetchedNewCollateralMintAsset.toString()
       );
+      assert.equal(collateralPriceFeed.toString(), sol_usd_price_feed_id)
+      assert.equal(lendPriceFeed.toString(), usdc_usd_price_feed_id)
     });
 
     it("Close Account Setting", async () => {
@@ -433,7 +485,7 @@ describe("enso-lending", () => {
       const tierId = "1234_tier_1";
       const lenderFeePercent = 0.01;
       const borrowerFeePercent = 0.01;
-      const dataSize = 215; // Replace with the desired account size in bytes
+      const dataSize = 279; // Replace with the desired account size in bytes
       const expectedLoanRentReturned =
         await program.provider.connection.getMinimumBalanceForRentExemption(
           dataSize
@@ -450,6 +502,8 @@ describe("enso-lending", () => {
         seedSettingAccount,
         program.programId
       )[0];
+      const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+      const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
 
       await initSettingAccount({
 				amount,
@@ -460,6 +514,8 @@ describe("enso-lending", () => {
 				collateralMintAsset: wrappedSol.publicKey,
 				settingAccount,
 				borrowerFeePercent,
+        lendPriceFeedAccount: usdc_usd_price_feed,
+        collateralPriceFeedAccount: sol_usd_price_feed
 			});
 
       const walletBalanceBeforeCloseLoan = await checkWalletBalance(
@@ -492,10 +548,10 @@ describe("enso-lending", () => {
         expectedLoanRentReturned.toString()
       );
 
-      // Lend offer account closed
-      const checkLendOfferAccountInfo =
+      // Setting account closed
+      const checkSettingAccountInfo =
         await provider.connection.getAccountInfo(settingAccount);
-      assert.equal(checkLendOfferAccountInfo, null);
+      assert.equal(checkSettingAccountInfo, null);
     });
   });
 
@@ -519,6 +575,8 @@ describe("enso-lending", () => {
           seedSettingAccount,
           program.programId
         )[0];
+        const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+        const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
 
         await initSettingAccount({
           amount: amountTier,
@@ -529,6 +587,8 @@ describe("enso-lending", () => {
           lendMintAsset: usdcMint.publicKey,
           collateralMintAsset: wrappedSol.publicKey,
           settingAccount,
+          lendPriceFeedAccount: usdc_usd_price_feed,
+          collateralPriceFeedAccount: sol_usd_price_feed,
         });
 
         const offerId = `lend_offer_id_${generateId(10)}`;
@@ -628,6 +688,8 @@ describe("enso-lending", () => {
             seedSettingAccount,
             program.programId
           )[0];
+          const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+          const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
 
           await initSettingAccount({
             amount: amountTier,
@@ -638,6 +700,8 @@ describe("enso-lending", () => {
             lendMintAsset: usdcMint.publicKey,
             collateralMintAsset: wrappedSol.publicKey,
             settingAccount,
+            lendPriceFeedAccount: usdc_usd_price_feed,
+            collateralPriceFeedAccount: sol_usd_price_feed,
           });
 
           const offerId = `lend_offer_id_${generateId(10)}`;
@@ -773,6 +837,8 @@ describe("enso-lending", () => {
             seedSettingAccount,
             program.programId
           )[0];
+          const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+          const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
 
           await initSettingAccount({
             amount: amountTier,
@@ -783,6 +849,8 @@ describe("enso-lending", () => {
             lendMintAsset: usdcMint.publicKey,
             collateralMintAsset: wrappedSol.publicKey,
             settingAccount,
+            lendPriceFeedAccount: usdc_usd_price_feed,
+            collateralPriceFeedAccount: sol_usd_price_feed,
           });
 
           const offerId = `lend_offer_id_${generateId(10)}`;
@@ -862,6 +930,8 @@ describe("enso-lending", () => {
 						seedSettingAccount,
 						program.programId
 					)[0];
+          const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+          const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
 
 					await initSettingAccount({
 						amount: amountTier,
@@ -871,7 +941,9 @@ describe("enso-lending", () => {
 						lendMintAsset: usdcMint.publicKey,
 						collateralMintAsset: wrappedSol.publicKey,
 						settingAccount,
-            borrowerFeePercent
+            borrowerFeePercent,
+            lendPriceFeedAccount: usdc_usd_price_feed,
+            collateralPriceFeedAccount: sol_usd_price_feed,
 					});
 
 					const offerId = `lend_offer_id_${generateId(10)}`;
@@ -940,6 +1012,8 @@ describe("enso-lending", () => {
           seedSettingAccount,
           program.programId
         )[0];
+        const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+        const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
 
         await initSettingAccount({
           amount: amountTier,
@@ -950,6 +1024,8 @@ describe("enso-lending", () => {
           lendMintAsset: usdcMint.publicKey,
           collateralMintAsset: wrappedSol.publicKey,
           settingAccount,
+          lendPriceFeedAccount: usdc_usd_price_feed,
+          collateralPriceFeedAccount: sol_usd_price_feed,
         });
 
         const offerId = `lend_offer_id_${generateId(10)}`;
@@ -1033,7 +1109,9 @@ describe("enso-lending", () => {
             seedSettingAccount,
             program.programId
           )[0];
-  
+          const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+          const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
+
           await initSettingAccount({
             amount: amountTier,
             duration,
@@ -1043,6 +1121,8 @@ describe("enso-lending", () => {
             lendMintAsset: usdcMint.publicKey,
             collateralMintAsset: wrappedSol.publicKey,
             settingAccount,
+            lendPriceFeedAccount: usdc_usd_price_feed,
+            collateralPriceFeedAccount: sol_usd_price_feed,
           });
   
           const offerId = `lend_offer_id_${generateId(10)}`;
@@ -1119,7 +1199,9 @@ describe("enso-lending", () => {
             seedSettingAccount,
             program.programId
           )[0];
-  
+          const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+          const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
+
           await initSettingAccount({
 						amount: amountTier,
 						duration,
@@ -1129,6 +1211,8 @@ describe("enso-lending", () => {
 						collateralMintAsset: wrappedSol.publicKey,
 						settingAccount,
 						borrowerFeePercent,
+            lendPriceFeedAccount: usdc_usd_price_feed,
+            collateralPriceFeedAccount: sol_usd_price_feed,
 					});
   
           const offerId = `lend_offer_id_${generateId(10)}`;
@@ -1186,5 +1270,186 @@ describe("enso-lending", () => {
         }
       })
     });
+
+    describe('close lend offer', () => {
+      it('lender should close the lend offer successfully', async () => {
+				const amountTier = 10 * 10 ** usdcMintDecimal;
+				const duration = 14;
+				const tierId = `tier_id_${generateId(10)}`;
+				const lenderFeePercent = 0.01;
+        const borrowerFeePercent = 0.01;
+        const interest = 2.1;
+        const dataSize = 152; // Replace with the desired account size in bytes
+
+				const seedSettingAccount = [
+					Buffer.from('enso'),
+					Buffer.from('setting_account'),
+					Buffer.from(tierId),
+					program.programId.toBuffer(),
+				];
+
+				const settingAccount = PublicKey.findProgramAddressSync(
+					seedSettingAccount,
+					program.programId
+				)[0];
+
+				await initSettingAccount({
+					amount: amountTier,
+					duration,
+					tierId,
+					lenderFeePercent,
+					lendMintAsset: usdcMint.publicKey,
+					collateralMintAsset: wrappedSol.publicKey,
+					settingAccount,
+					borrowerFeePercent: borrowerFeePercent,
+				});
+
+				const offerId = `lend_offer_id_${generateId(10)}`;
+
+        const seedLendOffer = [
+          Buffer.from('enso'),
+          Buffer.from('lend_offer'),
+          lender.publicKey.toBuffer(),
+          Buffer.from(offerId),
+          program.programId.toBuffer(),
+        ];
+
+        const lendOfferAccount = PublicKey.findProgramAddressSync(
+					seedLendOffer,
+					program.programId
+				)[0];
+
+        const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+					connection,
+					providerWallet,
+					usdcMint.publicKey,
+					hotWallet.publicKey
+				);
+
+				const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+					connection,
+					providerWallet,
+					usdcMint.publicKey,
+					lender.publicKey
+				);
+
+        await createLendOffer({
+					hotWalletAta: hotWalletUsdcAta.address,
+					lender,
+					lenderAtaAsset: lenderAtaUsdc.address,
+					lendOffer: lendOfferAccount,
+					mintAsset: usdcMint.publicKey,
+					settingAccount,
+					interest,
+					offerId,
+					tierId,
+				});
+
+        const { status: prevStatus } = await program.account.lendOfferAccount.fetch(
+					lendOfferAccount
+				);
+
+        assert.equal(prevStatus.hasOwnProperty('created'), true);
+
+				await closeLendOffer({
+					lender,
+					lendOffer: lendOfferAccount,
+					offerId,
+				});
+
+        const { status: currentStatus } =
+					await program.account.lendOfferAccount.fetch(lendOfferAccount);
+
+        assert.equal(currentStatus.hasOwnProperty('canceled'), true);
+			});
+
+      it("Should throw error if lender close lend offer that not belong to them", async () => {
+        const newLender = Keypair.generate();
+
+        // air drop sol to new lender
+        await airdrop(newLender.publicKey)
+
+        try {
+          const amountTier = 10 * 10 ** usdcMintDecimal;
+          const duration = 14;
+          const tierId = `tier_id_${generateId(10)}`;
+          const lenderFeePercent = 0.01;
+          const borrowerFeePercent = 0.01;
+  
+          const seedSettingAccount = [
+            Buffer.from("enso"),
+            Buffer.from("setting_account"),
+            Buffer.from(tierId),
+            program.programId.toBuffer(),
+          ];
+  
+          const settingAccount = PublicKey.findProgramAddressSync(
+            seedSettingAccount,
+            program.programId
+          )[0];
+  
+          await initSettingAccount({
+            amount: amountTier,
+            duration,
+            tierId,
+            lenderFeePercent,
+            lendMintAsset: usdcMint.publicKey,
+            collateralMintAsset: wrappedSol.publicKey,
+            settingAccount,
+            borrowerFeePercent
+          });
+  
+          const offerId = `lend_offer_id_${generateId(10)}`;
+          const interest = 2.1;
+  
+          const seedLendOffer = [
+            Buffer.from("enso"),
+            Buffer.from("lend_offer"),
+            lender.publicKey.toBuffer(),
+            Buffer.from(offerId),
+            program.programId.toBuffer(),
+          ];
+  
+          const lendOfferAccount = PublicKey.findProgramAddressSync(
+            seedLendOffer,
+            program.programId
+          )[0];
+  
+          const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            hotWallet.publicKey
+          );
+  
+          const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+            connection,
+            providerWallet,
+            usdcMint.publicKey,
+            lender.publicKey
+          );
+  
+          await createLendOffer({
+            hotWalletAta: hotWalletUsdcAta.address,
+            lender,
+            lenderAtaAsset: lenderAtaUsdc.address,
+            lendOffer: lendOfferAccount,
+            mintAsset: usdcMint.publicKey,
+            settingAccount,
+            interest,
+            offerId,
+            tierId,
+          });
+  
+          await closeLendOffer({
+						lender,
+						lendOffer: lendOfferAccount,
+						offerId,
+					});
+        } catch (error) {
+          assert.equal(error.error.errorMessage, "A seeds constraint was violated")
+        }
+      });
+		});
   });
 });
