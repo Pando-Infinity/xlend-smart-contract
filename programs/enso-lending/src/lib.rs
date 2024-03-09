@@ -77,4 +77,15 @@ pub mod enso_lending {
 
         Ok(())
     }
+
+    pub fn cancel_lend_offer(ctx: Context<CancelLendOffer>, offer_id: String) -> Result<()> {
+        ctx.accounts.cancel_lend_offer()?;
+
+        ctx.accounts.emit_event_cancel_lend_offer(
+            String::from("cancel_lend_offer"),
+            offer_id.clone(),
+        )?;
+
+        Ok(())
+    }
 }

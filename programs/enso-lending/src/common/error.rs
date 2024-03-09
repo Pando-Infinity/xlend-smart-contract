@@ -20,4 +20,8 @@ pub enum LendOfferError {
     InvalidLender,
     #[msg("Lend offer status is invalid")]
     InvalidOfferStatus,
+    #[msg("Invalid offer id")]
+    InvalidOfferId,
+    #[msg("Invalid receiver")]
+    InvalidReceiver,
 }
