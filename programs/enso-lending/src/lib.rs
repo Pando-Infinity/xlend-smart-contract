@@ -19,6 +19,7 @@ pub mod enso_lending {
         amount: u64,
         duration: u64,
         lender_fee_percent: f64,
+        borrower_fee_percent: f64,
     ) -> Result<()> {
         ctx.accounts.init_setting_account(
             &ctx.bumps,
@@ -26,6 +27,7 @@ pub mod enso_lending {
             amount,
             duration,
             lender_fee_percent,
+            borrower_fee_percent
         )?;
         ctx.accounts
             .emit_init_setting_account_event(String::from("Emit event init setting account"))?;
@@ -39,9 +41,10 @@ pub mod enso_lending {
         amount: Option<u64>,
         duration: Option<u64>,
         lender_fee_percent: Option<f64>,
+        borrower_fee_percent: Option<f64>,
     ) -> Result<()> {
         ctx.accounts
-            .edit_setting_account(amount, duration, lender_fee_percent)?;
+            .edit_setting_account(amount, duration, lender_fee_percent, borrower_fee_percent)?;
 
         ctx.accounts
             .emit_event_edit_setting_account(String::from("edit_setting_account"))?;

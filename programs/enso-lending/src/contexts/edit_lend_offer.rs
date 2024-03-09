@@ -38,7 +38,7 @@ impl<'info> EditLendOffer<'info> {
       emit!(EditLendOfferEvent {
         lender: self.lender.key(),
         interest: self.lend_offer.interest,
-        lender_fee: self.lend_offer.lender_fee,
+        lender_fee_percent: self.lend_offer.lender_fee_percent,
         amount: self.lend_offer.amount,
         duration: self.lend_offer.duration,
         offer_id: self.lend_offer.offer_id.clone(),

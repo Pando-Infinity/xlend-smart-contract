@@ -12,5 +12,6 @@ pub struct SettingAccount {
   #[max_len(50)]
   pub tier_id: String,
   pub lender_fee_percent: f64,
+  pub borrower_fee_percent: f64,
   pub bump: u8
 }
