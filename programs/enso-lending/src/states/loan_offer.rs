@@ -6,6 +6,8 @@ use crate::LoanOfferStatus;
 #[derive(InitSpace, Debug)]
 pub struct LoanOfferAccount {
   #[max_len(50)]
+  pub tier_id: String,
+  #[max_len(50)]
   pub lend_offer_id: String,
   pub interest: f64,
   pub borrow_amount: u64,
