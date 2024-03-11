@@ -89,7 +89,7 @@ impl<'info> RepayLoanOffer<'info> {
         CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
     }
 
-    pub fn emit_event_create_lend_offer(&mut self, label: String, loan_offer_id: String) -> Result<()> {
+    pub fn emit_event_repay_loan_offer(&mut self, label: String, loan_offer_id: String) -> Result<()> {
         emit!(RepayLoanOfferEvent {
             borrower: self.borrower.key(),
             loan_offer_id,
