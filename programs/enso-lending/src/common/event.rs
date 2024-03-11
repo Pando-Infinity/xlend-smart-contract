@@ -82,3 +82,11 @@ pub struct CreateLoanOfferEvent {
     pub borrower_fee_percent: f64,
     pub started_at: i64,
 }
+
+#[event]
+pub struct RepayLoanOfferEvent {
+  pub borrower: Pubkey,
+  pub loan_offer_id: String,
+  pub repay_amount: u64,
+  pub borrower_fee_percent: f64,
+}
