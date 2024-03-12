@@ -123,6 +123,10 @@ impl<'info> CreateLoanOffer<'info> {
       offer_id,
       started_at: Clock::get()?.unix_timestamp,
       status: LoanOfferStatus::Matched,
+      liquidating_at: None,
+      liquidating_price: None,
+      liquidated_tx: None,
+      liquidated_price: None,
     });
 
     Ok(())

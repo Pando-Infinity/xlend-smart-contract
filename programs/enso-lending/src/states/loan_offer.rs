@@ -23,5 +23,10 @@ pub struct LoanOfferAccount {
   pub status: LoanOfferStatus,
   pub borrower_fee_percent: f64,
   pub started_at: i64,
+  pub liquidating_at: Option<u64>,
+  pub liquidating_price: Option<u64>,
+  #[max_len(50)]
+  pub liquidated_tx: Option<String>,
+  pub liquidated_price: Option<u64>,
   pub bump: u8,
 }

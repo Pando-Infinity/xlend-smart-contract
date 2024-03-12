@@ -11,6 +11,7 @@ pub enum LendOfferStatus {
 pub enum LoanOfferStatus {
     Matched,
     Finished,
+    Liquidating,
     Liquidated
 }
 
