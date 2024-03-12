@@ -105,4 +105,16 @@ pub mod enso_lending {
         Ok(())
     }
 
+    pub fn deposit_collateral_loan_offer(
+        ctx: Context<DepositCollateralLoanOffer>,
+        _offer_id: String, 
+        _tier_id: String,
+        amount: u64
+    ) -> Result<()> {
+        ctx.accounts.deposit_collateral_loan_offer(amount)?;
+        ctx.accounts.emit_event_deposit_collateral_loan_offer(String::from("deposit_collateral_loan_offer"))?;
+
+        Ok(())
+    }
+
 }
