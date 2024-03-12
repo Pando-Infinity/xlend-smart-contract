@@ -25,5 +25,3 @@ pub const OPERATE_SYSTEM_PUBKEY: &str = "CanzRrJ6U81DLSRx2vJx3w9s9ssy23vizkTqZyG
 pub const STALENESS_THRESHOLD : u64 = 60; // staleness threshold in seconds
 
 pub const MIN_BORROW_HEALTH_RATIO: f64 = 1.5;
-
-pub const WRAPPED_SOL_STR: &str = "So11111111111111111111111111111111111111112";
