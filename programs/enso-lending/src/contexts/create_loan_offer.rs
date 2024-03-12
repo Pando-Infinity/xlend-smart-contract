@@ -34,7 +34,7 @@ pub struct CreateLoanOffer<'info> {
   pub mint_asset: Account<'info, Mint>,
   #[account(
     mut,
-    constraint = borrower_ata_asset.amount >= collateral_amount,
+    constraint = borrower_ata_asset.amount >= collateral_amount @ LoanOfferError::NotEnoughAmount,
     associated_token::mint = mint_asset,
     associated_token::authority = borrower
   )]
@@ -157,15 +157,19 @@ impl<'info> CreateLoanOffer<'info> {
   }
 
   fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
-    let minimum_collateral = (self.setting_account.amount as f64).mul(1.5);
+    // Validate the collateral amount must greater than minimum collateral amount
+    let convert_collateral_amount_to_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), collateral_amount).unwrap();
 
-    if minimum_collateral > collateral_amount as f64 {
+    let convert_amount_borrow_setting_account_to_usd = convert_to_usd_price(&self.lend_price_feed_account, self.setting_account.amount)?;
+    let minimum_collateral_to_usd = (convert_amount_borrow_setting_account_to_usd as f64).mul(1.5);
+
+    if minimum_collateral_to_usd > convert_collateral_amount_to_usd as f64 {
       return Err(LoanOfferError::CollateralAmountMustBeGreaterThenMinimumCollateralAmount)?;
     }
 
     self.validate_price_feed_account()?;
 
-    let convert_collateral_amount_to_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), collateral_amount).unwrap();
+    // Validate health ratio must >= MINIMUM_HEALTH_RATIO
     let convert_lend_amount_to_usd = convert_to_usd_price(&self.lend_price_feed_account.to_account_info(), self.setting_account.amount).unwrap();
     let health_ratio = convert_collateral_amount_to_usd.checked_div(convert_lend_amount_to_usd).unwrap() as f64;
 
