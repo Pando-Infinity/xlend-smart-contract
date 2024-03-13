@@ -1,5 +1,3 @@
-use std::ops::Mul;
-
 use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
@@ -155,17 +153,9 @@ impl<'info> CreateLoanOffer<'info> {
   }
 
   fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
-    let convert_collateral_amount_to_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), collateral_amount).unwrap();
-
-    let convert_amount_borrow_setting_account_to_usd = convert_to_usd_price(&self.lend_price_feed_account, self.setting_account.amount)?;
-    let minimum_collateral_to_usd = (convert_amount_borrow_setting_account_to_usd as f64).mul(1.5);
-
-    if minimum_collateral_to_usd > convert_collateral_amount_to_usd as f64 {
-      return Err(LoanOfferError::CollateralAmountMustBeGreaterThenMinimumCollateralAmount)?;
-    }
-
     self.validate_price_feed_account()?;
 
+    let convert_collateral_amount_to_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), collateral_amount).unwrap();
     let convert_lend_amount_to_usd = convert_to_usd_price(&self.lend_price_feed_account.to_account_info(), self.setting_account.amount).unwrap();
     let health_ratio = convert_collateral_amount_to_usd.checked_div(convert_lend_amount_to_usd).unwrap() as f64;
 
@@ -190,7 +180,6 @@ impl<'info> CreateLoanOffer<'info> {
       &[],  
     )?;
 
-    // TODO: Handle deposit spl token
     Ok(())
   }
 
