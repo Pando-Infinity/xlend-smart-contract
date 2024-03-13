@@ -46,4 +46,6 @@ pub enum LoanOfferError {
     InvalidOfferStatus,
     #[msg("lend offer is not available")]
     LendOfferIsNotAvailable,
+    #[msg("Invalid operator system account")]
+    InvalidSystem,
 }
