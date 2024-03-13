@@ -105,4 +105,15 @@ pub mod enso_lending {
         Ok(())
     }
 
+    pub fn withdraw_collateral(
+        ctx: Context<WithdrawCollateral>, 
+        loan_offer_id: String, 
+        withdraw_amount: u64
+    ) -> Result<()> {
+        ctx.accounts.withdraw_collateral(withdraw_amount)?;
+        ctx.accounts.emit_event_withdraw_collateral(String::from("withdraw_collateral"), loan_offer_id, withdraw_amount)?;
+
+        Ok(())
+    }
+
 }

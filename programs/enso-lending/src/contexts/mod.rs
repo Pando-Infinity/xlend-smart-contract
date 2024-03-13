@@ -14,3 +14,6 @@ pub use cancel_lend_offer::*;
 
 pub mod create_loan_offer;
 pub use create_loan_offer::*;
+
+pub mod withdraw_collateral;
+pub use withdraw_collateral::*;
