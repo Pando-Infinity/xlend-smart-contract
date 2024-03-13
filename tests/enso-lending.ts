@@ -1320,8 +1320,8 @@ describe("enso-lending", () => {
 					program.programId
 				)[0];
 
-        const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
-				const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
+        const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+        const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
 
 				await initSettingAccount({
 					amount: amountTier,
@@ -1332,8 +1332,8 @@ describe("enso-lending", () => {
 					collateralMintAsset: wrappedSol.publicKey,
 					settingAccount,
 					borrowerFeePercent: borrowerFeePercent,
-					collateralPriceFeedAccount: sol_usd_price_feed,
-					lendPriceFeedAccount: usdc_usd_price_feed,
+          lendPriceFeedAccount: usdc_usd_price_feed,
+          collateralPriceFeedAccount: sol_usd_price_feed,
 				});
 
 				const offerId = `lend_offer_id_${generateId(10)}`;
@@ -1419,22 +1419,22 @@ describe("enso-lending", () => {
             seedSettingAccount,
             program.programId
           )[0];
-
-          const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
-					const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
   
+          const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+          const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
+
           await initSettingAccount({
-						amount: amountTier,
-						duration,
-						tierId,
-						lenderFeePercent,
-						lendMintAsset: usdcMint.publicKey,
-						collateralMintAsset: wrappedSol.publicKey,
-						settingAccount,
-						borrowerFeePercent,
-						collateralPriceFeedAccount: sol_usd_price_feed,
-						lendPriceFeedAccount: usdc_usd_price_feed,
-					});
+            amount: amountTier,
+            duration,
+            tierId,
+            lenderFeePercent,
+            lendMintAsset: usdcMint.publicKey,
+            collateralMintAsset: wrappedSol.publicKey,
+            settingAccount,
+            borrowerFeePercent,
+            lendPriceFeedAccount: usdc_usd_price_feed,
+            collateralPriceFeedAccount: sol_usd_price_feed,
+          });
   
           const offerId = `lend_offer_id_${generateId(10)}`;
           const interest = 2.1;

@@ -1,5 +1,3 @@
-use std::ops::Mul;
-
 use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
@@ -12,8 +10,7 @@ use crate::{
   LoanOfferError, 
   LoanOfferStatus, 
   SettingAccount, 
-  MINIMUM_HEALTH_RATIO, 
-  WRAPPED_SOL_STR,
+  MIN_BORROW_HEALTH_RATIO, 
   common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED}
 };
 
@@ -29,12 +26,11 @@ pub struct CreateLoanOffer<'info> {
   pub borrower: Signer<'info>,
   #[account(
     constraint = mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidMintAsset,
-    constraint = mint_asset.key().to_string() == WRAPPED_SOL_STR @ LoanOfferError::JustAllowSOLIsCollateral
   )]
   pub mint_asset: Account<'info, Mint>,
   #[account(
     mut,
-    constraint = borrower_ata_asset.amount >= collateral_amount,
+    constraint = borrower_ata_asset.amount >= collateral_amount @ LoanOfferError::NotEnoughAmount,
     associated_token::mint = mint_asset,
     associated_token::authority = borrower
   )]
@@ -123,6 +119,10 @@ impl<'info> CreateLoanOffer<'info> {
       offer_id,
       started_at: Clock::get()?.unix_timestamp,
       status: LoanOfferStatus::Matched,
+      liquidating_at: None,
+      liquidating_price: None,
+      liquidated_tx: None,
+      liquidated_price: None,
     });
 
     Ok(())
@@ -153,19 +153,13 @@ impl<'info> CreateLoanOffer<'info> {
   }
 
   fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
-    let minimum_collateral = (self.setting_account.amount as f64).mul(1.5);
-
-    if minimum_collateral > collateral_amount as f64 {
-      return Err(LoanOfferError::CollateralAmountMustBeGreaterThenMinimumCollateralAmount)?;
-    }
-
     self.validate_price_feed_account()?;
 
     let convert_collateral_amount_to_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), collateral_amount).unwrap();
     let convert_lend_amount_to_usd = convert_to_usd_price(&self.lend_price_feed_account.to_account_info(), self.setting_account.amount).unwrap();
     let health_ratio = convert_collateral_amount_to_usd.checked_div(convert_lend_amount_to_usd).unwrap() as f64;
 
-    if health_ratio < MINIMUM_HEALTH_RATIO {
+    if health_ratio < MIN_BORROW_HEALTH_RATIO {
         return Err(LoanOfferError::CanNotTakeALoanBecauseHealthRatioIsNotValid)?;
     }
 
@@ -186,7 +180,6 @@ impl<'info> CreateLoanOffer<'info> {
       &[],  
     )?;
 
-    // TODO: Handle deposit spl token
     Ok(())
   }
 
