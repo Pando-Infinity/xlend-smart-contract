@@ -11,3 +11,6 @@ pub mod edit_lend_offer;
 pub use edit_lend_offer::*;
 pub mod cancel_lend_offer;
 pub use cancel_lend_offer::*;
+
+pub mod create_loan_offer;
+pub use create_loan_offer::*;

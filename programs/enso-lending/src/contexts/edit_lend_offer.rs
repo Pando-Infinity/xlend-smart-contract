@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{EditLendOfferEvent, LendOfferAccount, LendOfferError, LendOfferStatus};
+use crate::{EditLendOfferEvent, LendOfferAccount, LendOfferError, LendOfferStatus, common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED}};
 
 #[derive(Accounts)]
 #[instruction(offer_id: String)]
@@ -11,11 +11,11 @@ pub struct EditLendOffer<'info> {
     mut,
     constraint = lend_offer.status == LendOfferStatus::Created @ LendOfferError::InvalidOfferStatus,
     seeds = [
-        b"enso".as_ref(), 
-        b"lend_offer".as_ref(), 
-        lender.key().as_ref(), 
-        offer_id.as_bytes(),
-        crate::ID.key().as_ref(), 
+      ENSO_SEED.as_ref(), 
+      LEND_OFFER_ACCOUNT_SEED.as_ref(), 
+      lender.key().as_ref(), 
+      offer_id.as_bytes(),
+      crate::ID.key().as_ref(), 
     ],
     bump = lend_offer.bump
   )]

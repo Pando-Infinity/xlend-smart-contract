@@ -6,11 +6,14 @@ mod states;
 use states::*;
 mod common;
 use common::*;
+mod utils;
+use utils::*;
 
 declare_id!("CNkCiHgVyh6u1ifYb6YpK9bZAjD7oviJEsR5G1cMmLob");
 
 #[program]
 pub mod enso_lending {
+
     use super::*;
 
     pub fn init_setting_account(
@@ -88,4 +91,18 @@ pub mod enso_lending {
 
         Ok(())
     }
+
+    pub fn create_loan_offer(
+        ctx: Context<CreateLoanOffer>, 
+        offer_id: String, 
+        lend_offer_id: String, 
+        tier_id: String, 
+        collateral_amount: u64
+    ) -> Result<()> {
+        ctx.accounts.initialize_loan_offer(&ctx.bumps, offer_id, lend_offer_id, tier_id, collateral_amount)?;
+        ctx.accounts.emit_event_create_loan_offer(String::from("create_loan_offer"))?;
+
+        Ok(())
+    }
+
 }

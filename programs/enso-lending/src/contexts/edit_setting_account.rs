@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 
-use crate::{SettingAccount, EditSettingAccountEvent, SettingAccountError};
+use crate::{SettingAccount, EditSettingAccountEvent, SettingAccountError, common::{ENSO_SEED, SETTING_ACCOUNT_SEED}};
 
 #[derive(Accounts)]
 #[instruction(tier_id: String, amount: Option<u64>, duration: Option<u64>)]
@@ -21,8 +21,8 @@ pub struct EditSettingAccount<'info> {
     has_one = owner,
     constraint = setting_account.tier_id == tier_id @ SettingAccountError::InvalidTierId,
     seeds = [
-      b"enso".as_ref(), 
-      b"setting_account".as_ref(),
+      ENSO_SEED.as_ref(), 
+      SETTING_ACCOUNT_SEED.as_ref(),
       tier_id.as_bytes(), 
       crate::ID.key().as_ref(), 
     ],
