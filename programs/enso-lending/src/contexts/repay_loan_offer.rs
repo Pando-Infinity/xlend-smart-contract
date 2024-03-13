@@ -26,7 +26,6 @@ pub struct RepayLoanOffer<'info> {
     pub mint_asset: Account<'info, Mint>,
     #[account(
         mut,
-        constraint = loan_ata_asset.amount >= setting_account.amount @ RepayOfferError::NotEnoughAmount,
         associated_token::mint = mint_asset,
         associated_token::authority = borrower
     )]
@@ -66,39 +65,48 @@ pub struct RepayLoanOffer<'info> {
 
 impl<'info> RepayLoanOffer<'info> {
     pub fn repay_loan_offer(&mut self) -> Result<()> {
-        self.loan_offer.status = LoanOfferStatus::Finished;
+      let borrow_amount = self.loan_ata_asset.amount as f64;
+      let fee_amount = borrow_amount * self.setting_account.borrower_fee_percent;
+      let interest_amount = borrow_amount * self.loan_offer.interest;
 
-        Ok(())
+      let remaining_amount = borrow_amount - interest_amount - fee_amount;
+
+      if remaining_amount < self.setting_account.amount as f64 {
+        return Err(RepayOfferError::NotEnoughAmount.into());
+      }
+
+      self.loan_offer.status = LoanOfferStatus::Finished;
+      Ok(())
     }
 
     pub fn deposit(&mut self) -> Result<()> {
-        transfer_checked(
-            self.into_deposit_context(),
-            self.setting_account.amount,
-            self.mint_asset.decimals,
-        )
+      transfer_checked(
+        self.into_deposit_context(),
+        self.setting_account.amount,
+        self.mint_asset.decimals,
+      )
     }
 
     fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-        let cpi_accounts = TransferChecked {
-            from: self.loan_ata_asset.to_account_info(),
-            mint: self.mint_asset.to_account_info(),
-            to: self.hot_wallet_ata.to_account_info(),
-            authority: self.borrower.to_account_info(),
-        };
-        CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
+      let cpi_accounts = TransferChecked {
+        from: self.loan_ata_asset.to_account_info(),
+        mint: self.mint_asset.to_account_info(),
+        to: self.hot_wallet_ata.to_account_info(),
+        authority: self.borrower.to_account_info(),
+      };
+      CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
     }
 
     pub fn emit_event_repay_loan_offer(&mut self, label: String, loan_offer_id: String) -> Result<()> {
-        emit!(RepayLoanOfferEvent {
-            borrower: self.borrower.key(),
-            loan_offer_id,
-            repay_amount: self.loan_ata_asset.amount,
-            borrower_fee_percent: self.setting_account.borrower_fee_percent,
-        });
-        
-        msg!(&label.clone());
-        
-        Ok(())
+      emit!(RepayLoanOfferEvent {
+        borrower: self.borrower.key(),
+        loan_offer_id,
+        repay_amount: self.loan_ata_asset.amount,
+        borrower_fee_percent: self.setting_account.borrower_fee_percent,
+      });
+      
+      msg!(&label.clone());
+      
+      Ok(())
     }
 }
