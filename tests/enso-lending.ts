@@ -1293,6 +1293,9 @@ describe("enso-lending", () => {
 					program.programId
 				)[0];
 
+        const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+        const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
+
 				await initSettingAccount({
 					amount: amountTier,
 					duration,
@@ -1302,6 +1305,8 @@ describe("enso-lending", () => {
 					collateralMintAsset: wrappedSol.publicKey,
 					settingAccount,
 					borrowerFeePercent: borrowerFeePercent,
+          lendPriceFeedAccount: usdc_usd_price_feed,
+          collateralPriceFeedAccount: sol_usd_price_feed,
 				});
 
 				const offerId = `lend_offer_id_${generateId(10)}`;
@@ -1388,6 +1393,9 @@ describe("enso-lending", () => {
             program.programId
           )[0];
   
+          const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id)
+          const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id)
+
           await initSettingAccount({
             amount: amountTier,
             duration,
@@ -1396,7 +1404,9 @@ describe("enso-lending", () => {
             lendMintAsset: usdcMint.publicKey,
             collateralMintAsset: wrappedSol.publicKey,
             settingAccount,
-            borrowerFeePercent
+            borrowerFeePercent,
+            lendPriceFeedAccount: usdc_usd_price_feed,
+            collateralPriceFeedAccount: sol_usd_price_feed,
           });
   
           const offerId = `lend_offer_id_${generateId(10)}`;

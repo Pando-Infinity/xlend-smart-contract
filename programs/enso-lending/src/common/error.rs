@@ -25,3 +25,25 @@ pub enum LendOfferError {
     #[msg("Invalid receiver")]
     InvalidReceiver,
 }
+
+#[error_code]
+pub enum LoanOfferError {
+    #[msg("Loan offer currently just allow SOL is collateral")]
+    JustAllowSOLIsCollateral,
+    #[msg("Can not take a loan because health ratio is not valid")]
+    CanNotTakeALoanBecauseHealthRatioIsNotValid,
+    #[msg("Invalid price feed account for collateral asset")]
+    InvalidPriceFeedAccountForCollateralAsset,
+    #[msg("Invalid price feed account for lend asset")]
+    InvalidPriceFeedAccountForLendAsset,
+    #[msg("Collateral amount must be greater than minimum collateral amount")]
+    CollateralAmountMustBeGreaterThenMinimumCollateralAmount,
+    #[msg("Borrower does not have enough assets")]
+    NotEnoughAmount,
+    #[msg("Invalid mint asset")]
+    InvalidMintAsset,
+    #[msg("Loan offer status is invalid")]
+    InvalidOfferStatus,
+    #[msg("lend offer is not available")]
+    LendOfferIsNotAvailable,
+}

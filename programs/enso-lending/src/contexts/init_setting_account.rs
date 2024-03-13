@@ -3,7 +3,7 @@ use std::str::FromStr;
 pub use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 
-use crate::{InitSettingAccountEvent, SettingAccount, common::{constant::OPERATE_STSTEM_PUBKEY, SettingAccountError}};
+use crate::{InitSettingAccountEvent, SettingAccount, common::{constant::OPERATE_SYSTEM_PUBKEY, SettingAccountError, ENSO_SEED, SETTING_ACCOUNT_SEED}};
 
 #[derive(Accounts)]
 #[instruction(tier_id: String, amount: u64, duration: u64)]
@@ -23,8 +23,8 @@ pub struct InitSettingAccount<'info> {
     payer = owner,
     space = SettingAccount::INIT_SPACE,
     seeds = [
-      b"enso".as_ref(), 
-      b"setting_account".as_ref(),
+      ENSO_SEED.as_ref(), 
+      SETTING_ACCOUNT_SEED.as_ref(),
       tier_id.as_bytes(), 
       crate::ID.key().as_ref(), 
     ],
@@ -36,7 +36,7 @@ pub struct InitSettingAccount<'info> {
 
 impl<'info> InitSettingAccount<'info> {
     pub fn init_setting_account(&mut self, bumps: &InitSettingAccountBumps, tier_id: String, amount: u64, duration: u64, lender_fee_percent: f64, borrower_fee_percent: f64  ) -> Result<()> {
-      if self.owner.key() != Pubkey::from_str(OPERATE_STSTEM_PUBKEY).unwrap() {
+      if self.owner.key() != Pubkey::from_str(OPERATE_SYSTEM_PUBKEY).unwrap() {
         return Err(SettingAccountError::InvalidOwner)?;
       }
 

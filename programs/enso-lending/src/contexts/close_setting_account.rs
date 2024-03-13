@@ -3,7 +3,7 @@ use anchor_lang::__private::CLOSED_ACCOUNT_DISCRIMINATOR;
 use std::io::{Cursor, Write};
 use std::ops::DerefMut;
 
-use crate::common::CloseSettingAccountEvent;
+use crate::common::{CloseSettingAccountEvent, constant::{ ENSO_SEED, SETTING_ACCOUNT_SEED }};
 use crate::{SettingAccount, SettingAccountError};
 
 #[derive(Accounts)]
@@ -17,8 +17,8 @@ pub struct CloseSettingAccount<'info> {
     has_one = owner,
     constraint = setting_account.tier_id == tier_id @ SettingAccountError::InvalidTierId,
     seeds = [
-      b"enso".as_ref(), 
-      b"setting_account".as_ref(),
+      ENSO_SEED.as_ref(), 
+      SETTING_ACCOUNT_SEED.as_ref(),
       tier_id.as_bytes(), 
       crate::ID.key().as_ref(), 
     ],

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
 
-use crate::{CreateLendOfferEvent, LendOfferAccount, LendOfferError, LendOfferStatus, SettingAccount};
+use crate::{CreateLendOfferEvent, LendOfferAccount, LendOfferError, LendOfferStatus, SettingAccount, constant::{ENSO_SEED, SETTING_ACCOUNT_SEED, LEND_OFFER_ACCOUNT_SEED}};
 
 #[derive(Accounts)]
 #[instruction(offer_id: String, tier_id: String, interest: f64)]
@@ -21,8 +21,8 @@ pub struct CreateLendOffer<'info> {
     pub lender_ata_asset: Account<'info, TokenAccount>,
     #[account(
         seeds = [
-            b"enso".as_ref(), 
-            b"setting_account".as_ref(),
+            ENSO_SEED.as_ref(), 
+            SETTING_ACCOUNT_SEED.as_ref(),
             tier_id.as_bytes(), 
             crate::ID.key().as_ref(), 
         ],
@@ -34,8 +34,8 @@ pub struct CreateLendOffer<'info> {
         payer = lender,
         space = LendOfferAccount::INIT_SPACE,
         seeds = [
-            b"enso".as_ref(), 
-            b"lend_offer".as_ref(), 
+            ENSO_SEED.as_ref(), 
+            LEND_OFFER_ACCOUNT_SEED.as_ref(), 
             lender.key().as_ref(), 
             offer_id.as_bytes(),
             crate::ID.key().as_ref(), 
