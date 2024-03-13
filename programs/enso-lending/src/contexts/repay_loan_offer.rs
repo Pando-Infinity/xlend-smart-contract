@@ -65,22 +65,22 @@ pub struct RepayLoanOffer<'info> {
 
 impl<'info> RepayLoanOffer<'info> {
     pub fn repay_loan_offer(&mut self) -> Result<()> {
-      let borrower_fee_percent = self.setting_account.borrower_fee_percent as u64;
-      let fee_amount = self.loan_offer.borrow_amount * borrower_fee_percent;
+      let borrower_fee_percent = self.setting_account.borrower_fee_percent;
+      let fee_amount = (self.loan_offer.borrow_amount as f64) * borrower_fee_percent;
 
-      let loan_interest = self.loan_offer.interest as u64;
-      let interest_amount = self.loan_offer.borrow_amount * loan_interest;
+      let loan_interest = self.loan_offer.interest;
+      let interest_amount = (self.loan_offer.borrow_amount as f64) * loan_interest;
 
-      let total_amount = self.setting_account.amount + fee_amount + interest_amount;
+      let total_amount = (self.setting_account.amount as f64) + fee_amount + interest_amount;
 
-      if total_amount > self.loan_ata_asset.amount {
+      if total_amount > self.loan_ata_asset.amount as f64 {
         return Err(RepayOfferError::NotEnoughAmount.into());
       }
 
-      self.deposit(total_amount)?;
+      self.deposit(total_amount as u64)?;
       self.loan_offer.status = LoanOfferStatus::Finished;
 
-      self.emit_event_repay_loan_offer( "repay_loan_offer".to_string(), self.loan_offer.offer_id.clone(), total_amount)?;
+      self.emit_event_repay_loan_offer( "repay_loan_offer".to_string(), self.loan_offer.offer_id.clone(), total_amount as u64)?;
       
       Ok(())
     }
