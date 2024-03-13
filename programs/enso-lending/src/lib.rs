@@ -105,10 +105,8 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn repay_loan_offer(ctx: Context<RepayLoanOffer>, loan_offer_id: String) -> Result<()> {
+    pub fn repay_loan_offer(ctx: Context<RepayLoanOffer>, _loan_offer_id: String) -> Result<()> {
         ctx.accounts.repay_loan_offer()?;
-        ctx.accounts.deposit()?;
-        ctx.accounts.emit_event_repay_loan_offer(String::from("repay_loan_offer"), loan_offer_id)?;
 
         Ok(())
     }

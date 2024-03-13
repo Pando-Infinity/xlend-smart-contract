@@ -65,24 +65,27 @@ pub struct RepayLoanOffer<'info> {
 
 impl<'info> RepayLoanOffer<'info> {
     pub fn repay_loan_offer(&mut self) -> Result<()> {
-      let borrow_amount = self.loan_ata_asset.amount as f64;
-      let fee_amount = borrow_amount * self.setting_account.borrower_fee_percent;
-      let interest_amount = borrow_amount * self.loan_offer.interest;
+      let fee_amount = (self.loan_offer.borrow_amount as f64) * self.setting_account.borrower_fee_percent;
+      let interest_amount = (self.loan_offer.borrow_amount as f64) * self.loan_offer.interest;
 
-      let remaining_amount = borrow_amount - interest_amount - fee_amount;
+      let total_amount = (self.setting_account.amount as f64) + fee_amount + interest_amount;
 
-      if remaining_amount < self.setting_account.amount as f64 {
+      if total_amount > self.loan_ata_asset.amount as f64 {
         return Err(RepayOfferError::NotEnoughAmount.into());
       }
 
+      self.deposit(total_amount as u64)?;
       self.loan_offer.status = LoanOfferStatus::Finished;
+
+      self.emit_event_repay_loan_offer( "repay_loan_offer".to_string(), self.loan_offer.offer_id.clone(), total_amount as u64)?;
+      
       Ok(())
     }
 
-    pub fn deposit(&mut self) -> Result<()> {
+    pub fn deposit(&mut self, repay_amount: u64) -> Result<()> {
       transfer_checked(
         self.into_deposit_context(),
-        self.setting_account.amount,
+        repay_amount,
         self.mint_asset.decimals,
       )
     }
@@ -97,11 +100,11 @@ impl<'info> RepayLoanOffer<'info> {
       CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
     }
 
-    pub fn emit_event_repay_loan_offer(&mut self, label: String, loan_offer_id: String) -> Result<()> {
+    pub fn emit_event_repay_loan_offer(&mut self, label: String, loan_offer_id: String, repay_amount: u64) -> Result<()> {
       emit!(RepayLoanOfferEvent {
         borrower: self.borrower.key(),
         loan_offer_id,
-        repay_amount: self.loan_ata_asset.amount,
+        repay_amount,
         borrower_fee_percent: self.setting_account.borrower_fee_percent,
       });
       
