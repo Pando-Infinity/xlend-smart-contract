@@ -49,3 +49,13 @@ pub enum LoanOfferError {
     #[msg("lend offer is not available")]
     LendOfferIsNotAvailable,
 }
+
+#[error_code]
+pub enum RepayOfferError {
+  #[msg("Invalid mint asset of loan offer")]
+  InvalidMintAsset,
+  #[msg("Borrower does not have enough assets")]
+  NotEnoughAmount,
+  #[msg("Loan offer is not available")]
+  LoanOfferIsNotAvailable
+}

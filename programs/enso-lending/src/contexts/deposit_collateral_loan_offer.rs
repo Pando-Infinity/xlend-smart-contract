@@ -4,7 +4,7 @@ use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_in
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::{
-  common::{ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, DepositCollateralLoanOfferEvent, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount, WRAPPED_SOL_STR
+  common::{ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, DepositCollateralLoanOfferEvent, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount
 };
 
 #[derive(Accounts)]
@@ -18,7 +18,6 @@ pub struct DepositCollateralLoanOffer<'info> {
   pub borrower: Signer<'info>,
   #[account(
     constraint = mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidMintAsset,
-    constraint = mint_asset.key().to_string() == WRAPPED_SOL_STR @ LoanOfferError::JustAllowSOLIsCollateral
   )]
   pub mint_asset: Account<'info, Mint>,
   #[account(

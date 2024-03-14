@@ -16,3 +16,6 @@ pub mod create_loan_offer;
 pub use create_loan_offer::*;
 pub mod deposit_collateral_loan_offer;
 pub use deposit_collateral_loan_offer::*;
+
+pub mod repay_loan_offer;
+pub use repay_loan_offer::*;
