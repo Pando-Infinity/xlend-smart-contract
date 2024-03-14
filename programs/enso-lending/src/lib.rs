@@ -92,27 +92,27 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn create_loan_offer(
-        ctx: Context<CreateLoanOffer>, 
+    pub fn create_loan_offer_for_spl(
+        ctx: Context<CreateLoanOfferForSPL>, 
         offer_id: String, 
         lend_offer_id: String, 
         tier_id: String, 
         collateral_amount: u64
     ) -> Result<()> {
         ctx.accounts.initialize_loan_offer(&ctx.bumps, offer_id, lend_offer_id, tier_id, collateral_amount)?;
-        ctx.accounts.emit_event_create_loan_offer(String::from("create_loan_offer"))?;
+        ctx.accounts.emit_event_create_loan_offer(String::from("create_loan_offer_for_spl"))?;
 
         Ok(())
     }
 
-    pub fn deposit_collateral_loan_offer(
-        ctx: Context<DepositCollateralLoanOffer>,
+    pub fn deposit_collateral_loan_offer_for_spl(
+        ctx: Context<DepositCollateralLoanOfferForSPL>,
         _offer_id: String, 
         _tier_id: String,
         amount: u64
     ) -> Result<()> {
         ctx.accounts.deposit_collateral_loan_offer(amount)?;
-        ctx.accounts.emit_event_deposit_collateral_loan_offer(String::from("deposit_collateral_loan_offer"))?;
+        ctx.accounts.emit_event_deposit_collateral_loan_offer(String::from("deposit_collateral_loan_offer_for_spl"))?;
 
         Ok(())
     }

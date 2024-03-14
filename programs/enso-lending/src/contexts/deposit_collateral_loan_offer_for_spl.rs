@@ -1,7 +1,7 @@
 use std::ops::Add;
 
-use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
-use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, Token, TokenAccount, TransferChecked, transfer_checked};
 
 use crate::{
   common::{ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, DepositCollateralLoanOfferEvent, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount
@@ -13,7 +13,7 @@ use crate::{
   tier_id: String,
   amount: u64
 )]
-pub struct DepositCollateralLoanOffer<'info> {
+pub struct DepositCollateralLoanOfferForSPL<'info> {
   #[account(mut)]
   pub borrower: Signer<'info>,
   #[account(
@@ -60,7 +60,7 @@ pub struct DepositCollateralLoanOffer<'info> {
   pub system_program: Program<'info, System>,
 }
 
-impl<'info> DepositCollateralLoanOffer<'info> {
+impl<'info> DepositCollateralLoanOfferForSPL<'info> {
   pub fn deposit_collateral_loan_offer(&mut self, amount: u64) -> Result<()> {
     self.deposit_collateral(amount)?;
 
@@ -94,24 +94,21 @@ impl<'info> DepositCollateralLoanOffer<'info> {
     Ok(())
   }
 
-  fn deposit_collateral(&self, amount: u64) -> Result<()> {
-     // transfer lamport
-     let transfer_instruction = system_instruction::transfer(
-      &self.borrower.key(), 
-      &self.hot_wallet_ata.key(), 
-      amount
-    );
-    
-     invoke_signed(
-       &transfer_instruction,
-       &[
-         self.borrower.to_account_info(),
-         self.hot_wallet_ata.to_account_info(),          
-         self.system_program.to_account_info()
-       ],
-       &[],  
-     )?;
- 
-     Ok(())
+  fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
+    transfer_checked(
+      self.into_deposit_context(),
+      collateral_amount,
+      self.mint_asset.decimals,
+    )
+  }
+
+  fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+    let cpi_accounts = TransferChecked {
+        from: self.borrower_ata_asset.to_account_info(),
+        mint: self.mint_asset.to_account_info(),
+        to: self.hot_wallet_ata.to_account_info(),
+        authority: self.borrower.to_account_info(),
+    };
+    CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
   }
 }
