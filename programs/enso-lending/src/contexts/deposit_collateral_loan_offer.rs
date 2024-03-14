@@ -64,8 +64,8 @@ impl<'info> DepositCollateralLoanOffer<'info> {
   pub fn deposit_collateral_loan_offer(&mut self, amount: u64) -> Result<()> {
     self.deposit_collateral(amount)?;
 
-    let before_collateral_amount = self.loan_offer.borrow_amount;
-    self.loan_offer.borrow_amount = before_collateral_amount.add(amount);
+    let before_collateral_amount = self.loan_offer.collateral_amount;
+    self.loan_offer.collateral_amount = before_collateral_amount.add(amount);
 
     Ok(())
   }
@@ -112,7 +112,6 @@ impl<'info> DepositCollateralLoanOffer<'info> {
        &[],  
      )?;
  
-     // TODO: Handle deposit spl token
      Ok(())
   }
 }
