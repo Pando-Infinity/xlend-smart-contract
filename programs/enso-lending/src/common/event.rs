@@ -84,6 +84,14 @@ pub struct CreateLoanOfferEvent {
 }
 
 #[event]
+pub struct WithdrawCollateralEvent {
+    pub borrower: Pubkey,
+    pub withdraw_amount: u64,
+    pub loan_offer_id: String,
+    pub remaining_amount: u64,
+}
+
+#[event]
 pub struct DepositCollateralLoanOfferEvent {
     pub tier_id: String,
     pub lend_offer_id: String,

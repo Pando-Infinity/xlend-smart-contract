@@ -48,14 +48,18 @@ pub enum LoanOfferError {
     InvalidOfferStatus,
     #[msg("lend offer is not available")]
     LendOfferIsNotAvailable,
+    #[msg("Health ratio limit")]
+    HealthRatioLimit,
+    #[msg("Duration loan offer invalid")]
+    DurationLoanOfferInvalid,
 }
 
 #[error_code]
 pub enum RepayOfferError {
-  #[msg("Invalid mint asset of loan offer")]
-  InvalidMintAsset,
-  #[msg("Borrower does not have enough assets")]
-  NotEnoughAmount,
-  #[msg("Loan offer is not available")]
-  LoanOfferIsNotAvailable
+    #[msg("Invalid mint asset of loan offer")]
+    InvalidMintAsset,
+    #[msg("Borrower does not have enough assets")]
+    NotEnoughAmount,
+    #[msg("Loan offer is not available")]
+    LoanOfferIsNotAvailable
 }
