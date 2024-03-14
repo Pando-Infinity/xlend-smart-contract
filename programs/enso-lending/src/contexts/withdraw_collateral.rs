@@ -56,15 +56,14 @@ impl<'info> WithdrawCollateral<'info> {
   pub fn withdraw_collateral(&mut self, withdraw_amount: u64) -> Result<()> {
     let lend_amount_to_usd = convert_to_usd_price(&self.lend_price_feed_account.to_account_info(), self.setting_account.amount).unwrap();
 
-    let withdraw_amount_in_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), withdraw_amount).unwrap();
-    let collateral_amount_in_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), self.loan_offer.collateral_amount).unwrap();
+    let remaining_collateral = self.loan_offer.collateral_amount - withdraw_amount;
 
-    let remaining_amount_in_usd = collateral_amount_in_usd - withdraw_amount_in_usd;
+    let remaining_collateral_in_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), remaining_collateral).unwrap();
 
-    let health_ratio = remaining_amount_in_usd.checked_div(lend_amount_to_usd).unwrap() as f64;
+    let health_ratio = remaining_collateral_in_usd.checked_div(lend_amount_to_usd).unwrap() as f64;
 
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
-      return Err(LoanOfferError::InsufficientBalance)?;
+      return Err(LoanOfferError::HealthRatioLimit)?;
     }
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
@@ -74,11 +73,10 @@ impl<'info> WithdrawCollateral<'info> {
     let duration_days = duration_seconds / (60 * 60 * 24);
 
     if duration_days > OFFER_DURATION_DAYS as i64 {
-      return Err(LoanOfferError::LendOfferIsNotAvailable)?;
+      return Err(LoanOfferError::DurationLoanOfferInvalid)?;
     }
 
-    let before_collateral_amount = self.loan_offer.collateral_amount;
-    self.loan_offer.collateral_amount = before_collateral_amount - withdraw_amount;
+    self.loan_offer.collateral_amount = remaining_collateral;
 
     Ok(())
   }

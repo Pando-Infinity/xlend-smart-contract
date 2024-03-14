@@ -48,8 +48,10 @@ pub enum LoanOfferError {
     InvalidOfferStatus,
     #[msg("lend offer is not available")]
     LendOfferIsNotAvailable,
-    #[msg("Can not withdraw because health ratio is invalid")]
-    InsufficientBalance,
+    #[msg("Health ratio limit")]
+    HealthRatioLimit,
+    #[msg("Duration loan offer invalid")]
+    DurationLoanOfferInvalid,
 }
 
 #[error_code]
