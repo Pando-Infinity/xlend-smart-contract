@@ -13,7 +13,7 @@ use crate::{
   tier_id: String,
   amount: u64
 )]
-pub struct DepositCollateralLoanOfferForSPL<'info> {
+pub struct DepositCollateralLoanOffer<'info> {
   #[account(mut)]
   pub borrower: Signer<'info>,
   #[account(
@@ -60,7 +60,7 @@ pub struct DepositCollateralLoanOfferForSPL<'info> {
   pub system_program: Program<'info, System>,
 }
 
-impl<'info> DepositCollateralLoanOfferForSPL<'info> {
+impl<'info> DepositCollateralLoanOffer<'info> {
   pub fn deposit_collateral_loan_offer(&mut self, amount: u64) -> Result<()> {
     self.deposit_collateral(amount)?;
 

@@ -21,7 +21,7 @@ use crate::{
   tier_id: String, 
   collateral_amount: u64
 )]
-pub struct CreateLoanOfferForSPL<'info> {
+pub struct CreateLoanOffer<'info> {
   #[account(mut)]
   pub borrower: Signer<'info>,
   #[account(
@@ -88,10 +88,10 @@ pub struct CreateLoanOfferForSPL<'info> {
   pub system_program: Program<'info, System>,
 }
 
-impl<'info> CreateLoanOfferForSPL<'info> {
+impl<'info> CreateLoanOffer<'info> {
   pub fn initialize_loan_offer(
     &mut self,
-    bumps: &CreateLoanOfferForSPLBumps,
+    bumps: &CreateLoanOfferBumps,
     offer_id: String, 
     lend_offer_id: String, 
     tier_id: String, 

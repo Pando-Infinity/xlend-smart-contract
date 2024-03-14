@@ -12,10 +12,10 @@ pub use edit_lend_offer::*;
 pub mod cancel_lend_offer;
 pub use cancel_lend_offer::*;
 
-pub mod create_loan_offer_for_spl;
-pub use create_loan_offer_for_spl::*;
-pub mod deposit_collateral_loan_offer_for_spl;
-pub use deposit_collateral_loan_offer_for_spl::*;
+pub mod create_loan_offer;
+pub use create_loan_offer::*;
+pub mod deposit_collateral_loan_offer;
+pub use deposit_collateral_loan_offer::*;
 
 pub mod repay_loan_offer;
 pub use repay_loan_offer::*;

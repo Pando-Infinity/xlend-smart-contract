@@ -92,8 +92,8 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn create_loan_offer_for_spl(
-        ctx: Context<CreateLoanOfferForSPL>, 
+    pub fn create_loan_offer(
+        ctx: Context<CreateLoanOffer>, 
         offer_id: String, 
         lend_offer_id: String, 
         tier_id: String, 
@@ -105,8 +105,8 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn deposit_collateral_loan_offer_for_spl(
-        ctx: Context<DepositCollateralLoanOfferForSPL>,
+    pub fn deposit_collateral_loan_offer(
+        ctx: Context<DepositCollateralLoanOffer>,
         _offer_id: String, 
         _tier_id: String,
         amount: u64
