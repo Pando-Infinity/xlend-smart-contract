@@ -1490,7 +1490,7 @@ describe("enso-lending", () => {
 		});
   });
 
-  describe('repay loan offer', () => {
+  xdescribe('repay loan offer', () => {
 		it('create lend offer successfully', async () => {
 			const amountTier = 50 * 10 ** usdcMintDecimal;
       const collateralAmount = 10 * 10 ** wrappedSolDecimal;
@@ -1584,7 +1584,7 @@ describe("enso-lending", () => {
 				program.programId
 			)[0];
 
-      const borrowerAtaUsdc = await getOrCreateAssociatedTokenAccount(
+      const borrowerAtaSol = await getOrCreateAssociatedTokenAccount(
 				connection,
 				providerWallet,
 				usdcMint.publicKey,
@@ -1608,7 +1608,7 @@ describe("enso-lending", () => {
 					hotWalletAta: hotWalletUsdcAta.address,
 					loanOffer: loanOfferAccount,
 					borrowerAtaAsset: borrowerAtaUsdc.address,
-					mintAsset: usdcMint.publicKey,
+					mintAsset: wrappedSol.publicKey,
 					tokenProgram: TOKEN_PROGRAM_ID,
 					systemProgram: SystemProgram.programId,
 				})

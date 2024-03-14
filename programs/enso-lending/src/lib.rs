@@ -105,6 +105,24 @@ pub mod enso_lending {
         Ok(())
     }
 
+    pub fn deposit_collateral_loan_offer(
+        ctx: Context<DepositCollateralLoanOffer>,
+        _offer_id: String, 
+        _tier_id: String,
+        amount: u64
+    ) -> Result<()> {
+        ctx.accounts.deposit_collateral_loan_offer(amount)?;
+        ctx.accounts.emit_event_deposit_collateral_loan_offer(String::from("deposit_collateral_loan_offer"))?;
+
+        Ok(())
+    }
+
+    pub fn repay_loan_offer(ctx: Context<RepayLoanOffer>, _loan_offer_id: String) -> Result<()> {
+        ctx.accounts.repay_loan_offer()?;
+
+        Ok(())
+    }
+
     pub fn withdraw_collateral(
         ctx: Context<WithdrawCollateral>, 
         loan_offer_id: String, 
@@ -112,18 +130,6 @@ pub mod enso_lending {
     ) -> Result<()> {
         ctx.accounts.withdraw_collateral(withdraw_amount)?;
         ctx.accounts.emit_event_withdraw_collateral(String::from("withdraw_collateral"), loan_offer_id, withdraw_amount)?;
-
-        Ok(())
-    }
-
-    pub fn repay_loan_offer(ctx: Context<RepayLoanOffer>, _loan_offer_id: String) -> Result<()> {
-      ctx.accounts.repay_loan_offer()?;
-
-      Ok(())
-    }
-
-    pub fn repay_loan_offer(ctx: Context<RepayLoanOffer>, _loan_offer_id: String) -> Result<()> {
-        ctx.accounts.repay_loan_offer()?;
 
         Ok(())
     }

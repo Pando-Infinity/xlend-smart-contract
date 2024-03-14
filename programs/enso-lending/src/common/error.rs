@@ -28,6 +28,8 @@ pub enum LendOfferError {
 
 #[error_code]
 pub enum LoanOfferError {
+    #[msg("Can not deposit collateral to loan offer that not available")]
+    CanNotDepositCollateralToContractThatNotAvailable,
     #[msg("Loan offer currently just allow SOL is collateral")]
     JustAllowSOLIsCollateral,
     #[msg("Can not take a loan because health ratio is not valid")]
