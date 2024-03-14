@@ -121,4 +121,10 @@ pub mod enso_lending {
 
       Ok(())
     }
+
+    pub fn repay_loan_offer(ctx: Context<RepayLoanOffer>, _loan_offer_id: String) -> Result<()> {
+        ctx.accounts.repay_loan_offer()?;
+
+        Ok(())
+    }
 }
