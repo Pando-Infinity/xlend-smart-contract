@@ -77,8 +77,8 @@ impl<'info> WithdrawCollateral<'info> {
       return Err(LoanOfferError::LendOfferIsNotAvailable)?;
     }
 
-    let before_collateral_amount = self.loan_offer.borrow_amount;
-    self.loan_offer.borrow_amount = before_collateral_amount - withdraw_amount;
+    let before_collateral_amount = self.loan_offer.collateral_amount;
+    self.loan_offer.collateral_amount = before_collateral_amount - withdraw_amount;
 
     Ok(())
   }
@@ -87,7 +87,7 @@ impl<'info> WithdrawCollateral<'info> {
     emit!(WithdrawCollateralEvent {
       borrower: self.borrower.key(),
       loan_offer_id,
-      remaining_amount: self.loan_offer.borrow_amount,
+      remaining_amount: self.loan_offer.collateral_amount,
       withdraw_amount,
     });
 
