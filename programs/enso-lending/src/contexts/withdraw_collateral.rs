@@ -70,9 +70,8 @@ impl<'info> WithdrawCollateral<'info> {
     let borrowed_timestamp = self.loan_offer.started_at;
 
     let duration_seconds = current_timestamp - borrowed_timestamp;
-    let duration_days = duration_seconds / (60 * 60 * 24);
 
-    if duration_days > self.setting_account.duration as i64 {
+    if duration_seconds > (self.setting_account.duration as i64) * 60 * 60 * 24 {
       return Err(LoanOfferError::DurationLoanOfferInvalid)?;
     }
 
