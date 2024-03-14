@@ -49,3 +49,14 @@ pub enum LoanOfferError {
     #[msg("Can not withdraw because health ratio is invalid")]
     InsufficientBalance,
 }
+
+
+#[error_code]
+pub enum RepayOfferError {
+  #[msg("Invalid mint asset of loan offer")]
+  InvalidMintAsset,
+  #[msg("Borrower does not have enough assets")]
+  NotEnoughAmount,
+  #[msg("Loan offer is not available")]
+  LoanOfferIsNotAvailable
+}

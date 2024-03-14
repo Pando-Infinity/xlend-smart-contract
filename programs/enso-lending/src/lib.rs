@@ -9,7 +9,7 @@ use common::*;
 mod utils;
 use utils::*;
 
-declare_id!("CNkCiHgVyh6u1ifYb6YpK9bZAjD7oviJEsR5G1cMmLob");
+declare_id!("4z4kmGW4AcmBoyeGobKDXXTRizSSuzXLroX6zjkyeYA1");
 
 #[program]
 pub mod enso_lending {
@@ -116,4 +116,9 @@ pub mod enso_lending {
         Ok(())
     }
 
+    pub fn repay_loan_offer(ctx: Context<RepayLoanOffer>, _loan_offer_id: String) -> Result<()> {
+      ctx.accounts.repay_loan_offer()?;
+
+      Ok(())
+    }
 }

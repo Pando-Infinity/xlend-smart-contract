@@ -90,3 +90,10 @@ pub struct WithdrawCollateralEvent {
     pub loan_offer_id: String,
     pub remaining_amount: u64,
 }
+
+pub struct RepayLoanOfferEvent {
+  pub borrower: Pubkey,
+  pub loan_offer_id: String,
+  pub repay_amount: u64,
+  pub borrower_fee_percent: f64,
+}
