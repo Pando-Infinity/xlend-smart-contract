@@ -48,7 +48,7 @@ pub struct CreateLoanOffer<'info> {
     ],
     bump
   )]
-  pub loan_offer: Account<'info, LoanOfferAccount>, 
+  pub loan_offer: Account<'info, LoanOfferAccount>,
   /// CHECK: This account is used to check the validate of lend offer account
   pub lender: AccountInfo<'info>,
   #[account(
