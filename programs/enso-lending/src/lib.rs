@@ -134,7 +134,7 @@ pub mod enso_lending {
         Ok(())
     }
     pub fn liquidating_collateral(
-        ctx: Context<LiquidatingCollateral>,
+        ctx: Context<LiquidateCollateral>,
         liquidating_price: u64,
         liquidating_at: u64
     ) -> Result<()> {
@@ -145,7 +145,7 @@ pub mod enso_lending {
     }
 
     pub fn liquidated_collateral(
-        ctx: Context<LiquidatedCollateral>,
+        ctx: Context<LiquidateCollateral>,
         liquidated_price: u64,
         liquidated_tx: String,
     ) -> Result<()> {

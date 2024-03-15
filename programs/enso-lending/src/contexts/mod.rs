@@ -23,7 +23,5 @@ pub use withdraw_collateral::*;
 pub mod repay_loan_offer;
 pub use repay_loan_offer::*;
 
-pub mod liquidating_collateral;
-pub use liquidating_collateral::*;
-pub mod liquidated_collateral;
-pub use liquidated_collateral::*;
+pub mod liquidate_collateral;
+pub use liquidate_collateral::*;
