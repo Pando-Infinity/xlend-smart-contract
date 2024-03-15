@@ -28,6 +28,8 @@ pub enum LendOfferError {
 
 #[error_code]
 pub enum LoanOfferError {
+    #[msg("Can not deposit collateral to loan offer that not available")]
+    CanNotDepositCollateralToContractThatNotAvailable,
     #[msg("Loan offer currently just allow SOL is collateral")]
     JustAllowSOLIsCollateral,
     #[msg("Can not take a loan because health ratio is not valid")]
@@ -46,6 +48,20 @@ pub enum LoanOfferError {
     InvalidOfferStatus,
     #[msg("lend offer is not available")]
     LendOfferIsNotAvailable,
+    #[msg("Health ratio limit")]
+    HealthRatioLimit,
+    #[msg("Duration loan offer invalid")]
+    DurationLoanOfferInvalid,
     #[msg("Invalid operator system account")]
     InvalidSystem,
+}
+
+#[error_code]
+pub enum RepayOfferError {
+    #[msg("Invalid mint asset of loan offer")]
+    InvalidMintAsset,
+    #[msg("Borrower does not have enough assets")]
+    NotEnoughAmount,
+    #[msg("Loan offer is not available")]
+    LoanOfferIsNotAvailable
 }

@@ -9,6 +9,7 @@ use crate::{common::constant::{ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, OPERATE_SYSTE
 pub struct LiquidatedCollateral<'info> {
   #[account(mut)]
   pub system: Signer<'info>,
+  /// CHECK: This is the account used to make a seeds
   pub borrower: AccountInfo<'info>,
   #[account(
     mut,
