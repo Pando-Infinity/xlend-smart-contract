@@ -26,7 +26,7 @@ pub struct LiquidateCollateral<'info> {
 }
 
 impl<'info> LiquidateCollateral<'info> {
-  pub fn liquidating_collateral(&mut self, liquidating_price: u64, liquidating_at: u64) -> Result<()> {
+  pub fn start_liquidate_contract(&mut self, liquidating_price: u64, liquidating_at: u64) -> Result<()> {
     if self.system.key() != Pubkey::from_str(OPERATE_SYSTEM_PUBKEY).unwrap() {
       return Err(LoanOfferError::InvalidSystem)?;
     }
@@ -43,7 +43,7 @@ impl<'info> LiquidateCollateral<'info> {
     Ok(())
   }
 
-  pub fn emit_event_liquidating_collateral(&self, label: String) -> Result<()> {
+  pub fn emit_event_start_liquidate_contract(&self, label: String) -> Result<()> {
     emit!(LiquidatingCollateralEvent {
       offer_id: self.loan_offer.offer_id.clone(),
       liquidating_at: self.loan_offer.liquidating_at.unwrap(),
@@ -54,7 +54,7 @@ impl<'info> LiquidateCollateral<'info> {
     Ok(())
   }
 
-  pub fn liquidated_collateral(&mut self, liquidated_price: u64, liquidated_tx: String) -> Result<()> {
+  pub fn finish_liquidate_contract(&mut self, liquidated_price: u64, liquidated_tx: String) -> Result<()> {
     if self.system.key() != Pubkey::from_str(OPERATE_SYSTEM_PUBKEY).unwrap() {
       return Err(LoanOfferError::InvalidSystem)?;
     }
@@ -71,7 +71,7 @@ impl<'info> LiquidateCollateral<'info> {
     Ok(())
   }
   
-  pub fn emit_event_liquidated_collateral(&self, label: String) -> Result<()> {
+  pub fn emit_event_finish_liquidate_contract(&self, label: String) -> Result<()> {
     emit!(LiquidatedCollateralEvent {
       offer_id: self.loan_offer.offer_id.clone(),
       liquidated_price: self.loan_offer.liquidated_price.unwrap(),

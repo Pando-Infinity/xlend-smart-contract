@@ -133,24 +133,24 @@ pub mod enso_lending {
 
         Ok(())
     }
-    pub fn liquidating_collateral(
+    pub fn start_liquidate_contract(
         ctx: Context<LiquidateCollateral>,
         liquidating_price: u64,
         liquidating_at: u64
     ) -> Result<()> {
-        ctx.accounts.liquidating_collateral(liquidating_price, liquidating_at)?;
-        ctx.accounts.emit_event_liquidating_collateral(String::from("liquidating_collateral"))?;
+        ctx.accounts.start_liquidate_contract(liquidating_price, liquidating_at)?;
+        ctx.accounts.emit_event_start_liquidate_contract(String::from("liquidating_collateral"))?;
 
         Ok(())
     }
 
-    pub fn liquidated_collateral(
+    pub fn finish_liquidate_contract(
         ctx: Context<LiquidateCollateral>,
         liquidated_price: u64,
         liquidated_tx: String,
     ) -> Result<()> {
-        ctx.accounts.liquidated_collateral(liquidated_price, liquidated_tx)?;
-        ctx.accounts.emit_event_liquidated_collateral(String::from("Liquidated_collateral"))?;
+        ctx.accounts.finish_liquidate_contract(liquidated_price, liquidated_tx)?;
+        ctx.accounts.emit_event_finish_liquidate_contract(String::from("Liquidated_collateral"))?;
 
         Ok(())
     }
