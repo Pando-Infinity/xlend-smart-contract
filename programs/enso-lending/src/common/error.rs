@@ -52,6 +52,8 @@ pub enum LoanOfferError {
     HealthRatioLimit,
     #[msg("Duration loan offer invalid")]
     DurationLoanOfferInvalid,
+    #[msg("Invalid operator system account")]
+    InvalidSystem,
 }
 
 #[error_code]
