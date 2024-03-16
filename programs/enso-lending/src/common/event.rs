@@ -84,9 +84,50 @@ pub struct CreateLoanOfferEvent {
 }
 
 #[event]
+pub struct WithdrawCollateralEvent {
+    pub borrower: Pubkey,
+    pub withdraw_amount: u64,
+    pub loan_offer_id: String,
+    pub remaining_amount: u64,
+}
+
+#[event]
+pub struct DepositCollateralLoanOfferEvent {
+    pub tier_id: String,
+    pub lend_offer_id: String,
+    pub interest: f64,
+    pub borrow_amount: u64,
+    pub lender_fee_percent: f64,
+    pub duration: u64,
+    pub lend_mint_token: Pubkey,
+    pub lender: Pubkey,
+    pub offer_id: String,
+    pub borrower: Pubkey,
+    pub collateral_mint_token: Pubkey,
+    pub collateral_amount: u64,
+    pub status: LoanOfferStatus,
+    pub borrower_fee_percent: f64,
+    pub started_at: i64,
+}
+
+#[event]
 pub struct RepayLoanOfferEvent {
   pub borrower: Pubkey,
   pub loan_offer_id: String,
   pub repay_amount: u64,
   pub borrower_fee_percent: f64,
+}
+
+#[event]
+pub struct LiquidatingCollateralEvent {
+    pub offer_id: String,
+    pub liquidating_price: u64,
+    pub liquidating_at: u64,
+}
+
+#[event]
+pub struct LiquidatedCollateralEvent {
+    pub offer_id: String,
+    pub liquidated_price: u64,
+    pub liquidated_tx: String,
 }

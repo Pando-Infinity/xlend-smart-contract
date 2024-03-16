@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-enso_lending = "CNkCiHgVyh6u1ifYb6YpK9bZAjD7oviJEsR5G1cMmLob"
+enso_lending = "4z4kmGW4AcmBoyeGobKDXXTRizSSuzXLroX6zjkyeYA1"
 
 [registry]
 url = "https://api.apr.dev"
