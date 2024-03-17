@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
-use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::{
   common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, convert_to_usd_price, CreateLoanOfferEvent, LendOfferAccount, LendOfferStatus, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount, MIN_BORROW_HEALTH_RATIO, NATIVE_MINT
@@ -60,8 +59,8 @@ pub struct CreateLoanOfferNative<'info> {
     bump = setting_account.bump
   )]
   pub setting_account: Account<'info, SettingAccount>,
+  /// CHECK: This is the account used to receive the collateral amount
   pub receiver: AccountInfo<'info>,
-  pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
 }
 
@@ -75,7 +74,9 @@ impl<'info> CreateLoanOfferNative<'info> {
     collateral_amount: u64
   ) -> Result<()> {
     self.validate_initialize_loan_offer(collateral_amount)?;
-    self.validate_receiver_collateral()?;
+    if self.receiver.key() != self.setting_account.receiver.key() {
+      return Err(LoanOfferError::InvalidReceiver)?;
+    }
 
     self.deposit_collateral(collateral_amount)?;
 
@@ -163,14 +164,6 @@ impl<'info> CreateLoanOfferNative<'info> {
 
     Ok(())
   }
-
-  fn validate_receiver_collateral(&self) -> Result<()> {
-    if self.receiver.key() != self.setting_account.receiver.key() {
-      return Err(LoanOfferError::InvalidReceiver)?;
-    }
-
-    Ok(())
-  } 
 
   fn validate_price_feed_account(&self) -> Result<()> {
     if self.setting_account.lend_price_feed.key() != self.lend_price_feed_account.key() {
