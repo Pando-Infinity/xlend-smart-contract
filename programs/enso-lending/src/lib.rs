@@ -107,7 +107,7 @@ pub mod enso_lending {
 
     pub fn deposit_collateral_loan_offer(
         ctx: Context<DepositCollateralLoanOffer>,
-        _offer_id: String, 
+        _offer_id: String,
         _tier_id: String,
         amount: u64
     ) -> Result<()> {
@@ -122,4 +122,37 @@ pub mod enso_lending {
 
         Ok(())
     }
+
+    pub fn withdraw_collateral(
+        ctx: Context<WithdrawCollateral>,
+        loan_offer_id: String,
+        withdraw_amount: u64
+    ) -> Result<()> {
+        ctx.accounts.withdraw_collateral(withdraw_amount)?;
+        ctx.accounts.emit_event_withdraw_collateral(String::from("withdraw_collateral"), loan_offer_id, withdraw_amount)?;
+
+        Ok(())
+    }
+    pub fn start_liquidate_contract(
+        ctx: Context<LiquidateCollateral>,
+        liquidating_price: u64,
+        liquidating_at: u64
+    ) -> Result<()> {
+        ctx.accounts.start_liquidate_contract(liquidating_price, liquidating_at)?;
+        ctx.accounts.emit_event_start_liquidate_contract(String::from("liquidating_collateral"))?;
+
+        Ok(())
+    }
+
+    pub fn finish_liquidate_contract(
+        ctx: Context<LiquidateCollateral>,
+        liquidated_price: u64,
+        liquidated_tx: String,
+    ) -> Result<()> {
+        ctx.accounts.finish_liquidate_contract(liquidated_price, liquidated_tx)?;
+        ctx.accounts.emit_event_finish_liquidate_contract(String::from("Liquidated_collateral"))?;
+
+        Ok(())
+    }
+
 }
