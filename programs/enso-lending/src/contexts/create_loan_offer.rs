@@ -1,5 +1,5 @@
-use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
-use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_lang::prelude::*;
+use anchor_spl::token::{Mint, Token, TokenAccount, TransferChecked, transfer_checked};
 
 use crate::{
   convert_to_usd_price, 
@@ -152,6 +152,24 @@ impl<'info> CreateLoanOffer<'info> {
     Ok(())
   }
 
+  fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
+    transfer_checked(
+      self.into_deposit_context(),
+      collateral_amount,
+      self.mint_asset.decimals,
+    )
+  }
+
+  fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+    let cpi_accounts = TransferChecked {
+        from: self.borrower_ata_asset.to_account_info(),
+        mint: self.mint_asset.to_account_info(),
+        to: self.hot_wallet_ata.to_account_info(),
+        authority: self.borrower.to_account_info(),
+    };
+    CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
+  }
+
   fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
     self.validate_price_feed_account()?;
 
@@ -162,23 +180,6 @@ impl<'info> CreateLoanOffer<'info> {
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
         return Err(LoanOfferError::CanNotTakeALoanBecauseHealthRatioIsNotValid)?;
     }
-
-    Ok(())
-  }
-
-  fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
-    // transfer lamport
-    let transfer_instruction = system_instruction::transfer(&self.borrower.key(), &self.hot_wallet_ata.key(), collateral_amount);
-    
-    invoke_signed(
-      &transfer_instruction,
-      &[
-        self.borrower.to_account_info(),
-        self.hot_wallet_ata.to_account_info(),          
-        self.system_program.to_account_info()
-      ],
-      &[],  
-    )?;
 
     Ok(())
   }
