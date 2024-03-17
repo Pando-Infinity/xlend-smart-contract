@@ -28,18 +28,16 @@ pub enum LendOfferError {
 
 #[error_code]
 pub enum LoanOfferError {
+    #[msg("Invalid receiver")]
+    InvalidReceiver,
     #[msg("Can not deposit collateral to loan offer that not available")]
     CanNotDepositCollateralToContractThatNotAvailable,
-    #[msg("Loan offer currently just allow SOL is collateral")]
-    JustAllowSOLIsCollateral,
     #[msg("Can not take a loan because health ratio is not valid")]
     CanNotTakeALoanBecauseHealthRatioIsNotValid,
     #[msg("Invalid price feed account for collateral asset")]
     InvalidPriceFeedAccountForCollateralAsset,
     #[msg("Invalid price feed account for lend asset")]
     InvalidPriceFeedAccountForLendAsset,
-    #[msg("Collateral amount must be greater than minimum collateral amount")]
-    CollateralAmountMustBeGreaterThenMinimumCollateralAmount,
     #[msg("Borrower does not have enough assets")]
     NotEnoughAmount,
     #[msg("Invalid mint asset")]
