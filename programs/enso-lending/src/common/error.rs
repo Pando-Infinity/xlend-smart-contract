@@ -40,8 +40,10 @@ pub enum LoanOfferError {
     InvalidPriceFeedAccountForLendAsset,
     #[msg("Borrower does not have enough assets")]
     NotEnoughAmount,
-    #[msg("Invalid mint asset")]
-    InvalidMintAsset,
+    #[msg("Invalid collateral mint asset")]
+    InvalidCollateralMintAsset,
+    #[msg("Invalid Lend mint asset")]
+    InvalidLendMintAsset,
     #[msg("Loan offer status is invalid")]
     InvalidOfferStatus,
     #[msg("lend offer is not available")]

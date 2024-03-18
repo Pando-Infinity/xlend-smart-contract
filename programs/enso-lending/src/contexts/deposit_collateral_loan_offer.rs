@@ -17,13 +17,13 @@ pub struct DepositCollateralLoanOffer<'info> {
   #[account(mut)]
   pub borrower: Signer<'info>,
   #[account(
-    constraint = mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidMintAsset,
+    constraint = collateral_mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidCollateralMintAsset,
   )]
-  pub mint_asset: Account<'info, Mint>,
+  pub collateral_mint_asset: Account<'info, Mint>,
   #[account(
     mut,
     constraint = borrower_ata_asset.amount >= amount @ LoanOfferError::NotEnoughAmount,
-    associated_token::mint = mint_asset,
+    associated_token::mint = collateral_mint_asset,
     associated_token::authority = borrower
   )]
   pub borrower_ata_asset: Account<'info, TokenAccount>,
@@ -52,7 +52,7 @@ pub struct DepositCollateralLoanOffer<'info> {
   pub setting_account: Account<'info, SettingAccount>,
   #[account(
     mut,
-    associated_token::mint = mint_asset,
+    associated_token::mint = collateral_mint_asset,
     associated_token::authority = setting_account.receiver
   )]
   pub hot_wallet_ata: Account<'info, TokenAccount>,
@@ -98,14 +98,14 @@ impl<'info> DepositCollateralLoanOffer<'info> {
     transfer_checked(
       self.into_deposit_context(),
       collateral_amount,
-      self.mint_asset.decimals,
+      self.collateral_mint_asset.decimals,
     )
   }
 
   fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
     let cpi_accounts = TransferChecked {
         from: self.borrower_ata_asset.to_account_info(),
-        mint: self.mint_asset.to_account_info(),
+        mint: self.collateral_mint_asset.to_account_info(),
         to: self.hot_wallet_ata.to_account_info(),
         authority: self.borrower.to_account_info(),
     };

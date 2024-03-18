@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
+use anchor_spl::token::{Mint, Token};
 
 use crate::{
   common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, convert_to_usd_price, CreateLoanOfferEvent, LendOfferAccount, LendOfferStatus, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount, MIN_BORROW_HEALTH_RATIO, NATIVE_MINT
@@ -16,6 +17,14 @@ use crate::{
 pub struct CreateLoanOfferNative<'info> {
   #[account(mut)]
   pub borrower: Signer<'info>,
+  #[account(
+    constraint = collateral_mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidCollateralMintAsset,
+  )]
+  pub collateral_mint_asset: Account<'info, Mint>,
+  #[account(
+    constraint = lend_mint_asset.key() == setting_account.lend_mint_asset @ LoanOfferError::InvalidLendMintAsset,
+  )]
+  pub lend_mint_asset: Account<'info, Mint>,
   #[account(
     init_if_needed,
     payer = borrower,
@@ -60,7 +69,9 @@ pub struct CreateLoanOfferNative<'info> {
   )]
   pub setting_account: Account<'info, SettingAccount>,
   /// CHECK: This is the account used to receive the collateral amount
+  #[account(mut)]
   pub receiver: AccountInfo<'info>,
+  pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
 }
 
@@ -134,9 +145,15 @@ impl<'info> CreateLoanOfferNative<'info> {
   fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
     self.validate_price_feed_account()?;
 
-    let convert_collateral_amount_to_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), collateral_amount).unwrap();
-    let convert_lend_amount_to_usd = convert_to_usd_price(&self.lend_price_feed_account.to_account_info(), self.setting_account.amount).unwrap();
-    let health_ratio = convert_collateral_amount_to_usd.checked_div(convert_lend_amount_to_usd).unwrap() as f64;
+    let convert_collateral_amount_to_usd = convert_to_usd_price(
+      &self.collateral_price_feed_account.to_account_info(), 
+      collateral_amount as f64 / 10f64.powf(self.collateral_mint_asset.decimals as f64)
+    ).unwrap();
+    let convert_lend_amount_to_usd = convert_to_usd_price(
+      &self.lend_price_feed_account.to_account_info(), 
+      self.setting_account.amount as f64 / 10f64.powf(self.lend_mint_asset.decimals as f64)
+    ).unwrap();
+    let health_ratio = convert_collateral_amount_to_usd / convert_lend_amount_to_usd;
 
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
         return Err(LoanOfferError::CanNotTakeALoanBecauseHealthRatioIsNotValid)?;
@@ -147,8 +164,8 @@ impl<'info> CreateLoanOfferNative<'info> {
 
   fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
     let transfer_instruction = system_instruction::transfer(
-      &self.borrower.key(), 
-      &self.receiver.key(), 
+      &self.borrower.key(),
+      &self.receiver.key(),
       collateral_amount
     );
     
@@ -156,7 +173,7 @@ impl<'info> CreateLoanOfferNative<'info> {
       &transfer_instruction,
       &[
         self.borrower.to_account_info(),
-        self.receiver.to_account_info(),          
+        self.receiver.to_account_info(),
         self.system_program.to_account_info()
       ],
       &[],  

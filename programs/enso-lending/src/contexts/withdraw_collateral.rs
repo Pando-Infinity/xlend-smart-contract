@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token};
+use anchor_spl::token::{Mint, Token};
 
 use crate::{
   convert_to_usd_price,
@@ -21,6 +21,14 @@ use crate::{
 pub struct WithdrawCollateral<'info> {
     #[account(mut)]
     pub borrower: Signer<'info>,
+    #[account(
+      constraint = collateral_mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidCollateralMintAsset,
+    )]
+    pub collateral_mint_asset: Account<'info, Mint>,
+    #[account(
+      constraint = lend_mint_asset.key() == setting_account.lend_mint_asset @ LoanOfferError::InvalidLendMintAsset,
+    )]
+    pub lend_mint_asset: Account<'info, Mint>,
     #[account(
       seeds = [
           ENSO_SEED.as_ref(), 
@@ -54,13 +62,19 @@ pub struct WithdrawCollateral<'info> {
 
 impl<'info> WithdrawCollateral<'info> {
   pub fn withdraw_collateral(&mut self, withdraw_amount: u64) -> Result<()> {
-    let lend_amount_to_usd = convert_to_usd_price(&self.lend_price_feed_account.to_account_info(), self.setting_account.amount).unwrap();
+    let lend_amount_to_usd = convert_to_usd_price(
+      &self.lend_price_feed_account.to_account_info(), 
+      self.setting_account.amount as f64 / 10f64.powf(self.lend_mint_asset.decimals as f64)
+    ).unwrap();
 
     let remaining_collateral = self.loan_offer.collateral_amount - withdraw_amount;
 
-    let remaining_collateral_in_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), remaining_collateral).unwrap();
+    let remaining_collateral_in_usd = convert_to_usd_price(
+      &self.collateral_price_feed_account.to_account_info(), 
+      remaining_collateral as f64 / 10f64.powf(self.collateral_mint_asset.decimals as f64)
+    ).unwrap();
 
-    let health_ratio = remaining_collateral_in_usd.checked_div(lend_amount_to_usd).unwrap() as f64;
+    let health_ratio = remaining_collateral_in_usd / lend_amount_to_usd;
 
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
       return Err(LoanOfferError::HealthRatioLimit)?;
