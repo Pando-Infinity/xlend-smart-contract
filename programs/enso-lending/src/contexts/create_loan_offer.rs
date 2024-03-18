@@ -25,13 +25,17 @@ pub struct CreateLoanOffer<'info> {
   #[account(mut)]
   pub borrower: Signer<'info>,
   #[account(
-    constraint = mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidMintAsset,
+    constraint = collateral_mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidCollateralMintAsset,
   )]
-  pub mint_asset: Account<'info, Mint>,
+  pub collateral_mint_asset: Account<'info, Mint>,
+  #[account(
+    constraint = lend_mint_asset.key() == setting_account.lend_mint_asset @ LoanOfferError::InvalidLendMintAsset,
+  )]
+  pub lend_mint_asset: Account<'info, Mint>,
   #[account(
     mut,
     constraint = borrower_ata_asset.amount >= collateral_amount @ LoanOfferError::NotEnoughAmount,
-    associated_token::mint = mint_asset,
+    associated_token::mint = collateral_mint_asset,
     associated_token::authority = borrower
   )]
   pub borrower_ata_asset: Account<'info, TokenAccount>,
@@ -80,7 +84,7 @@ pub struct CreateLoanOffer<'info> {
   pub setting_account: Account<'info, SettingAccount>,
   #[account(
     mut,
-    associated_token::mint = mint_asset,
+    associated_token::mint = collateral_mint_asset,
     associated_token::authority = setting_account.receiver
   )]
   pub hot_wallet_ata: Account<'info, TokenAccount>,
@@ -109,7 +113,7 @@ impl<'info> CreateLoanOffer<'info> {
       borrower_fee_percent: self.setting_account.borrower_fee_percent,
       bump: bumps.loan_offer,
       collateral_amount,
-      collateral_mint_token: self.mint_asset.key(),
+      collateral_mint_token: self.collateral_mint_asset.key(),
       duration: self.lend_offer.duration,
       interest: self.lend_offer.interest,
       lend_mint_token: self.lend_offer.lend_mint_token.key(),
@@ -156,14 +160,14 @@ impl<'info> CreateLoanOffer<'info> {
     transfer_checked(
       self.into_deposit_context(),
       collateral_amount,
-      self.mint_asset.decimals,
+      self.collateral_mint_asset.decimals,
     )
   }
 
   fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
     let cpi_accounts = TransferChecked {
         from: self.borrower_ata_asset.to_account_info(),
-        mint: self.mint_asset.to_account_info(),
+        mint: self.collateral_mint_asset.to_account_info(),
         to: self.hot_wallet_ata.to_account_info(),
         authority: self.borrower.to_account_info(),
     };
@@ -173,9 +177,15 @@ impl<'info> CreateLoanOffer<'info> {
   fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
     self.validate_price_feed_account()?;
 
-    let convert_collateral_amount_to_usd = convert_to_usd_price(&self.collateral_price_feed_account.to_account_info(), collateral_amount).unwrap();
-    let convert_lend_amount_to_usd = convert_to_usd_price(&self.lend_price_feed_account.to_account_info(), self.setting_account.amount).unwrap();
-    let health_ratio = convert_collateral_amount_to_usd.checked_div(convert_lend_amount_to_usd).unwrap() as f64;
+    let convert_collateral_amount_to_usd = convert_to_usd_price(
+      &self.collateral_price_feed_account.to_account_info(), 
+      collateral_amount as f64 / 10f64.powf(self.collateral_mint_asset.decimals as f64)
+    ).unwrap();
+    let convert_lend_amount_to_usd = convert_to_usd_price(
+      &self.lend_price_feed_account.to_account_info(), 
+      self.setting_account.amount as f64 / 10f64.powf(self.lend_mint_asset.decimals as f64)
+    ).unwrap();
+    let health_ratio = convert_collateral_amount_to_usd / convert_lend_amount_to_usd;
 
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
         return Err(LoanOfferError::CanNotTakeALoanBecauseHealthRatioIsNotValid)?;
