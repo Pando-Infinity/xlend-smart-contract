@@ -148,8 +148,8 @@ impl<'info> CreateLoanOfferNative<'info> {
 
   fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
     let transfer_instruction = system_instruction::transfer(
-      &self.borrower.key,
-      &self.receiver.key,
+      &self.borrower.key(),
+      &self.receiver.key(),
       collateral_amount
     );
     
@@ -157,7 +157,7 @@ impl<'info> CreateLoanOfferNative<'info> {
       &transfer_instruction,
       &[
         self.borrower.to_account_info(),
-        self.receiver.clone(),
+        self.receiver.to_account_info(),
         self.system_program.to_account_info()
       ],
       &[],  
