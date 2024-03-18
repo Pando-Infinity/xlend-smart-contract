@@ -1,7 +1,6 @@
 use std::ops::Add;
 
-use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount, TransferChecked, transfer_checked};
+use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
 
 use crate::{
   common::{ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, DepositCollateralLoanOfferEvent, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount
@@ -13,20 +12,9 @@ use crate::{
   tier_id: String,
   amount: u64
 )]
-pub struct DepositCollateralLoanOffer<'info> {
+pub struct DepositCollateralLoanOfferNative<'info> {
   #[account(mut)]
   pub borrower: Signer<'info>,
-  #[account(
-    constraint = mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidMintAsset,
-  )]
-  pub mint_asset: Account<'info, Mint>,
-  #[account(
-    mut,
-    constraint = borrower_ata_asset.amount >= amount @ LoanOfferError::NotEnoughAmount,
-    associated_token::mint = mint_asset,
-    associated_token::authority = borrower
-  )]
-  pub borrower_ata_asset: Account<'info, TokenAccount>,
   #[account(
     mut,
     constraint = loan_offer.status == LoanOfferStatus::Matched @ LoanOfferError::CanNotDepositCollateralToContractThatNotAvailable,
@@ -50,18 +38,17 @@ pub struct DepositCollateralLoanOffer<'info> {
     bump = setting_account.bump
   )]
   pub setting_account: Account<'info, SettingAccount>,
-  #[account(
-    mut,
-    associated_token::mint = mint_asset,
-    associated_token::authority = setting_account.receiver
-  )]
-  pub hot_wallet_ata: Account<'info, TokenAccount>,
-  pub token_program: Program<'info, Token>,
+  /// CHECK: This is the account used to receive the collateral amount
+  pub receiver: AccountInfo<'info>,
   pub system_program: Program<'info, System>,
 }
 
-impl<'info> DepositCollateralLoanOffer<'info> {
+impl<'info> DepositCollateralLoanOfferNative<'info> {
   pub fn deposit_collateral_loan_offer(&mut self, amount: u64) -> Result<()> {
+    if self.receiver.key() != self.setting_account.receiver.key() {
+      return Err(LoanOfferError::InvalidReceiver)?;
+    }
+
     self.deposit_collateral(amount)?;
 
     let before_collateral_amount = self.loan_offer.collateral_amount;
@@ -94,21 +81,23 @@ impl<'info> DepositCollateralLoanOffer<'info> {
     Ok(())
   }
 
-  fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
-    transfer_checked(
-      self.into_deposit_context(),
-      collateral_amount,
-      self.mint_asset.decimals,
-    )
-  }
-
-  fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-    let cpi_accounts = TransferChecked {
-        from: self.borrower_ata_asset.to_account_info(),
-        mint: self.mint_asset.to_account_info(),
-        to: self.hot_wallet_ata.to_account_info(),
-        authority: self.borrower.to_account_info(),
-    };
-    CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
+  fn deposit_collateral(&self, amount: u64) -> Result<()> {
+     let transfer_instruction = system_instruction::transfer(
+      &self.borrower.key(), 
+      &self.receiver.key(), 
+      amount
+    );
+    
+     invoke_signed(
+       &transfer_instruction,
+       &[
+         self.borrower.to_account_info(),
+         self.receiver.to_account_info(),          
+         self.system_program.to_account_info()
+       ],
+       &[],  
+     )?;
+ 
+     Ok(())
   }
 }

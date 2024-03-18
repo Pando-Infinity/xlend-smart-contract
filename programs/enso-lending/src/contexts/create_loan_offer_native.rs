@@ -1,17 +1,9 @@
-use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount, TransferChecked, transfer_checked};
+use std::str::FromStr;
+
+use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
 
 use crate::{
-  convert_to_usd_price, 
-  CreateLoanOfferEvent, 
-  LendOfferAccount, 
-  LendOfferStatus, 
-  LoanOfferAccount, 
-  LoanOfferError, 
-  LoanOfferStatus, 
-  SettingAccount, 
-  MIN_BORROW_HEALTH_RATIO, 
-  common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED}
+  common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, convert_to_usd_price, CreateLoanOfferEvent, LendOfferAccount, LendOfferStatus, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount, MIN_BORROW_HEALTH_RATIO, NATIVE_MINT
 };
 
 #[derive(Accounts)]
@@ -21,20 +13,9 @@ use crate::{
   tier_id: String, 
   collateral_amount: u64
 )]
-pub struct CreateLoanOffer<'info> {
+pub struct CreateLoanOfferNative<'info> {
   #[account(mut)]
   pub borrower: Signer<'info>,
-  #[account(
-    constraint = mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidMintAsset,
-  )]
-  pub mint_asset: Account<'info, Mint>,
-  #[account(
-    mut,
-    constraint = borrower_ata_asset.amount >= collateral_amount @ LoanOfferError::NotEnoughAmount,
-    associated_token::mint = mint_asset,
-    associated_token::authority = borrower
-  )]
-  pub borrower_ata_asset: Account<'info, TokenAccount>,
   #[account(
     init_if_needed,
     payer = borrower,
@@ -78,26 +59,24 @@ pub struct CreateLoanOffer<'info> {
     bump = setting_account.bump
   )]
   pub setting_account: Account<'info, SettingAccount>,
-  #[account(
-    mut,
-    associated_token::mint = mint_asset,
-    associated_token::authority = setting_account.receiver
-  )]
-  pub hot_wallet_ata: Account<'info, TokenAccount>,
-  pub token_program: Program<'info, Token>,
+  /// CHECK: This is the account used to receive the collateral amount
+  pub receiver: AccountInfo<'info>,
   pub system_program: Program<'info, System>,
 }
 
-impl<'info> CreateLoanOffer<'info> {
+impl<'info> CreateLoanOfferNative<'info> {
   pub fn initialize_loan_offer(
     &mut self,
-    bumps: &CreateLoanOfferBumps,
+    bumps: &CreateLoanOfferNativeBumps,
     offer_id: String, 
     lend_offer_id: String, 
     tier_id: String, 
     collateral_amount: u64
   ) -> Result<()> {
     self.validate_initialize_loan_offer(collateral_amount)?;
+    if self.receiver.key() != self.setting_account.receiver.key() {
+      return Err(LoanOfferError::InvalidReceiver)?;
+    }
 
     self.deposit_collateral(collateral_amount)?;
 
@@ -109,7 +88,7 @@ impl<'info> CreateLoanOffer<'info> {
       borrower_fee_percent: self.setting_account.borrower_fee_percent,
       bump: bumps.loan_offer,
       collateral_amount,
-      collateral_mint_token: self.mint_asset.key(),
+      collateral_mint_token: Pubkey::from_str(NATIVE_MINT).unwrap(),
       duration: self.lend_offer.duration,
       interest: self.lend_offer.interest,
       lend_mint_token: self.lend_offer.lend_mint_token.key(),
@@ -152,24 +131,6 @@ impl<'info> CreateLoanOffer<'info> {
     Ok(())
   }
 
-  fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
-    transfer_checked(
-      self.into_deposit_context(),
-      collateral_amount,
-      self.mint_asset.decimals,
-    )
-  }
-
-  fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-    let cpi_accounts = TransferChecked {
-        from: self.borrower_ata_asset.to_account_info(),
-        mint: self.mint_asset.to_account_info(),
-        to: self.hot_wallet_ata.to_account_info(),
-        authority: self.borrower.to_account_info(),
-    };
-    CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
-  }
-
   fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
     self.validate_price_feed_account()?;
 
@@ -180,6 +141,26 @@ impl<'info> CreateLoanOffer<'info> {
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
         return Err(LoanOfferError::CanNotTakeALoanBecauseHealthRatioIsNotValid)?;
     }
+
+    Ok(())
+  }
+
+  fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
+    let transfer_instruction = system_instruction::transfer(
+      &self.borrower.key(), 
+      &self.receiver.key(), 
+      collateral_amount
+    );
+    
+    invoke_signed(
+      &transfer_instruction,
+      &[
+        self.borrower.to_account_info(),
+        self.receiver.to_account_info(),          
+        self.system_program.to_account_info()
+      ],
+      &[],  
+    )?;
 
     Ok(())
   }
