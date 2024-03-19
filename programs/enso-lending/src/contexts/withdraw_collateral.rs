@@ -81,11 +81,9 @@ impl<'info> WithdrawCollateral<'info> {
     }
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
-    let borrowed_timestamp = self.loan_offer.started_at;
+    let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
-    let current_duration = current_timestamp - borrowed_timestamp;
-
-    if current_duration > self.setting_account.duration as i64 {
+    if current_timestamp > end_borrowed_loan_offer {
       return Err(LoanOfferError::DurationLoanOfferInvalid)?;
     }
 
