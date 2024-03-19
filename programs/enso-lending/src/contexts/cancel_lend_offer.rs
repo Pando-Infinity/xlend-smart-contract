@@ -1,6 +1,13 @@
-use anchor_lang::{prelude::*};
-use crate::common::{CancelLendOfferEvent, LendOfferStatus, LendOfferError};
-use crate::states::lend_offer::LendOfferAccount;
+use anchor_lang::prelude::*;
+use crate::{
+  ENSO_SEED, LEND_OFFER_ACCOUNT_SEED,
+  common::{
+    CancelLendOfferEvent, 
+    LendOfferStatus, 
+    LendOfferError
+  },
+  states::lend_offer::LendOfferAccount
+};
 
 #[derive(Accounts)]
 #[instruction(offer_id: String)]
@@ -11,8 +18,8 @@ pub struct CancelLendOffer<'info> {
     mut,
     constraint = lend_offer.status == LendOfferStatus::Created @ LendOfferError::InvalidOfferStatus,
     seeds = [
-      b"enso".as_ref(), 
-      b"lend_offer".as_ref(), 
+      ENSO_SEED.as_ref(),
+      LEND_OFFER_ACCOUNT_SEED.as_ref(),  
       lender.key().as_ref(), 
       offer_id.as_bytes(),
       crate::ID.key().as_ref(), 
@@ -24,16 +31,19 @@ pub struct CancelLendOffer<'info> {
 
 impl<'info> CancelLendOffer<'info> {
   pub fn cancel_lend_offer(&mut self) -> Result<()>  {
-    let lend_offer = &mut self.lend_offer;
-    lend_offer.status = LendOfferStatus::Canceled;
+    self.lend_offer.status = LendOfferStatus::Canceling;
 
     Ok(())
   }
 
-  pub fn emit_event_cancel_lend_offer(&mut self, label: String, offer_id: String) -> Result<()> {
+  pub fn emit_event_cancel_lend_offer(&mut self, label: String) -> Result<()> {
     emit!(CancelLendOfferEvent {
       lender: self.lender.key(),
-      offer_id
+      amount: self.lend_offer.amount,
+      duration: self.lend_offer.duration,
+      interest: self.lend_offer.interest,
+      lender_fee_percent: self.lend_offer.lender_fee_percent,
+      offer_id: self.lend_offer.offer_id.clone()
     });
 
     msg!(&label.clone());

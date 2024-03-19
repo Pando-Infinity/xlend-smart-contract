@@ -4,7 +4,8 @@ use anchor_lang::prelude::{borsh, AnchorDeserialize, AnchorSerialize, InitSpace}
 pub enum LendOfferStatus {
     Created,
     Loaned,
-    Canceled
+    Canceled,
+    Canceling
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, PartialEq, Eq, InitSpace, Debug)]
