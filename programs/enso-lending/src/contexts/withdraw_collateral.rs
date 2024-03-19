@@ -11,7 +11,7 @@ use crate::{
   LoanOfferError,
   common::{
     ENSO_SEED, SETTING_ACCOUNT_SEED,
-    LOAN_OFFER_ACCOUNT_SEED, constant::{MIN_BORROW_HEALTH_RATIO}, WithdrawCollateralEvent,
+    LOAN_OFFER_ACCOUNT_SEED, constant::MIN_BORROW_HEALTH_RATIO, WithdrawCollateralEvent,
   }
 };
 
@@ -81,11 +81,9 @@ impl<'info> WithdrawCollateral<'info> {
     }
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
-    let borrowed_timestamp = self.loan_offer.started_at;
+    let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
-    let duration_seconds = current_timestamp - borrowed_timestamp;
-
-    if duration_seconds > (self.setting_account.duration as i64) * 60 * 60 * 24 {
+    if current_timestamp > end_borrowed_loan_offer {
       return Err(LoanOfferError::DurationLoanOfferInvalid)?;
     }
 
