@@ -3,7 +3,7 @@ use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChe
 use crate::{
   common::{
     LendOfferError, LendOfferStatus
-  }, states::lend_offer::LendOfferAccount, SettingAccount, SystemCancelLendOfferEvent, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
+  }, states::lend_offer::LendOfferAccount, SettingAccount, LendOfferCanceledEvent, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
 };
 
 #[derive(Accounts)]
@@ -70,7 +70,7 @@ impl<'info> SystemCancelLendOffer<'info> {
     let total_repay = lend_amount + waiting_interest;
 
     if total_repay > self.hot_wallet_ata.amount {
-      return Err(LendOfferError::HotWalletNotEnoughAmount)?;
+      return Err(LendOfferError::NotEnoughAmount)?;
     }
 
     self.transfer_back_lend_asset(total_repay)?;
@@ -101,7 +101,7 @@ impl<'info> SystemCancelLendOffer<'info> {
   }
 
   fn emit_event_cancel_lend_offer(&mut self, label: String, total_repay: u64) -> Result<()> {
-    emit!(SystemCancelLendOfferEvent {
+    emit!(LendOfferCanceledEvent {
       lender: self.lender.key(),
       amount: total_repay,
       duration: self.lend_offer.duration,

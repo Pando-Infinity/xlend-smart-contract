@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use crate::{
   ENSO_SEED, LEND_OFFER_ACCOUNT_SEED,
   common::{
-    CancelLendOfferEvent, 
+    LendOfferCancelRequestEvent, 
     LendOfferStatus, 
     LendOfferError
   },
@@ -37,7 +37,7 @@ impl<'info> CancelLendOffer<'info> {
   }
 
   pub fn emit_event_cancel_lend_offer(&mut self, label: String) -> Result<()> {
-    emit!(CancelLendOfferEvent {
+    emit!(LendOfferCancelRequestEvent {
       lender: self.lender.key(),
       amount: self.lend_offer.amount,
       duration: self.lend_offer.duration,

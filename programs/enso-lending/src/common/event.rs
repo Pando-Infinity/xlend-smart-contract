@@ -59,7 +59,7 @@ pub struct EditLendOfferEvent {
 }
 
 #[event]
-pub struct CancelLendOfferEvent {
+pub struct LendOfferCancelRequestEvent {
     pub lender: Pubkey,
     pub interest: f64,
     pub lender_fee_percent: f64,
@@ -69,7 +69,7 @@ pub struct CancelLendOfferEvent {
 }
 
 #[event]
-pub struct SystemCancelLendOfferEvent {
+pub struct LendOfferCanceledEvent {
     pub lender: Pubkey,
     pub interest: f64,
     pub lender_fee_percent: f64,
