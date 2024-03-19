@@ -3,7 +3,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount, TransferChecked, transfer_che
 
 use crate::{
   convert_to_usd_price, 
-  CreateLoanOfferEvent, 
+  LoanOfferCreateRequestEvent, 
   LendOfferAccount, 
   LendOfferStatus, 
   LoanOfferAccount, 
@@ -133,7 +133,7 @@ impl<'info> CreateLoanOffer<'info> {
   }
 
   pub fn emit_event_create_loan_offer(&self, label: String) -> Result<()> {
-    emit!(CreateLoanOfferEvent {
+    emit!(LoanOfferCreateRequestEvent {
       tier_id: self.loan_offer.tier_id.clone(),
       lend_offer_id: self.loan_offer.lend_offer_id.clone(),
       interest: self.loan_offer.interest,
