@@ -7,6 +7,9 @@
 		"target": "es6",
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
-	}
+	},
+  "ts-node": {
+    "esm": true
+  },
 }
           

@@ -189,6 +189,8 @@ describe('enso-lending', () => {
 				receiver: hotWallet.publicKey,
 				settingAccount,
 				systemProgram: SystemProgram.programId,
+        collateralMintAsset: mintSolWrappedAccount,
+        lendMintAsset: mintUsdcAccount,
 			})
       .transaction();
 
