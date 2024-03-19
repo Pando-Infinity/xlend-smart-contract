@@ -8,6 +8,7 @@ use crate::{
   }, 
   RepayOfferError,
   LoanOfferStatus,
+  LoanOfferError,
   common::{
     ENSO_SEED, SETTING_ACCOUNT_SEED,
     LOAN_OFFER_ACCOUNT_SEED, RepayLoanOfferEvent,
@@ -65,6 +66,8 @@ pub struct RepayLoanOffer<'info> {
 
 impl<'info> RepayLoanOffer<'info> {
     pub fn repay_loan_offer(&mut self) -> Result<()> {
+      self.validate_loan_offer()?;
+
       let borrower_fee_percent = self.setting_account.borrower_fee_percent;
       let fee_amount = ((self.loan_offer.borrow_amount as f64) * borrower_fee_percent) as u64;
 
@@ -91,6 +94,19 @@ impl<'info> RepayLoanOffer<'info> {
         repay_amount,
         self.mint_asset.decimals,
       )
+    }
+
+    fn validate_loan_offer(&self) -> Result<()> {
+      let current_timestamp = Clock::get().unwrap().unix_timestamp;
+      let borrowed_timestamp: i64 = self.loan_offer.started_at;
+
+      let current_duration = current_timestamp - borrowed_timestamp;
+
+      if current_duration > self.loan_offer.duration as i64 {
+        return Err(LoanOfferError::DurationLoanOfferInvalid)?;
+      }
+
+      Ok(())
     }
 
     fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
