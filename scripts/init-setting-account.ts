@@ -1,4 +1,4 @@
-import { Connection, Keypair, PublicKey, SystemProgram, clusterApiUrl } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, SystemProgram, clusterApiUrl, sendAndConfirmTransaction } from "@solana/web3.js";
 import { AnchorProvider } from '@project-serum/anchor';
 import {
 	OPERATE_SYSTEM_SECRET_KEY,
@@ -65,7 +65,7 @@ const initSettingAccount = async (params: {
   ownerAccountSetting: Keypair;
   hotWallet: PublicKey;
   
-}): Promise<void> => {
+}) => {
   const {
     amount,
     duration,
@@ -80,7 +80,7 @@ const initSettingAccount = async (params: {
     ownerAccountSetting,
     hotWallet
   } = params;
-  await program.methods
+  return await program.methods
     .initSettingAccount(
       tierId,
       new anchor.BN(amount),
@@ -98,10 +98,7 @@ const initSettingAccount = async (params: {
       collateralPriceFeedAccount,
       lendPriceFeedAccount,
     })
-    .signers([ownerAccountSetting])
-    .rpc()
-    .then((sig) => confirm(connection, sig))
-    .then((sig) => log(connection, sig));
+    .transaction();
 };
 
 (async () => {
@@ -125,7 +122,7 @@ const initSettingAccount = async (params: {
 	const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
 	const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
 
-	await initSettingAccount({
+	const transaction = await initSettingAccount({
 		amount,
 		duration,
 		tierId,
@@ -139,4 +136,10 @@ const initSettingAccount = async (params: {
 		ownerAccountSetting: ownerAccountSetting,
 		hotWallet: hotWallet.publicKey,
 	});
+
+  await sendAndConfirmTransaction(connection, transaction, [
+		ownerAccountSetting,
+  ]).then((tx) => {
+    console.log(tx);
+  });
 })();

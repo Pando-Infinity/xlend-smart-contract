@@ -3,7 +3,8 @@
 		"lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
 		"lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
 		"precommit": "anchor test",
-		"prepare": "husky install"
+		"prepare": "husky install",
+		"init-setting-accounts": "ts-node ./scripts/init-setting-account.ts"
 	},
 	"dependencies": {
 		"@coral-xyz/anchor": "^0.29.0",
@@ -31,6 +32,5 @@
 		"hooks": {
 			"pre-commit": "yarn precommit"
 		}
-	},
-	"type": "module"
+	}
 }
