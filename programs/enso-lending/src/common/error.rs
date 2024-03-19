@@ -10,7 +10,9 @@ pub enum SettingAccountError {
 
 #[error_code]
 pub enum LendOfferError {
-    #[msg("Lender does not have enough assets")]
+    #[msg("Invalid Lend Amount")]
+    InvalidLendAmount,
+    #[msg("Not enough amount")]
     NotEnoughAmount,
     #[msg("Invalid mint asset")]
     InvalidMintAsset,
