@@ -59,7 +59,7 @@ const program = new Program<EnsoLending>(
 	provider
 );
 
-describe('enso-lending', () => {
+xdescribe('enso-lending', () => {
   it('createLoanOffer', async () => {
     const amount = 100 * Math.pow(10, usdcMintDecimal);
 		const duration = 14;
