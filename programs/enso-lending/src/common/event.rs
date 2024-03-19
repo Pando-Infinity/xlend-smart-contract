@@ -79,7 +79,26 @@ pub struct LendOfferCanceledEvent {
 }
 
 #[event]
-pub struct CreateLoanOfferEvent {
+pub struct LoanOfferCreateRequestEvent {
+    pub tier_id: String,
+    pub lend_offer_id: String,
+    pub interest: f64,
+    pub borrow_amount: u64,
+    pub lender_fee_percent: f64,
+    pub duration: u64,
+    pub lend_mint_token: Pubkey,
+    pub lender: Pubkey,
+    pub offer_id: String,
+    pub borrower: Pubkey,
+    pub collateral_mint_token: Pubkey,
+    pub collateral_amount: u64,
+    pub status: LoanOfferStatus,
+    pub borrower_fee_percent: f64,
+    pub started_at: i64,
+}
+
+#[event]
+pub struct LoanOfferUpdateEvent {
     pub tier_id: String,
     pub lend_offer_id: String,
     pub interest: f64,

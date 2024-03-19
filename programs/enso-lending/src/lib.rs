@@ -85,7 +85,6 @@ pub mod enso_lending {
         Ok(())
     }
 
-
     pub fn edit_lend_offer(
         ctx: Context<EditLendOffer>,
         _offer_id: String,
@@ -99,13 +98,14 @@ pub mod enso_lending {
     }
 
     pub fn system_cancel_lend_offer(
-        ctx: Context<SystemCancelLendOffer>, 
-        _offer_id: String, 
-        _tier_id: String, 
-        lend_amount: u64, 
-        waiting_interest: u64
+        ctx: Context<SystemCancelLendOffer>,
+        _offer_id: String,
+        _tier_id: String,
+        lend_amount: u64,
+        waiting_interest: u64,
     ) -> Result<()> {
-        ctx.accounts.system_cancel_lend_offer(lend_amount, waiting_interest)?;
+        ctx.accounts
+            .system_cancel_lend_offer(lend_amount, waiting_interest)?;
 
         Ok(())
     }
@@ -155,6 +155,17 @@ pub mod enso_lending {
         )?;
         ctx.accounts
             .emit_event_create_loan_offer(String::from("create_loan_offer_native"))?;
+
+        Ok(())
+    }
+
+    pub fn system_update_loan_offer(
+        ctx: Context<SystemUpdateLoanOffer>,
+        _offer_id: String,
+        _tier_id: String,
+        borrow_amount: u64,
+    ) -> Result<()> {
+        ctx.accounts.system_update_loan_offer(borrow_amount)?;
 
         Ok(())
     }
