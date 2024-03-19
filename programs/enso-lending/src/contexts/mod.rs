@@ -20,6 +20,8 @@ pub mod deposit_collateral_loan_offer;
 pub use deposit_collateral_loan_offer::*;
 pub mod deposit_collateral_loan_offer_native;
 pub use deposit_collateral_loan_offer_native::*;
+pub mod system_update_loan_offer;
+pub use system_update_loan_offer::*;
 
 pub mod withdraw_collateral;
 pub use withdraw_collateral::*;

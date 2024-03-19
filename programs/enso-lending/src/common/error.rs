@@ -38,7 +38,7 @@ pub enum LoanOfferError {
     InvalidPriceFeedAccountForCollateralAsset,
     #[msg("Invalid price feed account for lend asset")]
     InvalidPriceFeedAccountForLendAsset,
-    #[msg("Borrower does not have enough assets")]
+    #[msg("Not enough amount")]
     NotEnoughAmount,
     #[msg("Invalid collateral mint asset")]
     InvalidCollateralMintAsset,
@@ -54,6 +54,12 @@ pub enum LoanOfferError {
     DurationLoanOfferInvalid,
     #[msg("Invalid operator system account")]
     InvalidSystem,
+    #[msg("Invalid borrower")]
+    InvalidBorrower,
+    #[msg("Invalid loan offer")]
+    InvalidLoanOffer,
+    #[msg("Invalid borrow amount")]
+    InvalidBorrowAmount,
 }
 
 #[error_code]
