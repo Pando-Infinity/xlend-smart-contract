@@ -10,6 +10,7 @@ pub enum LendOfferStatus {
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, PartialEq, Eq, InitSpace, Debug)]
 pub enum LoanOfferStatus {
     Matched,
+    Repay,
     Finished,
     Liquidating,
     Liquidated
