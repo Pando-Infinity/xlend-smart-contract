@@ -17,7 +17,9 @@ pub struct DepositCollateralLoanOfferNative<'info> {
   pub borrower: Signer<'info>,
   #[account(
     mut,
-    constraint = loan_offer.status == LoanOfferStatus::Matched @ LoanOfferError::CanNotDepositCollateralToContractThatNotAvailable,
+    constraint = 
+      loan_offer.status == LoanOfferStatus::Matched || loan_offer.status == LoanOfferStatus::FundTransferred 
+      @ LoanOfferError::CanNotDepositCollateralToContractThatNotAvailable,
     seeds = [
       ENSO_SEED.as_ref(),
       LOAN_OFFER_ACCOUNT_SEED.as_ref(),

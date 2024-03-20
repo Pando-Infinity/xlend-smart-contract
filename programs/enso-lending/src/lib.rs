@@ -30,7 +30,7 @@ pub mod enso_lending {
             amount,
             duration,
             lender_fee_percent,
-            borrower_fee_percent
+            borrower_fee_percent,
         )?;
         ctx.accounts
             .emit_init_setting_account_event(String::from("Emit event init setting account"))?;
@@ -46,8 +46,12 @@ pub mod enso_lending {
         lender_fee_percent: Option<f64>,
         borrower_fee_percent: Option<f64>,
     ) -> Result<()> {
-        ctx.accounts
-            .edit_setting_account(amount, duration, lender_fee_percent, borrower_fee_percent)?;
+        ctx.accounts.edit_setting_account(
+            amount,
+            duration,
+            lender_fee_percent,
+            borrower_fee_percent,
+        )?;
 
         ctx.accounts
             .emit_event_edit_setting_account(String::from("edit_setting_account"))?;
@@ -66,54 +70,102 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn create_lend_offer(ctx: Context<CreateLendOffer>, offer_id: String, _tier_id: String, interest: f64) -> Result<()> {
-        ctx.accounts.initialize_lend_offer(&ctx.bumps, offer_id, interest)?;
+    pub fn create_lend_offer(
+        ctx: Context<CreateLendOffer>,
+        offer_id: String,
+        _tier_id: String,
+        interest: f64,
+    ) -> Result<()> {
+        ctx.accounts
+            .initialize_lend_offer(&ctx.bumps, offer_id, interest)?;
         ctx.accounts.deposit()?;
-        ctx.accounts.emit_event_create_lend_offer(String::from("create_lend_offer"))?;
+        ctx.accounts
+            .emit_event_create_lend_offer(String::from("create_lend_offer"))?;
 
         Ok(())
     }
 
-    pub fn edit_lend_offer(ctx: Context<EditLendOffer>, _offer_id: String, interest: f64) -> Result<()> {
+    pub fn edit_lend_offer(
+        ctx: Context<EditLendOffer>,
+        _offer_id: String,
+        interest: f64,
+    ) -> Result<()> {
         ctx.accounts.edit_lend_offer(interest)?;
-        ctx.accounts.emit_event_edit_lend_offer(String::from("edit_lend_offer"))?;
+        ctx.accounts
+            .emit_event_edit_lend_offer(String::from("edit_lend_offer"))?;
 
         Ok(())
     }
 
-    pub fn cancel_lend_offer(ctx: Context<CancelLendOffer>, offer_id: String) -> Result<()> {
+    pub fn system_cancel_lend_offer(
+        ctx: Context<SystemCancelLendOffer>,
+        _offer_id: String,
+        _tier_id: String,
+        lend_amount: u64,
+        waiting_interest: u64,
+    ) -> Result<()> {
+        ctx.accounts
+            .system_cancel_lend_offer(lend_amount, waiting_interest)?;
+
+        Ok(())
+    }
+
+    pub fn cancel_lend_offer(ctx: Context<CancelLendOffer>, _offer_id: String) -> Result<()> {
         ctx.accounts.cancel_lend_offer()?;
 
-        ctx.accounts.emit_event_cancel_lend_offer(
-            String::from("cancel_lend_offer"),
-            offer_id.clone(),
-        )?;
+        ctx.accounts
+            .emit_event_cancel_lend_offer(String::from("cancel_lend_offer"))?;
 
         Ok(())
     }
 
     pub fn create_loan_offer(
-        ctx: Context<CreateLoanOffer>, 
-        offer_id: String, 
-        lend_offer_id: String, 
-        tier_id: String, 
-        collateral_amount: u64
+        ctx: Context<CreateLoanOffer>,
+        offer_id: String,
+        lend_offer_id: String,
+        tier_id: String,
+        collateral_amount: u64,
     ) -> Result<()> {
-        ctx.accounts.initialize_loan_offer(&ctx.bumps, offer_id, lend_offer_id, tier_id, collateral_amount)?;
-        ctx.accounts.emit_event_create_loan_offer(String::from("create_loan_offer"))?;
+        ctx.accounts.initialize_loan_offer(
+            &ctx.bumps,
+            offer_id,
+            lend_offer_id,
+            tier_id,
+            collateral_amount,
+        )?;
+        ctx.accounts
+            .emit_event_create_loan_offer(String::from("create_loan_offer"))?;
 
         Ok(())
     }
 
     pub fn create_loan_offer_native(
         ctx: Context<CreateLoanOfferNative>,
-        offer_id: String, 
-        lend_offer_id: String, 
-        tier_id: String, 
-        collateral_amount: u64
+        offer_id: String,
+        lend_offer_id: String,
+        tier_id: String,
+        collateral_amount: u64,
     ) -> Result<()> {
-        ctx.accounts.initialize_loan_offer(&ctx.bumps, offer_id, lend_offer_id, tier_id, collateral_amount)?;
-        ctx.accounts.emit_event_create_loan_offer(String::from("create_loan_offer_native"))?;
+        ctx.accounts.initialize_loan_offer(
+            &ctx.bumps,
+            offer_id,
+            lend_offer_id,
+            tier_id,
+            collateral_amount,
+        )?;
+        ctx.accounts
+            .emit_event_create_loan_offer(String::from("create_loan_offer_native"))?;
+
+        Ok(())
+    }
+
+    pub fn system_update_loan_offer(
+        ctx: Context<SystemUpdateLoanOffer>,
+        _offer_id: String,
+        _tier_id: String,
+        borrow_amount: u64,
+    ) -> Result<()> {
+        ctx.accounts.system_update_loan_offer(borrow_amount)?;
 
         Ok(())
     }
@@ -122,10 +174,13 @@ pub mod enso_lending {
         ctx: Context<DepositCollateralLoanOffer>,
         _offer_id: String,
         _tier_id: String,
-        amount: u64
+        amount: u64,
     ) -> Result<()> {
         ctx.accounts.deposit_collateral_loan_offer(amount)?;
-        ctx.accounts.emit_event_deposit_collateral_loan_offer(String::from("deposit_collateral_loan_offer"))?;
+        ctx.accounts
+            .emit_event_deposit_collateral_loan_offer(String::from(
+                "deposit_collateral_loan_offer",
+            ))?;
 
         Ok(())
     }
@@ -134,10 +189,13 @@ pub mod enso_lending {
         ctx: Context<DepositCollateralLoanOfferNative>,
         _offer_id: String,
         _tier_id: String,
-        amount: u64
+        amount: u64,
     ) -> Result<()> {
         ctx.accounts.deposit_collateral_loan_offer(amount)?;
-        ctx.accounts.emit_event_deposit_collateral_loan_offer(String::from("deposit_collateral_loan_offer_native"))?;
+        ctx.accounts
+            .emit_event_deposit_collateral_loan_offer(String::from(
+                "deposit_collateral_loan_offer_native",
+            ))?;
 
         Ok(())
     }
@@ -151,20 +209,26 @@ pub mod enso_lending {
     pub fn withdraw_collateral(
         ctx: Context<WithdrawCollateral>,
         loan_offer_id: String,
-        withdraw_amount: u64
+        withdraw_amount: u64,
     ) -> Result<()> {
         ctx.accounts.withdraw_collateral(withdraw_amount)?;
-        ctx.accounts.emit_event_withdraw_collateral(String::from("withdraw_collateral"), loan_offer_id, withdraw_amount)?;
+        ctx.accounts.emit_event_withdraw_collateral(
+            String::from("withdraw_collateral"),
+            loan_offer_id,
+            withdraw_amount,
+        )?;
 
         Ok(())
     }
     pub fn start_liquidate_contract(
         ctx: Context<LiquidateCollateral>,
         liquidating_price: u64,
-        liquidating_at: u64
+        liquidating_at: u64,
     ) -> Result<()> {
-        ctx.accounts.start_liquidate_contract(liquidating_price, liquidating_at)?;
-        ctx.accounts.emit_event_start_liquidate_contract(String::from("liquidating_collateral"))?;
+        ctx.accounts
+            .start_liquidate_contract(liquidating_price, liquidating_at)?;
+        ctx.accounts
+            .emit_event_start_liquidate_contract(String::from("liquidating_collateral"))?;
 
         Ok(())
     }
@@ -174,10 +238,11 @@ pub mod enso_lending {
         liquidated_price: u64,
         liquidated_tx: String,
     ) -> Result<()> {
-        ctx.accounts.finish_liquidate_contract(liquidated_price, liquidated_tx)?;
-        ctx.accounts.emit_event_finish_liquidate_contract(String::from("Liquidated_collateral"))?;
+        ctx.accounts
+            .finish_liquidate_contract(liquidated_price, liquidated_tx)?;
+        ctx.accounts
+            .emit_event_finish_liquidate_contract(String::from("Liquidated_collateral"))?;
 
         Ok(())
     }
-
 }
