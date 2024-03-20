@@ -4,7 +4,7 @@ use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_in
 use anchor_spl::token::{Mint, Token};
 
 use crate::{
-  common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, convert_to_usd_price, CreateLoanOfferEvent, LendOfferAccount, LendOfferStatus, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount, MIN_BORROW_HEALTH_RATIO, NATIVE_MINT
+  common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, convert_to_usd_price, LoanOfferCreateRequestEvent, LendOfferAccount, LendOfferStatus, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount, MIN_BORROW_HEALTH_RATIO, NATIVE_MINT
 };
 
 #[derive(Accounts)]
@@ -26,7 +26,7 @@ pub struct CreateLoanOfferNative<'info> {
   )]
   pub lend_mint_asset: Account<'info, Mint>,
   #[account(
-    init_if_needed,
+    init,
     payer = borrower,
     space = LoanOfferAccount::INIT_SPACE,
     seeds = [
@@ -119,7 +119,7 @@ impl<'info> CreateLoanOfferNative<'info> {
   }
 
   pub fn emit_event_create_loan_offer(&self, label: String) -> Result<()> {
-    emit!(CreateLoanOfferEvent {
+    emit!(LoanOfferCreateRequestEvent {
       tier_id: self.loan_offer.tier_id.clone(),
       lend_offer_id: self.loan_offer.lend_offer_id.clone(),
       interest: self.loan_offer.interest,

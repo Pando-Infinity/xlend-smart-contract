@@ -3,13 +3,15 @@ use anchor_lang::prelude::{borsh, AnchorDeserialize, AnchorSerialize, InitSpace}
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, PartialEq, Eq, InitSpace, Debug)]
 pub enum LendOfferStatus {
     Created,
+    Canceling,
+    Canceled,
     Loaned,
-    Canceled
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, PartialEq, Eq, InitSpace, Debug)]
 pub enum LoanOfferStatus {
     Matched,
+    FundTransferred,
     Repay,
     Finished,
     Liquidating,
