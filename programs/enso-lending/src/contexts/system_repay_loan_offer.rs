@@ -33,6 +33,7 @@ pub struct SystemRepayLoanOffer<'info> {
   )]
   pub lender_ata_asset: Account<'info, TokenAccount>,
   /// CHECK: This is the account used to receive back the collateral amount
+  #[account(mut)]
   pub borrower: AccountInfo<'info>,
   #[account(
     mut,
