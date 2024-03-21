@@ -99,6 +99,7 @@ impl<'info> CreateLoanOfferNative<'info> {
       borrower_fee_percent: self.setting_account.borrower_fee_percent,
       bump: bumps.loan_offer,
       collateral_amount,
+      request_withdraw_amount: None,
       collateral_mint_token: Pubkey::from_str(NATIVE_MINT).unwrap(),
       duration: self.lend_offer.duration,
       interest: self.lend_offer.interest,

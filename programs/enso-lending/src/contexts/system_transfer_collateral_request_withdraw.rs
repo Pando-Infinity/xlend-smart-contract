@@ -1,25 +1,29 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
 use anchor_spl::token::{Mint, Token};
 
 use crate::{
-  convert_to_usd_price,
-  states::{
+  common::{
+    constant::MIN_BORROW_HEALTH_RATIO, ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
+  }, convert_to_usd_price, states::{
     loan_offer::LoanOfferAccount,
     setting_account::SettingAccount
-  },
-  LoanOfferStatus,
-  LoanOfferError,
-  common::{
-    ENSO_SEED, SETTING_ACCOUNT_SEED,
-    LOAN_OFFER_ACCOUNT_SEED, constant::MIN_BORROW_HEALTH_RATIO, WithdrawCollateralEvent,
-  }
+  }, LoanOfferError, LoanOfferStatus, TransferCollateralWithdrawRequestEvent
 };
 
 #[derive(Accounts)]
 #[instruction(loan_offer_id: String, withdraw_amount: u64)]
-pub struct WithdrawCollateral<'info> {
-    #[account(mut)]
-    pub borrower: Signer<'info>,
+pub struct SystemTransferCollateralRequestWithdraw<'info> {
+    #[account(
+      mut,
+      constraint = system_wallet.to_account_info().lamports() >= withdraw_amount @ LoanOfferError::NotEnoughAmount
+    )]
+    pub system_wallet: Signer<'info>,
+    /// CHECK: This is the account used to transfer collateral had request withdraw
+    #[account(
+      mut,
+      constraint = borrower.key() == loan_offer.borrower @ LoanOfferError::InvalidBorrower
+    )]
+    pub borrower: UncheckedAccount<'info>,
     #[account(
       constraint = collateral_mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidCollateralMintAsset,
     )]
@@ -59,8 +63,8 @@ pub struct WithdrawCollateral<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> WithdrawCollateral<'info> {
-  pub fn withdraw_collateral(&mut self, loan_offer_id: String, withdraw_amount: u64) -> Result<()> {
+impl<'info> SystemTransferCollateralRequestWithdraw<'info> {
+  pub fn system_transfer_collateral_request_withdraw(&mut self, loan_offer_id: String, withdraw_amount: u64) -> Result<()> {
     let lend_amount_to_usd = convert_to_usd_price(
       &self.lend_price_feed_account.to_account_info(), 
       self.setting_account.amount as f64 / 10f64.powf(self.lend_mint_asset.decimals as f64)
@@ -76,6 +80,7 @@ impl<'info> WithdrawCollateral<'info> {
     let health_ratio = remaining_collateral_in_usd / lend_amount_to_usd;
 
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
+      self.loan_offer.request_withdraw_amount = None;
       return Err(LoanOfferError::HealthRatioLimit)?;
     }
 
@@ -83,13 +88,17 @@ impl<'info> WithdrawCollateral<'info> {
     let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
     if current_timestamp > end_borrowed_loan_offer {
+      self.loan_offer.request_withdraw_amount = None;
       return Err(LoanOfferError::DurationLoanOfferInvalid)?;
     }
 
-    self.loan_offer.request_withdraw_amount = Some(withdraw_amount);
+    self.transfer_collateral_to_borrower(withdraw_amount)?;
 
-    self.emit_event_withdraw_collateral(
-      String::from("withdraw_collateral"),
+    self.loan_offer.request_withdraw_amount = None;
+    self.loan_offer.collateral_amount = remaining_collateral;
+
+    self.emit_event_transfer_collateral_withdraw(
+      String::from("system_transfer_collateral_request_withdraw"),
       loan_offer_id,
       withdraw_amount,
     )?;
@@ -97,8 +106,28 @@ impl<'info> WithdrawCollateral<'info> {
     Ok(())
   }
 
-  fn emit_event_withdraw_collateral(&mut self, label: String, loan_offer_id: String, withdraw_amount: u64) -> Result<()> {
-    emit!(WithdrawCollateralEvent {
+  fn transfer_collateral_to_borrower(&self, collateral_amount: u64) -> Result<()> {
+    let transfer_instruction = system_instruction::transfer(
+      &self.system_wallet.key(), 
+      &self.borrower.key(), 
+      collateral_amount
+    );
+
+    invoke_signed(
+      &transfer_instruction, 
+      &[
+        self.system_wallet.to_account_info(),
+        self.borrower.to_account_info(),
+        self.system_program.to_account_info()
+      ], 
+      &[]
+    )?;
+
+    Ok(())
+  }
+
+  fn emit_event_transfer_collateral_withdraw(&mut self, label: String, loan_offer_id: String, withdraw_amount: u64) -> Result<()> {
+    emit!(TransferCollateralWithdrawRequestEvent {
       borrower: self.borrower.key(),
       loan_offer_id,
       collateral_amount: self.loan_offer.collateral_amount,
