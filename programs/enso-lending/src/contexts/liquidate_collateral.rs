@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use anchor_lang::prelude::*;
 
-use crate::{common::constant::{ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, OPERATE_SYSTEM_PUBKEY}, LiquidatedCollateralEvent, LiquidatingCollateralEvent, LoanOfferAccount, LoanOfferError, LoanOfferStatus};
+use crate::{common::constant::{ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, OPERATE_SYSTEM_PUBKEY}, LiquidatingCollateralEvent, LoanOfferAccount, LoanOfferError, LoanOfferStatus};
 
 #[derive(Accounts)]
 #[instruction(offer_id: String)]
@@ -31,6 +31,13 @@ impl<'info> LiquidateCollateral<'info> {
       return Err(LoanOfferError::InvalidSystem)?;
     }
 
+    let current_timestamp = Clock::get().unwrap().unix_timestamp;
+    let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
+
+    if current_timestamp > end_borrowed_loan_offer {
+      return Err(LoanOfferError::DurationLoanOfferInvalid)?;
+    }
+
     let loan_offer = &mut self.loan_offer;
     if loan_offer.status != LoanOfferStatus::Matched {
       return Err(LoanOfferError::InvalidOfferStatus)?;
@@ -48,34 +55,6 @@ impl<'info> LiquidateCollateral<'info> {
       offer_id: self.loan_offer.offer_id.clone(),
       liquidating_at: self.loan_offer.liquidating_at.unwrap(),
       liquidating_price: self.loan_offer.liquidating_price.unwrap(),
-    });
-
-    msg!(&label.clone());
-    Ok(())
-  }
-
-  pub fn finish_liquidate_contract(&mut self, liquidated_price: u64, liquidated_tx: String) -> Result<()> {
-    if self.system.key() != Pubkey::from_str(OPERATE_SYSTEM_PUBKEY).unwrap() {
-      return Err(LoanOfferError::InvalidSystem)?;
-    }
-
-    let loan_offer = &mut self.loan_offer;
-    if loan_offer.status != LoanOfferStatus::Liquidating {
-      return Err(LoanOfferError::InvalidOfferStatus)?;
-    }
-
-    loan_offer.liquidated_price = Some(liquidated_price);
-    loan_offer.liquidated_tx = Some(liquidated_tx);
-    loan_offer.status = LoanOfferStatus::Liquidated;
-
-    Ok(())
-  }
-  
-  pub fn emit_event_finish_liquidate_contract(&self, label: String) -> Result<()> {
-    emit!(LiquidatedCollateralEvent {
-      offer_id: self.loan_offer.offer_id.clone(),
-      liquidated_price: self.loan_offer.liquidated_price.unwrap(),
-      liquidated_tx: self.loan_offer.liquidated_tx.as_ref().unwrap().clone(),
     });
 
     msg!(&label.clone());

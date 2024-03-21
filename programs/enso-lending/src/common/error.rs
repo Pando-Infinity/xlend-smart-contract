@@ -73,3 +73,23 @@ pub enum RepayOfferError {
     #[msg("Loan offer is not available")]
     LoanOfferIsNotAvailable
 }
+
+#[error_code]
+pub enum LiquidateOfferError {
+    #[msg("Loan offer not belong to lender")]
+    InvalidLender,
+     #[msg("Loan offer not belong to borrower")]
+    InvalidBorrower,
+    #[msg("Loan offer status is invalid")]
+    InvalidOfferStatus,
+    #[msg("Invalid lend amount")]
+    InvalidLendAmount,
+    #[msg("Not have enough amount of assets")]
+    NotEnoughAmount,
+    #[msg("Invalid mint asset")]
+    InvalidMintAsset,
+    #[msg("Collateral amount not valid")]
+    CollateralAmountNotValid,
+    #[msg("Invalid operator system account")]
+    InvalidSystem,
+}
