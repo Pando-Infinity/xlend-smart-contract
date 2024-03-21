@@ -3,12 +3,12 @@ use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChe
 use crate::{
   common::{
     RepayOfferError, constant::LoanOfferStatus
-  }, SystemRepayLoanOfferEvent, LOAN_OFFER_ACCOUNT_SEED, ENSO_SEED, states::loan_offer::LoanOfferAccount
+  }, SystemRepayLoadOfferNativeEvent, LOAN_OFFER_ACCOUNT_SEED, ENSO_SEED, states::loan_offer::LoanOfferAccount
 };
 
 #[derive(Accounts)]
 #[instruction(loan_offer_id: String)]
-pub struct SystemRepayLoanOffer<'info> {
+pub struct SystemRepayLoadOfferNative<'info> {
   #[account(mut)]
   pub system: Signer<'info>,
   #[account(
@@ -52,12 +52,12 @@ pub struct SystemRepayLoanOffer<'info> {
   pub system_program: Program<'info, System>,
 }
 
-impl<'info> SystemRepayLoanOffer<'info> {
+impl<'info> SystemRepayLoadOfferNative<'info> {
   pub fn system_repay_loan_offer(&mut self, loan_amount: u64, collateral_amount: u64, waiting_interest: u64) -> Result<()>  {
-    let interest_loan_amount = self.loan_offer.interest * loan_amount as f64;
-    let lender_fee_amount = self.loan_offer.lender_fee_percent * loan_amount as f64;
+    let interest_loan_amount = (self.loan_offer.interest * loan_amount as f64) as u64;
+    let lender_fee_amount = (self.loan_offer.lender_fee_percent * loan_amount as f64) as u64;
 
-    let total_repay_to_lender = loan_amount + waiting_interest + interest_loan_amount as u64 - lender_fee_amount as u64;
+    let total_repay_to_lender = loan_amount + waiting_interest + interest_loan_amount - lender_fee_amount;
 
     self.transfer_asset_to_borrower(collateral_amount)?;
     self.transfer_asset_to_lender(loan_amount, total_repay_to_lender)?;
@@ -65,7 +65,6 @@ impl<'info> SystemRepayLoanOffer<'info> {
 
     self.emit_event_system_repay_loan_offer(
       String::from("system_repay_loan_offer"),
-      total_repay_to_lender,
       waiting_interest,
       loan_amount, 
       collateral_amount
@@ -143,16 +142,15 @@ impl<'info> SystemRepayLoanOffer<'info> {
   fn emit_event_system_repay_loan_offer(
     &mut self,
     label: String,
-    total_repay_to_lender: u64,
     waiting_interest: u64,
     loan_amount: u64,
     collateral_amount: u64
   ) -> Result<()> {
-    emit!(SystemRepayLoanOfferEvent {
+    emit!(SystemRepayLoadOfferNativeEvent {
       system: self.system.key(),
       lender: self.lender.key(),
       borrower: self.borrower.key(),
-      total_repay_to_lender,
+      interest: self.loan_offer.interest,
       loan_amount,
       loan_offer_id: self.loan_offer.offer_id.clone(),
       tier_id: self.loan_offer.tier_id.clone(),

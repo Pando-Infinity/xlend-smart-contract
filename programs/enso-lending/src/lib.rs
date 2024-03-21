@@ -207,7 +207,7 @@ pub mod enso_lending {
     }
 
     pub fn system_repay_loan_offer(
-        ctx: Context<SystemRepayLoanOffer>,
+        ctx: Context<SystemRepayLoadOfferNative>,
         _loan_offer_id: String,
         loan_amount: u64,
         collateral_amount: u64,
