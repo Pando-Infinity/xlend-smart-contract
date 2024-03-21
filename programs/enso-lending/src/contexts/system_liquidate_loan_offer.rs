@@ -37,7 +37,7 @@ pub struct SystemLiquidateLoanOffer<'info> {
     associated_token::authority = lender
   )]
   pub lender_ata_asset: Account<'info, TokenAccount>,
-  /// CHECK: This account is used to transfer back collateral for lender
+  /// CHECK: This account is used to transfer back collateral for borrower
   #[account(
     constraint = borrower.key() == loan_offer.borrower @ LiquidateOfferError::InvalidBorrower
   )]
