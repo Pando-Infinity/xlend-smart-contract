@@ -149,7 +149,7 @@ pub struct RepayLoanOfferEvent {
   pub loan_offer_id: String,
   pub repay_amount: u64,
   pub borrower_fee_percent: f64,
-   pub status: LoanOfferStatus,
+  pub status: LoanOfferStatus,
 }
 
 #[event]
