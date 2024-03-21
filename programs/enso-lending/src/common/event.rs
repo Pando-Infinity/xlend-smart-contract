@@ -149,6 +149,7 @@ pub struct RepayLoanOfferEvent {
   pub loan_offer_id: String,
   pub repay_amount: u64,
   pub borrower_fee_percent: f64,
+  pub status: LoanOfferStatus,
 }
 
 #[event]
@@ -163,4 +164,18 @@ pub struct LiquidatedCollateralEvent {
     pub offer_id: String,
     pub liquidated_price: u64,
     pub liquidated_tx: String,
+}
+
+#[event]
+pub struct SystemRepayLoadOfferNativeEvent {
+    pub system: Pubkey,
+    pub lender: Pubkey,
+    pub borrower: Pubkey,
+    pub interest: f64,
+    pub loan_amount: u64,
+    pub collateral_amount: u64,
+    pub waiting_interest: u64,
+    pub loan_offer_id: String,
+    pub tier_id: String,
+    pub status: LoanOfferStatus,
 }

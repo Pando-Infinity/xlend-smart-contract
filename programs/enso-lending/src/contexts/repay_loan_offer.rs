@@ -81,7 +81,7 @@ impl<'info> RepayLoanOffer<'info> {
       }
 
       self.deposit(total_amount)?;
-      self.loan_offer.status = LoanOfferStatus::Finished;
+      self.loan_offer.status = LoanOfferStatus::Repay;
 
       self.emit_event_repay_loan_offer( "repay_loan_offer".to_string(), self.loan_offer.offer_id.clone(), total_amount)?;
       
@@ -123,6 +123,7 @@ impl<'info> RepayLoanOffer<'info> {
         loan_offer_id,
         repay_amount,
         borrower_fee_percent: self.setting_account.borrower_fee_percent,
+        status: self.loan_offer.status
       });
       
       msg!(&label.clone());
