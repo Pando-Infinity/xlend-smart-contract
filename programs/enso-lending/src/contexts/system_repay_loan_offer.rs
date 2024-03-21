@@ -3,7 +3,7 @@ use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChe
 use crate::{
   common::{
     RepayOfferError, constant::LoanOfferStatus
-  }, SettingAccount, SystemRepayLoanOfferEvent, LOAN_OFFER_ACCOUNT_SEED, ENSO_SEED, SETTING_ACCOUNT_SEED, states::loan_offer::LoanOfferAccount
+  }, SystemRepayLoanOfferEvent, LOAN_OFFER_ACCOUNT_SEED, ENSO_SEED, states::loan_offer::LoanOfferAccount
 };
 
 #[derive(Accounts)]
@@ -18,7 +18,7 @@ pub struct SystemRepayLoanOffer<'info> {
   )]
   pub system_ata_asset: Account<'info, TokenAccount>,
   #[account(
-    constraint = mint_asset.key() == setting_account.lend_mint_asset @ RepayOfferError::InvalidMintAsset,
+    constraint = mint_asset.key() == loan_offer.lend_mint_token @ RepayOfferError::InvalidMintAsset,
   )]
   pub mint_asset: Account<'info, Mint>,
   /// CHECK: This account is used to validate the wallet receive back lend amount
@@ -34,7 +34,7 @@ pub struct SystemRepayLoanOffer<'info> {
   pub lender_ata_asset: Account<'info, TokenAccount>,
   /// CHECK: This is the account used to receive back the collateral amount
   #[account(mut)]
-  pub borrower: AccountInfo<'info>,
+  pub borrower: UncheckedAccount<'info>,
   #[account(
     mut,
     constraint = loan_offer.status == LoanOfferStatus::Repay @ RepayOfferError::InvalidOfferStatus,
@@ -48,16 +48,6 @@ pub struct SystemRepayLoanOffer<'info> {
     bump = loan_offer.bump
   )]
   pub loan_offer: Account<'info, LoanOfferAccount>,
-  #[account(
-    seeds = [
-        ENSO_SEED.as_ref(), 
-        SETTING_ACCOUNT_SEED.as_ref(),
-        loan_offer.tier_id.as_bytes(), 
-        crate::ID.key().as_ref(), 
-    ],
-    bump = setting_account.bump
-  )]
-  pub setting_account: Account<'info, SettingAccount>,
   pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
 }
@@ -165,7 +155,7 @@ impl<'info> SystemRepayLoanOffer<'info> {
       total_repay_to_lender,
       loan_amount,
       loan_offer_id: self.loan_offer.offer_id.clone(),
-      tier_id: self.setting_account.tier_id.clone(),
+      tier_id: self.loan_offer.tier_id.clone(),
       collateral_amount,
       status: self.loan_offer.status,
       waiting_interest
