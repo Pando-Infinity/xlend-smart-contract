@@ -73,18 +73,18 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
     liquidated_price: u64,
     liquidated_tx: String
   ) -> Result<()>  {
-    let interest_loan_amount = self.loan_offer.interest * loan_amount as f64;
-    let lender_fee_amount = self.loan_offer.lender_fee_percent * loan_amount as f64;
+    let interest_loan_amount = (self.loan_offer.interest * loan_amount as f64) as u64;
+    let lender_fee_amount = (self.loan_offer.lender_fee_percent * loan_amount as f64) as u64;
     let total_transfer_to_lender = loan_amount + waiting_interest + interest_loan_amount as u64 - lender_fee_amount as u64;
 
-    let borrower_fee_amount = self.loan_offer.borrower_fee_percent * loan_amount as f64;
-    let remaining_fund_to_borrower = collateral_swapped_amount - loan_amount - interest_loan_amount as u64 - borrower_fee_amount as u64; 
+    let borrower_fee_amount = (self.loan_offer.borrower_fee_percent * loan_amount as f64) as u64;
+    let remaining_fund_to_borrower = collateral_swapped_amount - loan_amount - interest_loan_amount - borrower_fee_amount; 
     
     if total_transfer_to_lender + remaining_fund_to_borrower > self.system_ata_asset.amount {
       return Err(LiquidateOfferError::NotEnoughAmount)?;
     }
 
-    if remaining_fund_to_borrower <= u64::MIN {
+    if remaining_fund_to_borrower < u64::MIN {
       return Err(LiquidateOfferError::CollateralAmountNotValid)?;
     }
 

@@ -31,13 +31,6 @@ impl<'info> LiquidateCollateral<'info> {
       return Err(LoanOfferError::InvalidSystem)?;
     }
 
-    let current_timestamp = Clock::get().unwrap().unix_timestamp;
-    let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
-
-    if current_timestamp > end_borrowed_loan_offer {
-      return Err(LoanOfferError::DurationLoanOfferInvalid)?;
-    }
-
     let loan_offer = &mut self.loan_offer;
     if loan_offer.status != LoanOfferStatus::Matched {
       return Err(LoanOfferError::InvalidOfferStatus)?;

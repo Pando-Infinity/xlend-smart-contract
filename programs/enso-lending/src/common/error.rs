@@ -52,8 +52,8 @@ pub enum LoanOfferError {
     LendOfferIsNotAvailable,
     #[msg("Health ratio limit")]
     HealthRatioLimit,
-    #[msg("Duration loan offer invalid")]
-    DurationLoanOfferInvalid,
+    #[msg("Loan offer expired")]
+    LoanOfferExpired,
     #[msg("Invalid operator system account")]
     InvalidSystem,
     #[msg("Invalid borrower")]
