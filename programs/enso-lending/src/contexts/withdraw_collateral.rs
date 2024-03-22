@@ -84,7 +84,7 @@ impl<'info> WithdrawCollateral<'info> {
     let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
     if current_timestamp > end_borrowed_loan_offer {
-      return Err(LoanOfferError::DurationLoanOfferInvalid)?;
+      return Err(LoanOfferError::LoanOfferExpired)?;
     }
 
     self.loan_offer.collateral_amount = remaining_collateral;
