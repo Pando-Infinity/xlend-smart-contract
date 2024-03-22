@@ -52,8 +52,8 @@ pub enum LoanOfferError {
     LendOfferIsNotAvailable,
     #[msg("Health ratio limit")]
     HealthRatioLimit,
-    #[msg("Duration loan offer invalid")]
-    DurationLoanOfferInvalid,
+    #[msg("Loan offer expired")]
+    LoanOfferExpired,
     #[msg("Invalid operator system account")]
     InvalidSystem,
     #[msg("Invalid borrower")]
@@ -71,7 +71,7 @@ pub enum RepayOfferError {
     #[msg("Not enough assets")]
     NotEnoughAmount,
     #[msg("Loan offer is not available")]
-    LoanOfferIsNotAvailable,
+     LoanOfferIsNotAvailable,
     #[msg("Invalid lend amount")]
     InvalidLendAmount,
     #[msg("Loan offer not belong to lender")]
@@ -82,4 +82,22 @@ pub enum RepayOfferError {
     InvalidCollateralAmount,
     #[msg("Invalid offer status")]
     InvalidOfferStatus
+}
+
+#[error_code]
+pub enum LiquidateOfferError {
+    #[msg("Loan offer not belong to lender")]
+    InvalidLender,
+     #[msg("Loan offer not belong to borrower")]
+    InvalidBorrower,
+    #[msg("Loan offer status is invalid")]
+    InvalidOfferStatus,
+    #[msg("Invalid lend amount")]
+    InvalidLendAmount,
+    #[msg("Not have enough amount of assets")]
+    NotEnoughAmount,
+    #[msg("Invalid mint asset")]
+    InvalidMintAsset,
+    #[msg("Invalid operator system account")]
+    InvalidSystem,
 }

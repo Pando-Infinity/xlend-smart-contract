@@ -246,14 +246,22 @@ pub mod enso_lending {
     }
 
     pub fn finish_liquidate_contract(
-        ctx: Context<LiquidateCollateral>,
+        ctx: Context<SystemLiquidateLoanOffer>,
+        _loan_offer_id: String,
+        loan_amount: u64,
+        collateral_swapped_amount: u64,
+        waiting_interest: u64,
         liquidated_price: u64,
         liquidated_tx: String,
     ) -> Result<()> {
         ctx.accounts
-            .finish_liquidate_contract(liquidated_price, liquidated_tx)?;
-        ctx.accounts
-            .emit_event_finish_liquidate_contract(String::from("Liquidated_collateral"))?;
+            .system_liquidate_loan_offer(
+              loan_amount,
+              collateral_swapped_amount,
+              waiting_interest,
+              liquidated_price, 
+              liquidated_tx
+            )?;
 
         Ok(())
     }
