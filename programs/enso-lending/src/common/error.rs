@@ -98,8 +98,6 @@ pub enum LiquidateOfferError {
     NotEnoughAmount,
     #[msg("Invalid mint asset")]
     InvalidMintAsset,
-    #[msg("Collateral amount not valid")]
-    CollateralAmountNotValid,
     #[msg("Invalid operator system account")]
     InvalidSystem,
 }

@@ -84,10 +84,6 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
       return Err(LiquidateOfferError::NotEnoughAmount)?;
     }
 
-    if remaining_fund_to_borrower < u64::MIN {
-      return Err(LiquidateOfferError::CollateralAmountNotValid)?;
-    }
-
     if loan_amount != self.loan_offer.borrow_amount {
       return Err(LiquidateOfferError::InvalidLendAmount)?;
     }
