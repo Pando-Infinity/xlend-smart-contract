@@ -20,6 +20,7 @@ import { EnsoLending } from '../../target/types/enso_lending';
 
 import enso_lending_idl from '../../target/idl/enso_lending.json';
 import { getOrCreateAssociatedTokenAccount, TOKEN_PROGRAM_ID, NATIVE_MINT } from '@solana/spl-token';
+import { generateId } from '../utils';
 
 const enso_lending_idl_string = JSON.stringify(enso_lending_idl);
 const enso_lending_idl_obj = JSON.parse(enso_lending_idl_string);
@@ -59,17 +60,19 @@ const program = new Program<EnsoLending>(
 	provider
 );
 
-xdescribe('enso-lending', () => {
+describe('enso-lending', () => {
   it('createLoanOffer', async () => {
-    const amount = 100 * Math.pow(10, usdcMintDecimal);
+    const lendAmount = 100 * Math.pow(10, usdcMintDecimal);
+    const waitingInterestAmount = 5 * Math.pow(10, usdcMintDecimal);
 		const duration = 14;
-		const tierId = 'tier_14567890vbhjndas';
+    const randomId = generateId(10);
+		const tierId = 'tier_' + randomId;
 		const lenderFeePercent = 0;
 		const borrowerFeePercent = 0;
     // const collateralAmount = 1 * Math.pow(10, solDecimal);
 
-		const lendOfferId = 'lend_offer_14567890vbhjndas';
-		const loanOfferId = 'loan_offer_14567890vbhjndas';
+		const lendOfferId = 'lend_offer_' + randomId;
+		const loanOfferId = 'loan_offer_' + randomId;
 		const interest = 0.05;
 
 		const seedSettingAccount = [
@@ -131,7 +134,7 @@ xdescribe('enso-lending', () => {
 		const settingAccountTsx = await program.methods
 			.initSettingAccount(
 				tierId,
-				new anchor.BN(amount),
+				new anchor.BN(lendAmount),
 				new anchor.BN(duration),
 				lenderFeePercent,
 				borrowerFeePercent
@@ -171,7 +174,7 @@ xdescribe('enso-lending', () => {
 
     const collateralAmount = 2 * Math.pow(10, solDecimal); // 2 SOL
 
-    // Create loan offer account
+    // Create loan offer
     const loanOfferTsx = await program.methods
 			.createLoanOfferNative(
 				loanOfferId,
@@ -194,15 +197,71 @@ xdescribe('enso-lending', () => {
 			})
       .transaction();
 
-      await sendAndConfirmTransaction(connection, loanOfferTsx, [borrower])
-				.then(async () => {
-					const data = await program.account.loanOfferAccount.fetch(
-						loanOfferAccount
-					);
-					console.log(data);
-				})
-				.catch((error) => {
-					console.log(error);
-				});
+      await sendAndConfirmTransaction(connection, loanOfferTsx, [borrower]);
+
+    const borrowerAtaUsdc = await getOrCreateAssociatedTokenAccount(
+			connection,
+			borrower,
+			mintUsdcAccount,
+			borrower.publicKey
+		);
+
+    // Repay loan offer
+    const repayLoanOfferTsx = await program.methods
+			.repayLoanOffer(loanOfferId)
+			.accounts({
+				settingAccount,
+				mintAsset: mintUsdcAccount,
+        hotWalletAta: hotWalletUsdcAta.address,
+				borrower: borrower.publicKey,
+        loanAtaAsset: borrowerAtaUsdc.address,
+				loanOffer: loanOfferAccount,
+				systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+			})
+			.transaction();
+
+    await sendAndConfirmTransaction(connection, repayLoanOfferTsx, [borrower]);
+
+    const systemAtaAsset = await getOrCreateAssociatedTokenAccount(
+			connection,
+			ownerAccountSetting,
+			mintUsdcAccount,
+			ownerAccountSetting.publicKey
+		);
+
+    // System repay loan offer
+    const systemRepayLoanOfferTsx = await program.methods
+			.systemRepayLoanOffer(
+				loanOfferId,
+				new anchor.BN(lendAmount),
+				new anchor.BN(collateralAmount),
+				new anchor.BN(waitingInterestAmount)
+			)
+			.accounts({
+				system: ownerAccountSetting.publicKey,
+				borrower: borrower.publicKey,
+				lender: lender.publicKey,
+				lenderAtaAsset: lenderOfferAtaUsdc.address,
+				systemAtaAsset: systemAtaAsset.address,
+				mintAsset: mintUsdcAccount,
+				loanOffer: loanOfferAccount,
+				systemProgram: SystemProgram.programId,
+				tokenProgram: TOKEN_PROGRAM_ID,
+			})
+			.transaction();
+
+    await sendAndConfirmTransaction(connection, systemRepayLoanOfferTsx, [
+      ownerAccountSetting,
+    ])
+    .then(async () => {
+      const data = await program.account.loanOfferAccount.fetch(
+				loanOfferAccount
+			);
+			console.log(data);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 	});
 });
