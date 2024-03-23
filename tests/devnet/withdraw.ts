@@ -267,8 +267,6 @@ describe("enso-lending-devnet", () => {
       requestWithdrawCollateralAmount
     );
 
-    console.log('pass request withdraw amount')
-
     const systemWithdrawNativeTsx = await program.methods
       .systemTransferCollateralRequestWithdraw(
         loanOfferId,
