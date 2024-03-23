@@ -113,6 +113,7 @@ impl<'info> CreateLoanOffer<'info> {
       borrower_fee_percent: self.setting_account.borrower_fee_percent,
       bump: bumps.loan_offer,
       collateral_amount,
+      request_withdraw_amount: None,
       collateral_mint_token: self.collateral_mint_asset.key(),
       duration: self.lend_offer.duration,
       interest: self.lend_offer.interest,

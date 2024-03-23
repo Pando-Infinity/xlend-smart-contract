@@ -20,6 +20,7 @@ pub struct LoanOfferAccount {
   pub borrower: Pubkey,
   pub collateral_mint_token: Pubkey,
   pub collateral_amount: u64,
+  pub request_withdraw_amount: Option<u64>,
   pub status: LoanOfferStatus,
   pub borrower_fee_percent: f64,
   pub started_at: i64,
