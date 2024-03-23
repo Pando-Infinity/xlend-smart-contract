@@ -89,7 +89,7 @@ impl<'info> SystemWithdrawNative<'info> {
 
     if current_timestamp > end_borrowed_loan_offer {
       self.loan_offer.request_withdraw_amount = None;
-      return Err(LoanOfferError::DurationLoanOfferInvalid)?;
+      return Err(LoanOfferError::LoanOfferExpired)?;
     }
 
     self.transfer_collateral_to_borrower(withdraw_amount)?;
