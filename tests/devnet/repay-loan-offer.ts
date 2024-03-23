@@ -69,7 +69,6 @@ describe('enso-lending', () => {
 		const tierId = 'tier_' + randomId;
 		const lenderFeePercent = 0;
 		const borrowerFeePercent = 0;
-    // const collateralAmount = 1 * Math.pow(10, solDecimal);
 
 		const lendOfferId = 'lend_offer_' + randomId;
 		const loanOfferId = 'loan_offer_' + randomId;
@@ -134,7 +133,7 @@ describe('enso-lending', () => {
 			borrower.publicKey
 		);
 
-    const systemAtaAsset = await getOrCreateAssociatedTokenAccount(
+    const systemAtaUsdc = await getOrCreateAssociatedTokenAccount(
 			connection,
 			ownerAccountSetting,
 			mintUsdcAccount,
@@ -218,7 +217,7 @@ describe('enso-lending', () => {
 			.systemUpdateLoanOffer(loanOfferId, tierId, new anchor.BN(lendAmount))
 			.accounts({
 				mintAsset: mintUsdcAccount,
-				hotWalletAta: systemAtaAsset.address,
+				hotWalletAta: systemAtaUsdc.address,
 				borrowerAtaAsset: borrowerAtaUsdc.address,
 				loanOffer: loanOfferAccount,
 				borrower: borrower.publicKey,
@@ -262,7 +261,7 @@ describe('enso-lending', () => {
 				borrower: borrower.publicKey,
 				lender: lender.publicKey,
 				lenderAtaAsset: lenderOfferAtaUsdc.address,
-				systemAtaAsset: systemAtaAsset.address,
+				systemAtaAsset: systemAtaUsdc.address,
 				mintAsset: mintUsdcAccount,
 				loanOffer: loanOfferAccount,
 				systemProgram: SystemProgram.programId,
