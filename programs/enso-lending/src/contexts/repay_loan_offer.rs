@@ -81,7 +81,7 @@ impl<'info> RepayLoanOffer<'info> {
       }
 
       self.deposit(total_amount)?;
-      self.loan_offer.status = LoanOfferStatus::Finished;
+      self.loan_offer.status = LoanOfferStatus::Repay;
 
       self.emit_event_repay_loan_offer( "repay_loan_offer".to_string(), self.loan_offer.offer_id.clone(), total_amount)?;
       
@@ -101,7 +101,7 @@ impl<'info> RepayLoanOffer<'info> {
       let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
       if current_timestamp > end_borrowed_loan_offer {
-        return Err(LoanOfferError::DurationLoanOfferInvalid)?;
+        return Err(LoanOfferError::LoanOfferExpired)?;
       }
 
       Ok(())
@@ -123,6 +123,7 @@ impl<'info> RepayLoanOffer<'info> {
         loan_offer_id,
         repay_amount,
         borrower_fee_percent: self.setting_account.borrower_fee_percent,
+        status: self.loan_offer.status
       });
       
       msg!(&label.clone());
