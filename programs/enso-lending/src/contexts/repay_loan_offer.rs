@@ -43,7 +43,7 @@ pub struct RepayLoanOffer<'info> {
     pub setting_account: Account<'info, SettingAccount>,
     #[account(
       mut,
-      constraint = loan_offer.status == LoanOfferStatus::Matched @ RepayOfferError::LoanOfferIsNotAvailable,
+      constraint = loan_offer.status == LoanOfferStatus::FundTransferred @ RepayOfferError::LoanOfferIsNotAvailable,
       seeds = [
         ENSO_SEED.as_ref(),
         LOAN_OFFER_ACCOUNT_SEED.as_ref(),
