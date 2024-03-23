@@ -217,7 +217,7 @@ pub mod enso_lending {
     }
 
     pub fn system_transfer_collateral_request_withdraw(
-        ctx: Context<SystemTransferCollateralRequestWithdraw>,
+        ctx: Context<SystemWithdrawNative>,
         loan_offer_id: String,
         withdraw_amount: u64,
     ) -> Result<()> {

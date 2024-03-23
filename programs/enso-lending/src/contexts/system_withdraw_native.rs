@@ -7,12 +7,12 @@ use crate::{
   }, convert_to_usd_price, states::{
     loan_offer::LoanOfferAccount,
     setting_account::SettingAccount
-  }, LoanOfferError, LoanOfferStatus, TransferCollateralWithdrawRequestEvent
+  }, LoanOfferError, LoanOfferStatus, WithdrawRequestEvent 
 };
 
 #[derive(Accounts)]
 #[instruction(loan_offer_id: String, withdraw_amount: u64)]
-pub struct SystemTransferCollateralRequestWithdraw<'info> {
+pub struct SystemWithdrawNative<'info> {
     #[account(
       mut,
       constraint = system_wallet.to_account_info().lamports() >= withdraw_amount @ LoanOfferError::NotEnoughAmount
@@ -63,7 +63,7 @@ pub struct SystemTransferCollateralRequestWithdraw<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> SystemTransferCollateralRequestWithdraw<'info> {
+impl<'info> SystemWithdrawNative<'info> {
   pub fn system_transfer_collateral_request_withdraw(&mut self, loan_offer_id: String, withdraw_amount: u64) -> Result<()> {
     let lend_amount_to_usd = convert_to_usd_price(
       &self.lend_price_feed_account.to_account_info(), 
@@ -127,7 +127,7 @@ impl<'info> SystemTransferCollateralRequestWithdraw<'info> {
   }
 
   fn emit_event_transfer_collateral_withdraw(&mut self, label: String, loan_offer_id: String, withdraw_amount: u64) -> Result<()> {
-    emit!(TransferCollateralWithdrawRequestEvent {
+    emit!(WithdrawRequestEvent  {
       borrower: self.borrower.key(),
       loan_offer_id,
       collateral_amount: self.loan_offer.collateral_amount,
