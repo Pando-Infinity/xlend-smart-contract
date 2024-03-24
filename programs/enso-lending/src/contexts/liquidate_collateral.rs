@@ -32,7 +32,7 @@ impl<'info> LiquidateCollateral<'info> {
     }
 
     let loan_offer = &mut self.loan_offer;
-    if loan_offer.status != LoanOfferStatus::Matched {
+    if loan_offer.status != LoanOfferStatus::FundTransferred {
       return Err(LoanOfferError::InvalidOfferStatus)?;
     }
 

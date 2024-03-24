@@ -112,8 +112,7 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
   fn transfer_asset_to_lender(&mut self, total_transfer_to_lender: u64) -> Result<()> {
     self.process_transfer(
       total_transfer_to_lender,
-      self.system.to_account_info(),
-      self.lender_ata_asset.to_account_info()
+      self.lender_ata_asset.to_account_info(),
     )?;
 
     Ok(())
@@ -122,24 +121,23 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
   fn transfer_asset_to_borrower(&mut self, remaining_fund_to_borrower: u64) -> Result<()> {
     self.process_transfer(
       remaining_fund_to_borrower,
-      self.system.to_account_info(),
-      self.borrower_ata_asset.to_account_info()
+      self.borrower_ata_asset.to_account_info(),
     )?;
 
     Ok(())
   }
 
-  fn process_transfer(&mut self, amount: u64, from: AccountInfo<'info>, to: AccountInfo<'info>) -> Result<()> {
+  fn process_transfer(&mut self, amount: u64,to: AccountInfo<'info>) -> Result<()> {
     transfer_checked(
-        self.into_transfer_context(from, to),
+        self.into_transfer_context(to),
         amount,
         self.mint_asset.decimals,
     )
   }
 
-  fn into_transfer_context(&self, from: AccountInfo<'info>, to: AccountInfo<'info>) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
+  fn into_transfer_context(&self, to: AccountInfo<'info>) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
     let cpi_accounts = TransferChecked {
-        from,
+        from: self.system_ata_asset.to_account_info(),
         mint: self.mint_asset.to_account_info(),
         to,
         authority: self.system.to_account_info(),
