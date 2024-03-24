@@ -240,6 +240,7 @@ pub mod enso_lending {
 
     pub fn start_liquidate_contract(
         ctx: Context<LiquidateCollateral>,
+        _offer_id: String,
         liquidating_price: u64,
         liquidating_at: u64,
     ) -> Result<()> {
