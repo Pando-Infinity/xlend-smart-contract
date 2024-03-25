@@ -41,6 +41,7 @@ pub struct DepositCollateralLoanOfferNative<'info> {
   )]
   pub setting_account: Account<'info, SettingAccount>,
   /// CHECK: This is the account used to receive the collateral amount
+  #[account(mut)]
   pub receiver: AccountInfo<'info>,
   pub system_program: Program<'info, System>,
 }
