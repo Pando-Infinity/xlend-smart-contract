@@ -3,7 +3,7 @@ use anchor_spl::token::{Mint, Token};
 
 use crate::{
   common::{
-    constant::MIN_BORROW_HEALTH_RATIO, ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
+    constant::MIN_BORROW_HEALTH_RATIO, ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED, UnhealthyRatioDetectedEvent, LoanOfferExpiredEvent
   }, convert_to_usd_price, states::{
     loan_offer::LoanOfferAccount,
     setting_account::SettingAccount
@@ -81,7 +81,17 @@ impl<'info> SystemWithdrawNative<'info> {
 
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
       self.loan_offer.request_withdraw_amount = None;
-      return Err(LoanOfferError::HealthRatioLimit)?;
+      
+      emit!(UnhealthyRatioDetectedEvent  {
+        borrower: self.borrower.key(),
+        loan_offer_id,
+        collateral_amount: self.loan_offer.collateral_amount,
+        withdraw_amount,
+      });
+
+      msg!("unhealthy_ratio_detected");
+
+      return Ok(());
     }
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
@@ -89,7 +99,17 @@ impl<'info> SystemWithdrawNative<'info> {
 
     if current_timestamp > end_borrowed_loan_offer {
       self.loan_offer.request_withdraw_amount = None;
-      return Err(LoanOfferError::LoanOfferExpired)?;
+      
+      emit!(LoanOfferExpiredEvent  {
+        borrower: self.borrower.key(),
+        loan_offer_id,
+        collateral_amount: self.loan_offer.collateral_amount,
+        withdraw_amount,
+      });
+
+      msg!("loan_offer_expired");
+
+      return Ok(());
     }
 
     self.transfer_collateral_to_borrower(withdraw_amount)?;
