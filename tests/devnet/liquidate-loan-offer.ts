@@ -4,14 +4,14 @@ import {
 	PublicKey,
 	SystemProgram,
 	clusterApiUrl,
-  sendAndConfirmTransaction,
+	sendAndConfirmTransaction,
 } from '@solana/web3.js';
 import { AnchorProvider } from '@project-serum/anchor';
 import {
 	OPERATE_SYSTEM_SECRET_KEY,
 	HOT_WALLET_SECRET_KEY,
-  LENDER_SECRET_KEY,
-  BORROWER_SECRET_KEY,
+	LENDER_SECRET_KEY,
+	BORROWER_SECRET_KEY,
 } from '../accounts';
 
 import * as anchor from '@coral-xyz/anchor';
@@ -19,7 +19,11 @@ import { Program } from '@coral-xyz/anchor';
 import { EnsoLending } from '../../target/types/enso_lending';
 
 import enso_lending_idl from '../../target/idl/enso_lending.json';
-import { getOrCreateAssociatedTokenAccount, TOKEN_PROGRAM_ID, NATIVE_MINT } from '@solana/spl-token';
+import {
+	getOrCreateAssociatedTokenAccount,
+	TOKEN_PROGRAM_ID,
+	NATIVE_MINT,
+} from '@solana/spl-token';
 import { generateId } from '../utils';
 
 const enso_lending_idl_string = JSON.stringify(enso_lending_idl);
@@ -60,12 +64,16 @@ const program = new Program<EnsoLending>(
 	provider
 );
 
-xdescribe('enso-lending-devnet', () => {
-  it('createLoanOffer', async () => {
-    const lendAmount = 100 * Math.pow(10, usdcMintDecimal);
-    const waitingInterestAmount = 5 * Math.pow(10, usdcMintDecimal);
+describe('enso-lending', () => {
+	it('createLoanOffer', async () => {
+		const lendAmount = 100 * Math.pow(10, usdcMintDecimal);
+		const liquidatingPrice = 1.2 * Math.pow(10, solDecimal); // 1.2 SOL;
+    const collateralSwappedAmount = 120 * Math.pow(10, usdcMintDecimal);
+    const waitingInterest = 5 * Math.pow(10, usdcMintDecimal);
+    const liquidated_tx = 'liquidated_tx';
+		const liquidatingAt = new Date().getTime() / 1000;
 		const duration = 14;
-    const randomId = generateId(10);
+		const randomId = generateId(10);
 		const tierId = 'tier_' + randomId;
 		const lenderFeePercent = 0;
 		const borrowerFeePercent = 0;
@@ -99,7 +107,7 @@ xdescribe('enso-lending-devnet', () => {
 			program.programId
 		)[0];
 
-    const seedLoanOffer = [
+		const seedLoanOffer = [
 			Buffer.from('enso'),
 			Buffer.from('loan_offer'),
 			borrower.publicKey.toBuffer(),
@@ -118,7 +126,7 @@ xdescribe('enso-lending-devnet', () => {
 			mintUsdcAccount,
 			hotWallet.publicKey
 		);
-    
+
 		const lenderOfferAtaUsdc = await getOrCreateAssociatedTokenAccount(
 			connection,
 			lender,
@@ -126,14 +134,14 @@ xdescribe('enso-lending-devnet', () => {
 			lender.publicKey
 		);
 
-    const borrowerAtaUsdc = await getOrCreateAssociatedTokenAccount(
+		const borrowerAtaUsdc = await getOrCreateAssociatedTokenAccount(
 			connection,
 			borrower,
 			mintUsdcAccount,
 			borrower.publicKey
 		);
 
-    const systemAtaUsdc = await getOrCreateAssociatedTokenAccount(
+		const systemAtaUsdc = await getOrCreateAssociatedTokenAccount(
 			connection,
 			ownerAccountSetting,
 			mintUsdcAccount,
@@ -185,10 +193,10 @@ xdescribe('enso-lending-devnet', () => {
 
 		await sendAndConfirmTransaction(connection, lendOfferTsx, [lender]);
 
-    const collateralAmount = 2 * Math.pow(10, solDecimal); // 2 SOL
+		const collateralAmount = 2 * Math.pow(10, solDecimal); // 2 SOL
 
-    // Borrower create loan offer
-    const loanOfferTsx = await program.methods
+		// Borrower create loan offer
+		const loanOfferTsx = await program.methods
 			.createLoanOfferNative(
 				loanOfferId,
 				lendOfferId,
@@ -205,15 +213,15 @@ xdescribe('enso-lending-devnet', () => {
 				receiver: hotWallet.publicKey,
 				settingAccount,
 				systemProgram: SystemProgram.programId,
-        collateralMintAsset: mintSolWrappedAccount,
-        lendMintAsset: mintUsdcAccount,
+				collateralMintAsset: mintSolWrappedAccount,
+				lendMintAsset: mintUsdcAccount,
 			})
-      .transaction();
+			.transaction();
 
-      await sendAndConfirmTransaction(connection, loanOfferTsx, [borrower]);
+		await sendAndConfirmTransaction(connection, loanOfferTsx, [borrower]);
 
-    // System update loan offer
-    const systemUpdateLoanOfferTsx = await program.methods
+		// System update loan offer
+		const systemUpdateLoanOfferTsx = await program.methods
 			.systemUpdateLoanOffer(loanOfferId, tierId, new anchor.BN(lendAmount))
 			.accounts({
 				mintAsset: mintUsdcAccount,
@@ -225,52 +233,62 @@ xdescribe('enso-lending-devnet', () => {
 				tokenProgram: TOKEN_PROGRAM_ID,
 			})
 			.transaction();
-    await sendAndConfirmTransaction(connection, systemUpdateLoanOfferTsx, [
+		await sendAndConfirmTransaction(connection, systemUpdateLoanOfferTsx, [
 			ownerAccountSetting,
 		]);
 
-    // Repay loan offer
-    const repayLoanOfferTsx = await program.methods
-			.repayLoanOffer(loanOfferId)
+		// Start liquidate loan offer
+		const startLiquidateLoanOfferTsx = await program.methods
+			.startLiquidateContract(
+				loanOfferId,
+				new anchor.BN(liquidatingPrice),
+				new anchor.BN(liquidatingAt)
+			)
 			.accounts({
-				settingAccount,
-				mintAsset: mintUsdcAccount,
-        hotWalletAta: hotWalletUsdcAta.address,
 				borrower: borrower.publicKey,
-        loanAtaAsset: borrowerAtaUsdc.address,
 				loanOffer: loanOfferAccount,
-				systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID,
+				system: ownerAccountSetting.publicKey,
 			})
 			.transaction();
 
-    await sendAndConfirmTransaction(connection, repayLoanOfferTsx, [
-			borrower,
+		await sendAndConfirmTransaction(connection, startLiquidateLoanOfferTsx, [
+			ownerAccountSetting,
 		]);
 
-    // System repay loan offer
-    const systemRepayLoanOfferTsx = await program.methods
-			.systemRepayLoanOffer(
+		// Finish liquidate loan offer
+		const endLiquidateLoanOfferTsx = await program.methods
+			.finishLiquidateContract(
 				loanOfferId,
 				new anchor.BN(lendAmount),
-				new anchor.BN(collateralAmount),
-				new anchor.BN(waitingInterestAmount)
+				new anchor.BN(collateralSwappedAmount),
+				new anchor.BN(waitingInterest),
+				new anchor.BN(liquidatingPrice),
+				liquidated_tx
 			)
 			.accounts({
-				system: ownerAccountSetting.publicKey,
 				borrower: borrower.publicKey,
+				loanOffer: loanOfferAccount,
+				system: ownerAccountSetting.publicKey,
+				borrowerAtaAsset: borrowerAtaUsdc.address,
 				lender: lender.publicKey,
 				lenderAtaAsset: lenderOfferAtaUsdc.address,
-				systemAtaAsset: systemAtaUsdc.address,
 				mintAsset: mintUsdcAccount,
-				loanOffer: loanOfferAccount,
-				systemProgram: SystemProgram.programId,
+				systemAtaAsset: systemAtaUsdc.address,
 				tokenProgram: TOKEN_PROGRAM_ID,
 			})
 			.transaction();
 
-    await sendAndConfirmTransaction(connection, systemRepayLoanOfferTsx, [
-      ownerAccountSetting,
-    ]);
+		await sendAndConfirmTransaction(connection, endLiquidateLoanOfferTsx, [
+			ownerAccountSetting,
+		])
+			.then(async () => {
+				const data = await program.account.loanOfferAccount.fetch(
+					loanOfferAccount
+				);
+				console.log(data);
+			})
+			.catch((err) => {
+				console.log(err);
+			});
 	});
 });
