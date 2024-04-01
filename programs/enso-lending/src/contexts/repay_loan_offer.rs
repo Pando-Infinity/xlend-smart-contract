@@ -72,7 +72,7 @@ impl<'info> RepayLoanOffer<'info> {
       let fee_amount = ((self.loan_offer.borrow_amount as f64) * borrower_fee_percent) as u64;
 
       let loan_interest = self.loan_offer.interest;
-      let interest_amount = ((self.loan_offer.borrow_amount as f64) * loan_interest) as u64;
+      let interest_amount = ((self.loan_offer.borrow_amount as f64) * loan_interest / 100.0) as u64;
 
       let total_amount = self.setting_account.amount + fee_amount + interest_amount;
 
