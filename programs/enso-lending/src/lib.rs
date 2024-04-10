@@ -266,4 +266,19 @@ pub mod enso_lending {
 
         Ok(())
     }
+
+    pub fn system_finish_loan_offer(
+      ctx: Context<SystemFinishLoanOffer>,
+      _loan_offer_id: String,
+      loan_amount: u64,
+      interest_amount: u64,
+    ) -> Result<()> {
+        ctx.accounts
+            .system_finish_loan_offer(
+              loan_amount,
+              interest_amount
+            )?;
+
+        Ok(())
+    }
 }

@@ -81,7 +81,11 @@ pub enum RepayOfferError {
     #[msg("Invalid collateral amount")]
     InvalidCollateralAmount,
     #[msg("Invalid offer status")]
-    InvalidOfferStatus
+    InvalidOfferStatus,
+    #[msg("Loan offer not belong to lender")]
+    InvalidLender,
+    #[msg("Time unmet exception")]
+    TimeUnmetException
 }
 
 #[error_code]

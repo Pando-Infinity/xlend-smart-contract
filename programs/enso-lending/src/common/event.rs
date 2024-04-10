@@ -208,3 +208,15 @@ pub struct SystemRepayLoadOfferNativeEvent {
     pub tier_id: String,
     pub status: LoanOfferStatus,
 }
+
+#[event]
+pub struct SystemFinishLoanOfferEvent {
+    pub system: Pubkey,
+    pub lender: Pubkey,
+    pub borrower: Pubkey,
+    pub interest: f64,
+    pub loan_amount: u64,
+    pub loan_offer_id: String,
+    pub tier_id: String,
+    pub status: LoanOfferStatus,
+}
