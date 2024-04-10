@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anchor_lang::{prelude::*};
+use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
 use crate::{
   common::{
@@ -26,17 +26,6 @@ pub struct SystemLiquidateLoanOffer<'info> {
     constraint = mint_asset.key() == loan_offer.lend_mint_token @ LiquidateOfferError::InvalidMintAsset,
   )]
   pub mint_asset: Account<'info, Mint>,
-  /// CHECK: This account is used to transfer back asset for lender
-  #[account(
-    constraint = lender.key() == loan_offer.lender @ LiquidateOfferError::InvalidLender
-  )]
-  pub lender: UncheckedAccount<'info>,
-  #[account(
-    mut,
-    associated_token::mint = mint_asset,
-    associated_token::authority = lender
-  )]
-  pub lender_ata_asset: Account<'info, TokenAccount>,
   /// CHECK: This account is used to transfer back collateral for borrower
   #[account(
     constraint = borrower.key() == loan_offer.borrower @ LiquidateOfferError::InvalidBorrower
@@ -67,28 +56,15 @@ pub struct SystemLiquidateLoanOffer<'info> {
 impl<'info> SystemLiquidateLoanOffer<'info> {
   pub fn system_liquidate_loan_offer(
     &mut self,
-    loan_amount: u64,
     collateral_swapped_amount: u64,
-    waiting_interest: u64,
     liquidated_price: u64,
     liquidated_tx: String
   ) -> Result<()>  {
-    let interest_loan_amount = (self.loan_offer.interest * loan_amount as f64) as u64;
-    let lender_fee_amount = (self.loan_offer.lender_fee_percent * loan_amount as f64) as u64;
-    let total_transfer_to_lender = loan_amount + waiting_interest + interest_loan_amount as u64 - lender_fee_amount as u64;
+    let interest_loan_amount = (self.loan_offer.interest * self.loan_offer.borrow_amount as f64) as u64;
 
-    let borrower_fee_amount = (self.loan_offer.borrower_fee_percent * loan_amount as f64) as u64;
-    let remaining_fund_to_borrower = collateral_swapped_amount - loan_amount - interest_loan_amount - borrower_fee_amount; 
-    
-    if total_transfer_to_lender + remaining_fund_to_borrower > self.system_ata_asset.amount {
-      return Err(LiquidateOfferError::NotEnoughAmount)?;
-    }
+    let borrower_fee_amount = (self.loan_offer.borrower_fee_percent * self.loan_offer.borrow_amount as f64) as u64;
+    let remaining_fund_to_borrower = collateral_swapped_amount - self.loan_offer.borrow_amount - interest_loan_amount - borrower_fee_amount; 
 
-    if loan_amount != self.loan_offer.borrow_amount {
-      return Err(LiquidateOfferError::InvalidLendAmount)?;
-    }
-
-    self.transfer_asset_to_lender(total_transfer_to_lender)?;
     self.transfer_asset_to_borrower(remaining_fund_to_borrower)?;
 
     let loan_offer = &mut self.loan_offer;
@@ -99,20 +75,8 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
 
     self.emit_event_system_liquidate_loan_offer(
       String::from("system_liquidate_loan_offer"),
-      total_transfer_to_lender,
       remaining_fund_to_borrower,
-      waiting_interest, 
-      loan_amount,
       collateral_swapped_amount
-    )?;
-
-    Ok(())
-  }
-
-  fn transfer_asset_to_lender(&mut self, total_transfer_to_lender: u64) -> Result<()> {
-    self.process_transfer(
-      total_transfer_to_lender,
-      self.lender_ata_asset.to_account_info(),
     )?;
 
     Ok(())
@@ -148,22 +112,16 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
   fn emit_event_system_liquidate_loan_offer(
     &mut self,
     label: String,
-    total_transfer_to_lender: u64,
     remaining_fund_to_borrower: u64,
-    waiting_interest: u64,
-    loan_amount: u64,
     collateral_swapped_amount: u64
   ) -> Result<()> {
     emit!(LiquidatedCollateralEvent {
       system: self.system.key(),
-      lender: self.lender.key(),
+      lender: self.loan_offer.lender.key(),
       borrower: self.borrower.key(),
-      total_transfer_to_lender,
-      loan_amount,
       loan_offer_id: self.loan_offer.offer_id.clone(),
       collateral_swapped_amount,
       status: self.loan_offer.status,
-      waiting_interest,
       liquidated_price: self.loan_offer.liquidated_price.unwrap(),
       liquidated_tx: self.loan_offer.liquidated_tx.as_ref().unwrap().clone(),
       remaining_fund_to_borrower

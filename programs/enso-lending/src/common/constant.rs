@@ -13,9 +13,10 @@ pub enum LoanOfferStatus {
     Matched,
     FundTransferred,
     Repay,
-    Finished,
+    BorrowerPaid,
     Liquidating,
-    Liquidated
+    Liquidated,
+    Finished
 }
 
 pub const ENSO_SEED: &[u8] = b"enso";

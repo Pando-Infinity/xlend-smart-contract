@@ -191,11 +191,8 @@ pub struct LiquidatedCollateralEvent {
     pub system: Pubkey,
     pub lender: Pubkey,
     pub borrower: Pubkey,
-    pub total_transfer_to_lender: u64,
     pub remaining_fund_to_borrower: u64,
-    pub loan_amount: u64,
     pub collateral_swapped_amount: u64,
-    pub waiting_interest: u64,
     pub status: LoanOfferStatus,
 }
 
@@ -207,7 +204,6 @@ pub struct SystemRepayLoadOfferNativeEvent {
     pub interest: f64,
     pub loan_amount: u64,
     pub collateral_amount: u64,
-    pub waiting_interest: u64,
     pub loan_offer_id: String,
     pub tier_id: String,
     pub status: LoanOfferStatus,

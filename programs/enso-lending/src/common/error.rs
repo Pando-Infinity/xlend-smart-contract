@@ -76,8 +76,6 @@ pub enum RepayOfferError {
      LoanOfferIsNotAvailable,
     #[msg("Invalid lend amount")]
     InvalidLendAmount,
-    #[msg("Loan offer not belong to lender")]
-    InvalidLender,
     #[msg("Loan offer not belong to borrower")]
     InvalidBorrower,
     #[msg("Invalid collateral amount")]
