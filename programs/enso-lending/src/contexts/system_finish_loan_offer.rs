@@ -38,7 +38,7 @@ pub struct SystemFinishLoanOffer<'info> {
   #[account(
     mut,
     constraint = loan_offer.status == LoanOfferStatus::BorrowerPaid 
-    || loan_offer.status == LoanOfferStatus::Finished @ RepayOfferError::InvalidOfferStatus,
+    || loan_offer.status == LoanOfferStatus::Liquidated @ RepayOfferError::InvalidOfferStatus,
     seeds = [
       ENSO_SEED.as_ref(),
       LOAN_OFFER_ACCOUNT_SEED.as_ref(),
