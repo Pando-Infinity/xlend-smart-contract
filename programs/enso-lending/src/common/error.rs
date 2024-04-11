@@ -84,7 +84,7 @@ pub enum RepayOfferError {
     InvalidOfferStatus,
     #[msg("Loan offer not belong to lender")]
     InvalidLender,
-    #[msg("Time unmet exception")]
+    #[msg("Invalid repay lender time")]
     TimeUnmetException
 }
 

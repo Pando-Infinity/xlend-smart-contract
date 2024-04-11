@@ -25,7 +25,7 @@ pub struct SystemFinishLoanOffer<'info> {
   #[account(
     constraint = lender.key() == loan_offer.lender @ RepayOfferError::InvalidLender
   )]
-  pub lender: UncheckedAccount<'info>,
+  pub lender: AccountInfo<'info>,
   #[account(
     mut,
     associated_token::mint = mint_asset,
@@ -34,7 +34,7 @@ pub struct SystemFinishLoanOffer<'info> {
   pub lender_ata_asset: Account<'info, TokenAccount>,
   /// CHECK: This is the account used to receive back the collateral amount
   #[account(mut)]
-  pub borrower: UncheckedAccount<'info>,
+  pub borrower: AccountInfo<'info>,
   #[account(
     mut,
     constraint = loan_offer.status == LoanOfferStatus::BorrowerPaid 
@@ -56,7 +56,7 @@ pub struct SystemFinishLoanOffer<'info> {
 impl<'info> SystemFinishLoanOffer<'info> {
   pub fn system_finish_loan_offer(&mut self, loan_amount: u64, waiting_interest: u64) -> Result<()>  {
     let interest_loan_amount = (self.loan_offer.interest * loan_amount as f64) as u64;
-    let lender_fee_amount = (self.loan_offer.lender_fee_percent * loan_amount as f64) as u64;
+    let lender_fee_amount = (self.loan_offer.lender_fee_percent * loan_amount as f64 / 100.0) as u64;
 
     let total_repay_to_lender = loan_amount + waiting_interest + interest_loan_amount - lender_fee_amount;
 

@@ -30,7 +30,7 @@ pub struct SystemLiquidateLoanOffer<'info> {
   #[account(
     constraint = borrower.key() == loan_offer.borrower @ LiquidateOfferError::InvalidBorrower
   )]
-  pub borrower: UncheckedAccount<'info>,
+  pub borrower: AccountInfo<'info>,
   #[account(
     mut,
     associated_token::mint = mint_asset,

@@ -23,7 +23,7 @@ pub struct SystemRepayLoadOfferNative<'info> {
   pub mint_asset: Account<'info, Mint>,
   /// CHECK: This is the account used to receive back the collateral amount
   #[account(mut)]
-  pub borrower: UncheckedAccount<'info>,
+  pub borrower: AccountInfo<'info>,
   #[account(
     mut,
     constraint = loan_offer.status == LoanOfferStatus::Repay @ RepayOfferError::InvalidOfferStatus,
