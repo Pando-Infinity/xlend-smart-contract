@@ -252,15 +252,11 @@ xdescribe('enso-lending-devnet', () => {
     const systemRepayLoanOfferTsx = await program.methods
 			.systemRepayLoanOffer(
 				loanOfferId,
-				new anchor.BN(lendAmount),
 				new anchor.BN(collateralAmount),
-				new anchor.BN(waitingInterestAmount)
 			)
 			.accounts({
 				system: ownerAccountSetting.publicKey,
 				borrower: borrower.publicKey,
-				lender: lender.publicKey,
-				lenderAtaAsset: lenderOfferAtaUsdc.address,
 				systemAtaAsset: systemAtaUsdc.address,
 				mintAsset: mintUsdcAccount,
 				loanOffer: loanOfferAccount,

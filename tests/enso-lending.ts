@@ -1688,7 +1688,7 @@ xdescribe("enso-lending", () => {
         program.programId
       )[0];
 
-      const borrowerAtaSol = await getOrCreateAssociatedTokenAccount(
+      const borrowerAtaUsdc = await getOrCreateAssociatedTokenAccount(
         connection,
         providerWallet,
         usdcMint.publicKey,
