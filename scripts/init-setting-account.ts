@@ -14,7 +14,7 @@ import enso_lending_idl from '../target/idl/enso_lending.json';
 
 const enso_lending_idl_string = JSON.stringify(enso_lending_idl);
 const enso_lending_idl_obj = JSON.parse(enso_lending_idl_string);
-const PROGRAM_ID_DEV_NET = '4z4kmGW4AcmBoyeGobKDXXTRizSSuzXLroX6zjkyeYA1';
+const PROGRAM_ID_DEV_NET = 'BderhzujHHQNjhCZGRjLWnN2XQ66q4EZnZx2p5WLJnBV';
 
 const programId = new PublicKey(PROGRAM_ID_DEV_NET);
 const connection = new Connection(clusterApiUrl('devnet'), 'confirmed')
