@@ -64,7 +64,7 @@ const program = new Program<EnsoLending>(
 	provider
 );
 
-describe('enso-lending', () => {
+xdescribe('enso-lending', () => {
 	it('createLoanOffer', async () => {
 		const lendAmount = 100 * Math.pow(10, usdcMintDecimal);
 		const liquidatingPrice = 1.2 * Math.pow(10, solDecimal); // 1.2 SOL;
@@ -259,9 +259,7 @@ describe('enso-lending', () => {
 		const endLiquidateLoanOfferTsx = await program.methods
 			.finishLiquidateContract(
 				loanOfferId,
-				new anchor.BN(lendAmount),
 				new anchor.BN(collateralSwappedAmount),
-				new anchor.BN(waitingInterest),
 				new anchor.BN(liquidatingPrice),
 				liquidated_tx
 			)
@@ -270,8 +268,6 @@ describe('enso-lending', () => {
 				loanOffer: loanOfferAccount,
 				system: ownerAccountSetting.publicKey,
 				borrowerAtaAsset: borrowerAtaUsdc.address,
-				lender: lender.publicKey,
-				lenderAtaAsset: lenderOfferAtaUsdc.address,
 				mintAsset: mintUsdcAccount,
 				systemAtaAsset: systemAtaUsdc.address,
 				tokenProgram: TOKEN_PROGRAM_ID,

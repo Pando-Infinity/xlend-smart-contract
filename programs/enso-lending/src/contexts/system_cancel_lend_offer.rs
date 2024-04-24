@@ -16,7 +16,7 @@ pub struct SystemCancelLendOffer<'info> {
   #[account(
     constraint = lender.key() == lend_offer.lender @ LendOfferError::InvalidLender
   )]
-  pub lender: UncheckedAccount<'info>,
+  pub lender: AccountInfo<'info>,
   #[account(
     mut,
     associated_token::mint = mint_asset,

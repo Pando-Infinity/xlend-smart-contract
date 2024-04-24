@@ -209,11 +209,9 @@ pub mod enso_lending {
     pub fn system_repay_loan_offer(
         ctx: Context<SystemRepayLoadOfferNative>,
         _loan_offer_id: String,
-        loan_amount: u64,
         collateral_amount: u64,
-        waiting_interest: u64
     ) -> Result<()> {
-        ctx.accounts.system_repay_loan_offer(loan_amount, collateral_amount, waiting_interest)?;
+        ctx.accounts.system_repay_loan_offer(collateral_amount)?;
 
         Ok(())
     }
@@ -255,19 +253,30 @@ pub mod enso_lending {
     pub fn finish_liquidate_contract(
         ctx: Context<SystemLiquidateLoanOffer>,
         _loan_offer_id: String,
-        loan_amount: u64,
         collateral_swapped_amount: u64,
-        waiting_interest: u64,
         liquidated_price: u64,
         liquidated_tx: String,
     ) -> Result<()> {
         ctx.accounts
             .system_liquidate_loan_offer(
-              loan_amount,
               collateral_swapped_amount,
-              waiting_interest,
               liquidated_price, 
               liquidated_tx
+            )?;
+
+        Ok(())
+    }
+
+    pub fn system_finish_loan_offer(
+      ctx: Context<SystemFinishLoanOffer>,
+      _loan_offer_id: String,
+      loan_amount: u64,
+      interest_amount: u64,
+    ) -> Result<()> {
+        ctx.accounts
+            .system_finish_loan_offer(
+              loan_amount,
+              interest_amount
             )?;
 
         Ok(())

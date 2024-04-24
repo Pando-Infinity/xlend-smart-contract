@@ -23,7 +23,7 @@ pub struct SystemWithdrawNative<'info> {
       mut,
       constraint = borrower.key() == loan_offer.borrower @ LoanOfferError::InvalidBorrower
     )]
-    pub borrower: UncheckedAccount<'info>,
+    pub borrower: AccountInfo<'info>,
     #[account(
       constraint = collateral_mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidCollateralMintAsset,
     )]

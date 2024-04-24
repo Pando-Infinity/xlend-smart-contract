@@ -76,14 +76,16 @@ pub enum RepayOfferError {
      LoanOfferIsNotAvailable,
     #[msg("Invalid lend amount")]
     InvalidLendAmount,
-    #[msg("Loan offer not belong to lender")]
-    InvalidLender,
     #[msg("Loan offer not belong to borrower")]
     InvalidBorrower,
     #[msg("Invalid collateral amount")]
     InvalidCollateralAmount,
     #[msg("Invalid offer status")]
-    InvalidOfferStatus
+    InvalidOfferStatus,
+    #[msg("Loan offer not belong to lender")]
+    InvalidLender,
+    #[msg("Invalid repay lender time")]
+    TimeUnmetException
 }
 
 #[error_code]

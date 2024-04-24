@@ -15,7 +15,7 @@ pub struct SystemUpdateLoanOffer<'info> {
   #[account(
     constraint = borrower.key() == loan_offer.borrower @ LoanOfferError::InvalidBorrower
   )]
-  pub borrower: UncheckedAccount<'info>,
+  pub borrower: AccountInfo<'info>,
   #[account(
     mut,
     associated_token::mint = mint_asset,
