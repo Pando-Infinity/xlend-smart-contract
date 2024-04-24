@@ -14,7 +14,7 @@ import enso_lending_idl from '../target/idl/enso_lending.json';
 
 const enso_lending_idl_string = JSON.stringify(enso_lending_idl);
 const enso_lending_idl_obj = JSON.parse(enso_lending_idl_string);
-const PROGRAM_ID_DEV_NET = '4z4kmGW4AcmBoyeGobKDXXTRizSSuzXLroX6zjkyeYA1';
+const PROGRAM_ID_DEV_NET = 'BderhzujHHQNjhCZGRjLWnN2XQ66q4EZnZx2p5WLJnBV';
 
 const programId = new PublicKey(PROGRAM_ID_DEV_NET);
 const connection = new Connection(clusterApiUrl('devnet'), 'confirmed')
@@ -32,7 +32,7 @@ const mintSolWrappedAccount = new PublicKey(
 );
 
 const mintUsdcAccount = new PublicKey(
-	'4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU'
+	'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'
 );
 
 const providerWallet = new anchor.Wallet(Keypair.generate());
@@ -102,9 +102,9 @@ const initSettingAccount = async (params: {
 };
 
 (async () => {
-	const amount = 100 * usdcMintDecimal;
-	const duration = 14;
-	const tierId = 'tier_14567890vbhjndas';
+	const amount = 100000000;
+	const duration = 1209600;
+	const tierId = 'tier_001';
 	const lenderFeePercent = 0;
 	const borrowerFeePercent = 0;
 
@@ -142,4 +142,220 @@ const initSettingAccount = async (params: {
   ]).then((tx) => {
     console.log(tx);
   });
+})();
+
+(async () => {
+	const amount = 200000000;
+	const duration = 1209600;
+	const tierId = 'tier_002';
+	const lenderFeePercent = 0;
+	const borrowerFeePercent = 0;
+
+	const seedSettingAccount = [
+		Buffer.from('enso'),
+		Buffer.from('setting_account'),
+		Buffer.from(tierId),
+		program.programId.toBuffer(),
+	];
+
+	const settingAccount = PublicKey.findProgramAddressSync(
+		seedSettingAccount,
+		program.programId
+	)[0];
+	const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
+	const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
+
+	const transaction = await initSettingAccount({
+		amount,
+		duration,
+		tierId,
+		lenderFeePercent,
+		lendMintAsset: mintUsdcAccount,
+		collateralMintAsset: mintSolWrappedAccount,
+		settingAccount,
+		borrowerFeePercent,
+		lendPriceFeedAccount: usdc_usd_price_feed,
+		collateralPriceFeedAccount: sol_usd_price_feed,
+		ownerAccountSetting: ownerAccountSetting,
+		hotWallet: hotWallet.publicKey,
+	});
+
+	await sendAndConfirmTransaction(connection, transaction, [
+		ownerAccountSetting,
+	]).then((tx) => {
+		console.log(tx);
+	});
+})();
+
+(async () => {
+	const amount = 500000000;
+	const duration = 1209600;
+	const tierId = 'tier_003';
+	const lenderFeePercent = 0;
+	const borrowerFeePercent = 0;
+
+	const seedSettingAccount = [
+		Buffer.from('enso'),
+		Buffer.from('setting_account'),
+		Buffer.from(tierId),
+		program.programId.toBuffer(),
+	];
+
+	const settingAccount = PublicKey.findProgramAddressSync(
+		seedSettingAccount,
+		program.programId
+	)[0];
+	const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
+	const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
+
+	const transaction = await initSettingAccount({
+		amount,
+		duration,
+		tierId,
+		lenderFeePercent,
+		lendMintAsset: mintUsdcAccount,
+		collateralMintAsset: mintSolWrappedAccount,
+		settingAccount,
+		borrowerFeePercent,
+		lendPriceFeedAccount: usdc_usd_price_feed,
+		collateralPriceFeedAccount: sol_usd_price_feed,
+		ownerAccountSetting: ownerAccountSetting,
+		hotWallet: hotWallet.publicKey,
+	});
+
+	await sendAndConfirmTransaction(connection, transaction, [
+		ownerAccountSetting,
+	]).then((tx) => {
+		console.log(tx);
+	});
+})();
+
+(async () => {
+	const amount = 1000000000;
+	const duration = 1209600;
+	const tierId = 'tier_004';
+	const lenderFeePercent = 0;
+	const borrowerFeePercent = 0;
+
+	const seedSettingAccount = [
+		Buffer.from('enso'),
+		Buffer.from('setting_account'),
+		Buffer.from(tierId),
+		program.programId.toBuffer(),
+	];
+
+	const settingAccount = PublicKey.findProgramAddressSync(
+		seedSettingAccount,
+		program.programId
+	)[0];
+	const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
+	const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
+
+	const transaction = await initSettingAccount({
+		amount,
+		duration,
+		tierId,
+		lenderFeePercent,
+		lendMintAsset: mintUsdcAccount,
+		collateralMintAsset: mintSolWrappedAccount,
+		settingAccount,
+		borrowerFeePercent,
+		lendPriceFeedAccount: usdc_usd_price_feed,
+		collateralPriceFeedAccount: sol_usd_price_feed,
+		ownerAccountSetting: ownerAccountSetting,
+		hotWallet: hotWallet.publicKey,
+	});
+
+	await sendAndConfirmTransaction(connection, transaction, [
+		ownerAccountSetting,
+	]).then((tx) => {
+		console.log(tx);
+	});
+})();
+
+
+(async () => {
+	const amount = 2000000000;
+	const duration = 1209600;
+	const tierId = 'tier_005';
+	const lenderFeePercent = 0;
+	const borrowerFeePercent = 0;
+
+	const seedSettingAccount = [
+		Buffer.from('enso'),
+		Buffer.from('setting_account'),
+		Buffer.from(tierId),
+		program.programId.toBuffer(),
+	];
+
+	const settingAccount = PublicKey.findProgramAddressSync(
+		seedSettingAccount,
+		program.programId
+	)[0];
+	const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
+	const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
+
+	const transaction = await initSettingAccount({
+		amount,
+		duration,
+		tierId,
+		lenderFeePercent,
+		lendMintAsset: mintUsdcAccount,
+		collateralMintAsset: mintSolWrappedAccount,
+		settingAccount,
+		borrowerFeePercent,
+		lendPriceFeedAccount: usdc_usd_price_feed,
+		collateralPriceFeedAccount: sol_usd_price_feed,
+		ownerAccountSetting: ownerAccountSetting,
+		hotWallet: hotWallet.publicKey,
+	});
+
+	await sendAndConfirmTransaction(connection, transaction, [
+		ownerAccountSetting,
+	]).then((tx) => {
+		console.log(tx);
+	});
+})();
+
+(async () => {
+	const amount = 5000000000;
+	const duration = 1209600;
+	const tierId = 'tier_006';
+	const lenderFeePercent = 0;
+	const borrowerFeePercent = 0;
+
+	const seedSettingAccount = [
+		Buffer.from('enso'),
+		Buffer.from('setting_account'),
+		Buffer.from(tierId),
+		program.programId.toBuffer(),
+	];
+
+	const settingAccount = PublicKey.findProgramAddressSync(
+		seedSettingAccount,
+		program.programId
+	)[0];
+	const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
+	const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
+
+	const transaction = await initSettingAccount({
+		amount,
+		duration,
+		tierId,
+		lenderFeePercent,
+		lendMintAsset: mintUsdcAccount,
+		collateralMintAsset: mintSolWrappedAccount,
+		settingAccount,
+		borrowerFeePercent,
+		lendPriceFeedAccount: usdc_usd_price_feed,
+		collateralPriceFeedAccount: sol_usd_price_feed,
+		ownerAccountSetting: ownerAccountSetting,
+		hotWallet: hotWallet.publicKey,
+	});
+
+	await sendAndConfirmTransaction(connection, transaction, [
+		ownerAccountSetting,
+	]).then((tx) => {
+		console.log(tx);
+	});
 })();
