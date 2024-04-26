@@ -26,7 +26,7 @@ pub struct SystemRevertStatus<'info> {
 }
 
 impl<'info> SystemRevertStatus<'info> {
-  pub fn system_revert_status(&mut self) -> Result<()> {
+  pub fn system_revert_status(&mut self, liquidating_price: u64, liquidating_at: u64) -> Result<()> {
     if self.system.key() != Pubkey::from_str(OPERATE_SYSTEM_PUBKEY).unwrap() {
       return Err(LoanOfferError::InvalidSystem)?;
     }
@@ -36,6 +36,8 @@ impl<'info> SystemRevertStatus<'info> {
       return Err(LoanOfferError::InvalidOfferStatus)?;
     }
 
+    loan_offer.liquidating_price = Some(liquidating_price);
+    loan_offer.liquidating_at = Some(liquidating_at);
     loan_offer.status = LoanOfferStatus::FundTransferred;
 
     Ok(())
