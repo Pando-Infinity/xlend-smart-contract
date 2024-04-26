@@ -281,4 +281,16 @@ pub mod enso_lending {
 
         Ok(())
     }
+
+    pub fn system_revert_status(
+      ctx: Context<SystemRevertStatus>,
+      _offer_id: String
+    ) -> Result<()> {
+      ctx.accounts
+        .system_revert_status()?;
+      ctx.accounts
+        .emit_event_revert_status(String::from("revert_status"))?;
+
+      Ok(())
+    }
 }
