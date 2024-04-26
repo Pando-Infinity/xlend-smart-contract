@@ -220,3 +220,9 @@ pub struct SystemFinishLoanOfferEvent {
     pub tier_id: String,
     pub status: LoanOfferStatus,
 }
+
+#[event]
+pub struct SystemRevertEvent {
+    pub offer_id: String,
+    pub status: LoanOfferStatus,
+}

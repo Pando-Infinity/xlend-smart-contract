@@ -44,3 +44,6 @@ pub use system_repay_loan_offer::*;
 
 pub mod system_finish_loan_offer;
 pub use system_finish_loan_offer::*;
+
+pub mod system_revert_status;
+pub use system_revert_status::*;
