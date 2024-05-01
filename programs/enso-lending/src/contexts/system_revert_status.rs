@@ -28,12 +28,12 @@ pub struct SystemRevertStatus<'info> {
 impl<'info> SystemRevertStatus<'info> {
   pub fn system_revert_status(&mut self) -> Result<()> {
     if self.system.key() != Pubkey::from_str(OPERATE_SYSTEM_PUBKEY).unwrap() {
-      return Err(LoanOfferError::InvalidSystem)?;
+      return err!(LoanOfferError::InvalidSystem);
     }
 
     let loan_offer = &mut self.loan_offer;
     if loan_offer.status != LoanOfferStatus::Liquidating {
-      return Err(LoanOfferError::InvalidOfferStatus)?;
+      return err!(LoanOfferError::InvalidOfferStatus);
     }
 
     loan_offer.liquidating_price = None;

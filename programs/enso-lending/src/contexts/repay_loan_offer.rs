@@ -77,7 +77,7 @@ impl<'info> RepayLoanOffer<'info> {
       let total_amount = self.setting_account.amount + fee_amount + interest_amount;
 
       if total_amount > self.loan_ata_asset.amount {
-        return Err(RepayOfferError::NotEnoughAmount.into());
+        return err!(RepayOfferError::NotEnoughAmount);
       }
 
       self.deposit(total_amount)?;
@@ -101,7 +101,7 @@ impl<'info> RepayLoanOffer<'info> {
       let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
       if current_timestamp > end_borrowed_loan_offer {
-        return Err(LoanOfferError::LoanOfferExpired)?;
+        return err!(LoanOfferError::LoanOfferExpired);
       }
 
       Ok(())

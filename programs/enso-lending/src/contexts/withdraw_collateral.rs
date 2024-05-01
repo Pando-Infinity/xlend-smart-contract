@@ -76,14 +76,14 @@ impl<'info> WithdrawCollateral<'info> {
     let health_ratio = remaining_collateral_in_usd / lend_amount_to_usd;
 
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
-      return Err(LoanOfferError::HealthRatioLimit)?;
+      return err!(LoanOfferError::HealthRatioLimit);
     }
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
     let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
     if current_timestamp > end_borrowed_loan_offer {
-      return Err(LoanOfferError::LoanOfferExpired)?;
+      return err!(LoanOfferError::LoanOfferExpired)?;
     }
 
     self.loan_offer.request_withdraw_amount = Some(withdraw_amount);

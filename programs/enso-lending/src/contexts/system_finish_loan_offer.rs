@@ -64,7 +64,7 @@ impl<'info> SystemFinishLoanOffer<'info> {
     let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
     if current_timestamp < end_borrowed_loan_offer {
-      return Err(RepayOfferError::TimeUnmetException)?;
+      return err!(RepayOfferError::TimeUnmetException);
     }
 
     self.transfer_asset_to_lender(loan_amount, total_repay_to_lender)?;
@@ -80,11 +80,11 @@ impl<'info> SystemFinishLoanOffer<'info> {
 
   fn transfer_asset_to_lender(&mut self, loan_amount: u64, total_repay_to_lender: u64) -> Result<()> {
     if loan_amount != self.loan_offer.borrow_amount {
-      return Err(RepayOfferError::InvalidLendAmount)?;
+      return err!(RepayOfferError::InvalidLendAmount);
     }
 
     if total_repay_to_lender > self.system_ata_asset.amount {
-      return Err(RepayOfferError::NotEnoughAmount)?;
+      return err!(RepayOfferError::NotEnoughAmount);
     }
 
     self.process_transfer_lend_asset(total_repay_to_lender)?;

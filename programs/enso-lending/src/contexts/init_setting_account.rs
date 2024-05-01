@@ -37,7 +37,7 @@ pub struct InitSettingAccount<'info> {
 impl<'info> InitSettingAccount<'info> {
     pub fn init_setting_account(&mut self, bumps: &InitSettingAccountBumps, tier_id: String, amount: u64, duration: u64, lender_fee_percent: f64, borrower_fee_percent: f64  ) -> Result<()> {
       if self.owner.key() != Pubkey::from_str(OPERATE_SYSTEM_PUBKEY).unwrap() {
-        return Err(SettingAccountError::InvalidOwner)?;
+        return err!(SettingAccountError::InvalidOwner)?;
       }
 
       self.setting_account.set_inner(SettingAccount {

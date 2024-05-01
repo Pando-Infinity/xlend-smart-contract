@@ -64,13 +64,13 @@ pub struct SystemCancelLendOffer<'info> {
 impl<'info> SystemCancelLendOffer<'info> {
   pub fn system_cancel_lend_offer(&mut self, lend_amount: u64, waiting_interest: u64) -> Result<()>  {
     if lend_amount != self.lend_offer.amount {
-      return Err(LendOfferError::InvalidLendAmount)?;
+      return err!(LendOfferError::InvalidLendAmount);
     }
 
     let total_repay = lend_amount + waiting_interest;
 
     if total_repay > self.hot_wallet_ata.amount {
-      return Err(LendOfferError::NotEnoughAmount)?;
+      return err!(LendOfferError::NotEnoughAmount);
     }
 
     self.transfer_back_lend_asset(total_repay)?;
