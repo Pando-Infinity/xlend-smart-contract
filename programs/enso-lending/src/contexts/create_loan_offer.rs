@@ -189,7 +189,7 @@ impl<'info> CreateLoanOffer<'info> {
     let health_ratio = convert_collateral_amount_to_usd / convert_lend_amount_to_usd;
 
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
-        return Err(LoanOfferError::CanNotTakeALoanBecauseHealthRatioIsNotValid)?;
+        return err!(LoanOfferError::CanNotTakeALoanBecauseHealthRatioIsNotValid);
     }
 
     Ok(())
@@ -197,11 +197,11 @@ impl<'info> CreateLoanOffer<'info> {
 
   fn validate_price_feed_account(&self) -> Result<()> {
     if self.setting_account.lend_price_feed.key() != self.lend_price_feed_account.key() {
-      return Err(LoanOfferError::InvalidPriceFeedAccountForLendAsset)?;
+      return err!(LoanOfferError::InvalidPriceFeedAccountForLendAsset);
     }
 
     if self.setting_account.collateral_price_feed.key() != self.collateral_price_feed_account.key() {
-      return Err(LoanOfferError::InvalidPriceFeedAccountForCollateralAsset)?;
+      return err!(LoanOfferError::InvalidPriceFeedAccountForCollateralAsset);
     }
 
     Ok(())
