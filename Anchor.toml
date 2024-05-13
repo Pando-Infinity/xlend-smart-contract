@@ -11,7 +11,7 @@ enso_lending = "BderhzujHHQNjhCZGRjLWnN2XQ66q4EZnZx2p5WLJnBV"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "./a23QvEb6Q3adWurmUVbJ9YfAa6tiEzZBdXB8cvmhViS.json"
 
 [scripts]
