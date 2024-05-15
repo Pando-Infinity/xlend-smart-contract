@@ -25,6 +25,7 @@ import {
 import { confirm, log, getAmountDifference, generateId } from "./utils";
 import { assert } from "chai";
 import { OPERATE_SYSTEM_SECRET_KEY } from "./accounts/operate-system";
+import { HOT_WALLET_SECRET_KEY } from "./accounts/hot-wallet";
 
 describe("enso-lending", () => {
   async function checkWalletBalance(tokenAccount: PublicKey): Promise<number> {
@@ -45,14 +46,18 @@ describe("enso-lending", () => {
 
   // Boilerplate
   // Determine dummy token mints and token account address
-  const [lender, hotWallet, usdcMint, wrappedSol, borrower] = Array.from(
-    { length: 5 },
+  const [lender, usdcMint, wrappedSol, borrower] = Array.from(
+    { length: 4 },
     () => Keypair.generate()
   );
 
   // Create account system to test on local network
   const ownerAccountSetting = Keypair.fromSecretKey(
     Uint8Array.from(OPERATE_SYSTEM_SECRET_KEY)
+  );
+
+  const hotWallet = Keypair.fromSecretKey(
+    Uint8Array.from(HOT_WALLET_SECRET_KEY)
   );
 
   const usdcMintDecimal = 6;
@@ -528,6 +533,43 @@ describe("enso-lending", () => {
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .signers([hotWallet])
+      .rpc()
+      .then((sig) => confirm(connection, sig))
+      .then((sig) => log(connection, sig));
+  };
+
+  const startLiquidateContract = async (params: {
+    offerId: string;
+    liquidatingPrice: number;
+    liquidatingAt: number;
+    borrower: PublicKey;
+    hotWallet: PublicKey;
+    loanOffer: PublicKey;
+    systemWallet: Keypair;
+  }) => {
+    const {
+      offerId,
+      borrower,
+      liquidatingAt,
+      liquidatingPrice,
+      hotWallet,
+      loanOffer,
+      systemWallet,
+    } = params;
+
+    await program.methods
+      .startLiquidateContract(
+        offerId,
+        new anchor.BN(liquidatingPrice),
+        new anchor.BN(liquidatingAt)
+      )
+      .accounts({
+        borrower,
+        hotWallet,
+        loanOffer,
+        system: systemWallet.publicKey,
+      })
+      .signers([systemWallet])
       .rpc()
       .then((sig) => confirm(connection, sig))
       .then((sig) => log(connection, sig));
@@ -1966,12 +2008,12 @@ describe("enso-lending", () => {
           balanceLoanOfferPdaBeforeCreateLoan / 10 ** wrappedSolDecimal
         } SOL`
       );
-      
-      const loanOfferDataSize = 439
+
+      const loanOfferDataSize = 439;
       const loanOfferRentLamports =
-      await program.provider.connection.getMinimumBalanceForRentExemption(
-        loanOfferDataSize
-      );
+        await program.provider.connection.getMinimumBalanceForRentExemption(
+          loanOfferDataSize
+        );
 
       await createLoanOfferNative({
         borrower,
@@ -2000,7 +2042,9 @@ describe("enso-lending", () => {
 
       assert.equal(
         collateralAmount,
-        balanceLoanOfferPdaAfterCreateLoan - loanOfferRentLamports - balanceLoanOfferPdaBeforeCreateLoan
+        balanceLoanOfferPdaAfterCreateLoan -
+          loanOfferRentLamports -
+          balanceLoanOfferPdaBeforeCreateLoan
       );
 
       const borrowerUsdcAmountBeforeReceiveLendAsset = +(
@@ -2098,6 +2142,238 @@ describe("enso-lending", () => {
           balanceSOLBorrowerAfterRepay / 10 ** wrappedSolDecimal
         } SOL`
       );
+    });
+  });
+
+  describe("liquidate loan offer", () => {
+    it("liquidate loan offer successfully", async () => {
+      const amountTier = 50 * 10 ** usdcMintDecimal;
+      const collateralAmount = 10 * 10 ** wrappedSolDecimal;
+      const duration = 14;
+      const tierId = `tier_id_${generateId(10)}`;
+      const lenderFeePercent = 0;
+      const borrowerFeePercent = 0;
+
+      const seedSettingAccount = [
+        Buffer.from("enso"),
+        Buffer.from("setting_account"),
+        Buffer.from(tierId),
+        program.programId.toBuffer(),
+      ];
+
+      const settingAccount = PublicKey.findProgramAddressSync(
+        seedSettingAccount,
+        program.programId
+      )[0];
+
+      const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
+      const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
+
+      await initSettingAccount({
+        amount: amountTier,
+        duration,
+        tierId,
+        lenderFeePercent,
+        borrowerFeePercent,
+        lendMintAsset: usdcMint.publicKey,
+        collateralMintAsset: wrappedSol.publicKey,
+        settingAccount,
+        collateralPriceFeedAccount: sol_usd_price_feed,
+        lendPriceFeedAccount: usdc_usd_price_feed,
+      });
+
+      const lendOfferId = `lend_offer_id_${generateId(10)}`;
+      const loanOfferId = `lend_offer_id_${generateId(10)}`;
+
+      const interest = 2.1;
+
+      const seedLendOffer = [
+        Buffer.from("enso"),
+        Buffer.from("lend_offer"),
+        lender.publicKey.toBuffer(),
+        Buffer.from(lendOfferId),
+        program.programId.toBuffer(),
+      ];
+
+      const lendOfferAccount = PublicKey.findProgramAddressSync(
+        seedLendOffer,
+        program.programId
+      )[0];
+
+      const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        hotWallet.publicKey
+      );
+
+      const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        lender.publicKey
+      );
+
+      const borrowerAtaUsdc = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        borrower.publicKey
+      );
+
+      await createLendOffer({
+        hotWalletAta: hotWalletUsdcAta.address,
+        lender,
+        lenderAtaAsset: lenderAtaUsdc.address,
+        lendOffer: lendOfferAccount,
+        mintAsset: usdcMint.publicKey,
+        settingAccount,
+        interest,
+        offerId: lendOfferId,
+        tierId,
+      });
+
+      const seedLoanOffer = [
+        Buffer.from("enso"),
+        Buffer.from("loan_offer"),
+        borrower.publicKey.toBuffer(),
+        Buffer.from(loanOfferId),
+        program.programId.toBuffer(),
+      ];
+
+      const loanOfferAccount = PublicKey.findProgramAddressSync(
+        seedLoanOffer,
+        program.programId
+      )[0];
+
+      const balanceLoanOfferPdaBeforeCreateLoan = +(await connection.getBalance(
+        loanOfferAccount
+      ));
+      console.log(
+        `🚀 ~ it ~ balanceLoanOfferPdaBeforeCreateLoan: ${
+          balanceLoanOfferPdaBeforeCreateLoan / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+
+      const loanOfferDataSize = 439;
+      const loanOfferRentLamports =
+        await program.provider.connection.getMinimumBalanceForRentExemption(
+          loanOfferDataSize
+        );
+
+      await createLoanOfferNative({
+        borrower,
+        collateralAmount,
+        settingAccount,
+        lender: lender.publicKey,
+        lendPriceFeedAccount: usdc_usd_price_feed,
+        collateralPriceFeedAccount: sol_usd_price_feed,
+        lendOffer: lendOfferAccount,
+        loanOffer: loanOfferAccount,
+        lendMintAsset: usdcMint.publicKey,
+        offerId: loanOfferId,
+        lendOfferId,
+        tierId,
+        collateralMintAsset: wrappedSol.publicKey,
+      });
+
+      const balanceLoanOfferPdaAfterCreateLoan = +(await connection.getBalance(
+        loanOfferAccount
+      ));
+      console.log(
+        `🚀 ~ it ~ balanceLoanOfferPdaAfterCreateLoan: ${
+          balanceLoanOfferPdaAfterCreateLoan / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+
+      assert.equal(
+        collateralAmount,
+        balanceLoanOfferPdaAfterCreateLoan -
+          loanOfferRentLamports -
+          balanceLoanOfferPdaBeforeCreateLoan
+      );
+
+      const borrowerUsdcAmountBeforeReceiveLendAsset = +(
+        await connection.getTokenAccountBalance(borrowerAtaUsdc.address)
+      ).value.amount;
+      console.log(
+        `🚀 ~ it ~ borrowerUsdcAmountBeforeReceiveLendAsset: ${
+          borrowerUsdcAmountBeforeReceiveLendAsset / 10 ** usdcMintDecimal
+        } USDC`
+      );
+
+      await systemUpdateLoanOffer({
+        borrowAmount: amountTier,
+        borrower: borrower.publicKey,
+        borrowerAtaAsset: borrowerAtaUsdc.address,
+        hotWallet,
+        hotWalletAta: hotWalletUsdcAta.address,
+        loanOffer: loanOfferAccount,
+        mintAsset: usdcMint.publicKey,
+        offerId: loanOfferId,
+        tierId,
+      });
+
+      const { status: loanOfferStatusAfterSystemTransferLendAsset } =
+        await program.account.loanOfferAccount.fetch(loanOfferAccount);
+
+      console.log(
+        "🚀 ~ it ~ loanOfferStatusAfterSystemTransferLendAsset:",
+        loanOfferStatusAfterSystemTransferLendAsset
+      );
+      assert.isTrue(
+        loanOfferStatusAfterSystemTransferLendAsset.hasOwnProperty(
+          "fundTransferred"
+        )
+      );
+
+      const borrowerUsdcAmountAfterReceiveLendAsset = +(
+        await connection.getTokenAccountBalance(borrowerAtaUsdc.address)
+      ).value.amount;
+      console.log(
+        `🚀 ~ it ~ borrowerUsdcAmountAfterReceiveLendAsset: ${
+          borrowerUsdcAmountAfterReceiveLendAsset / 10 ** usdcMintDecimal
+        } USDC`
+      );
+
+      assert.equal(
+        amountTier,
+        borrowerUsdcAmountAfterReceiveLendAsset -
+          borrowerUsdcAmountBeforeReceiveLendAsset
+      );
+
+      const hotWalletBalanceBeforeLiquidate = await connection.getBalance(
+        hotWallet.publicKey
+      );
+      console.log(
+        `🚀 ~ it ~ hotWalletBalanceBeforeLiquidate: ${
+          hotWalletBalanceBeforeLiquidate / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+
+      await startLiquidateContract({
+        borrower: borrower.publicKey,
+        hotWallet: hotWallet.publicKey,
+        liquidatingAt: Date.now(),
+        liquidatingPrice: 100 * 10 ** wrappedSolDecimal,
+        loanOffer: loanOfferAccount,
+        offerId: loanOfferId,
+        systemWallet: ownerAccountSetting,
+      });
+
+      const hotWalletBalanceAfterLiquidate = await connection.getBalance(
+        hotWallet.publicKey
+      );
+      console.log(
+        `🚀 ~ it ~ hotWalletBalanceAfterLiquidate: ${
+          hotWalletBalanceAfterLiquidate / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+
+      const { status } = await program.account.loanOfferAccount.fetch(loanOfferAccount)
+
+      assert.equal(collateralAmount, hotWalletBalanceAfterLiquidate - hotWalletBalanceBeforeLiquidate)
+      assert.isTrue(status.hasOwnProperty('liquidating'))
     });
   });
 });

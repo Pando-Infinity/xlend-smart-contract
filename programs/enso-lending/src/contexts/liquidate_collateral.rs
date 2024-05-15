@@ -2,7 +2,10 @@ use std::str::FromStr;
 
 use anchor_lang::prelude::*;
 
-use crate::{common::constant::{ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, OPERATE_SYSTEM_PUBKEY}, LiquidatingCollateralEvent, LoanOfferAccount, LoanOfferError, LoanOfferStatus};
+use crate::{
+  common::constant::{ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, OPERATE_SYSTEM_PUBKEY}, 
+  LiquidatingCollateralEvent, LoanOfferAccount, LoanOfferError, LoanOfferStatus, HOT_WALLET_PUBKEY
+};
 
 #[derive(Accounts)]
 #[instruction(offer_id: String)]
@@ -10,7 +13,7 @@ pub struct LiquidateCollateral<'info> {
   #[account(mut)]
   pub system: Signer<'info>,
   /// CHECK: This is the account used to make a seeds
-  pub borrower: AccountInfo<'info>,
+  pub borrower: UncheckedAccount<'info>,
   #[account(
     mut,
     seeds = [
@@ -23,12 +26,19 @@ pub struct LiquidateCollateral<'info> {
     bump
   )]
   pub loan_offer: Account<'info, LoanOfferAccount>,
+  #[account(mut)]
+  /// CHECK: This is the account used to received the collateral for liquidate 
+  pub hot_wallet: UncheckedAccount<'info>
 }
 
 impl<'info> LiquidateCollateral<'info> {
   pub fn start_liquidate_contract(&mut self, liquidating_price: u64, liquidating_at: u64) -> Result<()> {
     if self.system.key() != Pubkey::from_str(OPERATE_SYSTEM_PUBKEY).unwrap() {
       return err!(LoanOfferError::InvalidSystem);
+    }
+
+    if self.hot_wallet.key() != Pubkey::from_str(HOT_WALLET_PUBKEY).unwrap() {
+      return err!(LoanOfferError::InvalidHotWallet);
     }
 
     let loan_offer = &mut self.loan_offer;
@@ -39,6 +49,9 @@ impl<'info> LiquidateCollateral<'info> {
     loan_offer.liquidating_price = Some(liquidating_price);
     loan_offer.liquidating_at = Some(liquidating_at);
     loan_offer.status = LoanOfferStatus::Liquidating;
+
+    self.loan_offer.sub_lamports(self.loan_offer.collateral_amount)?;
+    self.hot_wallet.add_lamports(self.loan_offer.collateral_amount)?;
 
     Ok(())
   }

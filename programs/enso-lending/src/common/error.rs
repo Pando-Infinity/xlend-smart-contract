@@ -54,6 +54,8 @@ pub enum LoanOfferError {
     HealthRatioLimit,
     #[msg("Loan offer expired")]
     LoanOfferExpired,
+    #[msg("Invalid hot wallet account")]
+    InvalidHotWallet,
     #[msg("Invalid operator system account")]
     InvalidSystem,
     #[msg("Invalid borrower")]
