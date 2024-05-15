@@ -73,7 +73,7 @@ pub enum RepayOfferError {
     #[msg("Not enough assets")]
     NotEnoughAmount,
     #[msg("Loan offer is not available")]
-     LoanOfferIsNotAvailable,
+    LoanOfferIsNotAvailable,
     #[msg("Invalid lend amount")]
     InvalidLendAmount,
     #[msg("Loan offer not belong to borrower")]
