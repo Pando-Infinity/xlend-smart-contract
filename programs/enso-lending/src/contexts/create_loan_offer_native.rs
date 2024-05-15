@@ -81,8 +81,7 @@ impl<'info> CreateLoanOfferNative<'info> {
     tier_id: String, 
     collateral_amount: u64
   ) -> Result<()> {
-    // NOTE: Turn off check for local net
-    // self.validate_initialize_loan_offer(collateral_amount)?;
+    self.validate_initialize_loan_offer(collateral_amount)?;
 
     self.deposit_collateral(collateral_amount)?;
 
