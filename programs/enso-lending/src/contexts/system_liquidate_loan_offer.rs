@@ -60,7 +60,9 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
     liquidated_price: u64,
     liquidated_tx: String
   ) -> Result<()>  {
-    let interest_loan_amount = (self.loan_offer.interest * self.loan_offer.borrow_amount as f64) as u64;
+    let loan_interest_percent = self.loan_offer.interest / 100.0;
+    let time_borrowed = (self.loan_offer.duration / (24 * 60 * 60 * 365)) as f64;
+    let interest_loan_amount = (loan_interest_percent * self.loan_offer.borrow_amount as f64 * time_borrowed) as u64;
 
     let borrower_fee_amount = (self.loan_offer.borrower_fee_percent * self.loan_offer.borrow_amount as f64) as u64;
     let remaining_fund_to_borrower = collateral_swapped_amount - self.loan_offer.borrow_amount - interest_loan_amount - borrower_fee_amount; 
