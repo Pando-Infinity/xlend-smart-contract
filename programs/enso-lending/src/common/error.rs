@@ -54,6 +54,8 @@ pub enum LoanOfferError {
     HealthRatioLimit,
     #[msg("Loan offer expired")]
     LoanOfferExpired,
+    #[msg("Invalid hot wallet account")]
+    InvalidHotWallet,
     #[msg("Invalid operator system account")]
     InvalidSystem,
     #[msg("Invalid borrower")]
@@ -73,7 +75,7 @@ pub enum RepayOfferError {
     #[msg("Not enough assets")]
     NotEnoughAmount,
     #[msg("Loan offer is not available")]
-     LoanOfferIsNotAvailable,
+    LoanOfferIsNotAvailable,
     #[msg("Invalid lend amount")]
     InvalidLendAmount,
     #[msg("Loan offer not belong to borrower")]

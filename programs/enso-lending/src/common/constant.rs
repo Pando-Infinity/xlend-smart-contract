@@ -25,6 +25,7 @@ pub const LEND_OFFER_ACCOUNT_SEED: &[u8] = b"lend_offer";
 pub const LOAN_OFFER_ACCOUNT_SEED: &[u8] = b"loan_offer";
 
 pub const OPERATE_SYSTEM_PUBKEY: &str = "opty8HWBKX3wW8c9qMPkmB4xnrCpMWWmQwqq7yGzmr4";
+pub const HOT_WALLET_PUBKEY: &str = "Hot7zcvBTa3NybAnKrKtjcW1yJcoDWao39ZAoBn4mfPu";
 
 pub const STALENESS_THRESHOLD : u64 = 60; // staleness threshold in seconds
 

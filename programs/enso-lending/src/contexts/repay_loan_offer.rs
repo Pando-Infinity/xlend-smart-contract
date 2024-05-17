@@ -83,7 +83,10 @@ impl<'info> RepayLoanOffer<'info> {
       }
 
       self.deposit(total_amount)?;
-      self.loan_offer.status = LoanOfferStatus::Repay;
+
+      self.loan_offer.sub_lamports(self.loan_offer.collateral_amount)?;
+      self.borrower.add_lamports(self.loan_offer.collateral_amount)?;
+      self.loan_offer.status = LoanOfferStatus::BorrowerPaid;
 
       self.emit_event_repay_loan_offer( "repay_loan_offer".to_string(), self.loan_offer.offer_id.clone(), total_amount)?;
       
@@ -91,8 +94,17 @@ impl<'info> RepayLoanOffer<'info> {
     }
 
     pub fn deposit(&mut self, repay_amount: u64) -> Result<()> {
+      let cpi_accounts = TransferChecked {
+        from: self.loan_ata_asset.to_account_info(),
+        mint: self.mint_asset.to_account_info(),
+        to: self.hot_wallet_ata.to_account_info(),
+        authority: self.borrower.to_account_info(),
+      };
+      
+      let cpi_ctx = CpiContext::new(self.token_program.to_account_info(), cpi_accounts);
+
       transfer_checked(
-        self.into_deposit_context(),
+        cpi_ctx,
         repay_amount,
         self.mint_asset.decimals,
       )
@@ -107,16 +119,6 @@ impl<'info> RepayLoanOffer<'info> {
       }
 
       Ok(())
-    }
-
-    fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-      let cpi_accounts = TransferChecked {
-        from: self.loan_ata_asset.to_account_info(),
-        mint: self.mint_asset.to_account_info(),
-        to: self.hot_wallet_ata.to_account_info(),
-        authority: self.borrower.to_account_info(),
-      };
-      CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
     }
 
     pub fn emit_event_repay_loan_offer(&mut self, label: String, loan_offer_id: String, repay_amount: u64) -> Result<()> {
