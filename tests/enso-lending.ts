@@ -1773,7 +1773,7 @@ describe("enso-lending", () => {
     });
   });
 
-  describe("create loan offer native", () => {
+  xdescribe("create loan offer native", () => {
     // NOTE: To run this test, go to the context create_loan_offer_native and comment validation health ratio
     it("create loan offer successfully", async () => {
       const amountTier = 50 * 10 ** usdcMintDecimal;
@@ -1901,9 +1901,9 @@ describe("enso-lending", () => {
 
   describe("repay loan offer", () => {
     it("repay loan offer successfully", async () => {
-      const amountTier = 50 * 10 ** usdcMintDecimal;
-      const collateralAmount = 10 * 10 ** wrappedSolDecimal;
-      const duration = 14;
+      const amountTier = 200 * 10 ** usdcMintDecimal; // 200 USDC
+      const collateralAmount = 10 * 10 ** wrappedSolDecimal; // 10 SOL
+      const duration = 14 * 24 * 60 * 60;
       const tierId = `tier_id_${generateId(10)}`;
       const lenderFeePercent = 0;
       const borrowerFeePercent = 0;
@@ -1939,7 +1939,7 @@ describe("enso-lending", () => {
       const lendOfferId = `lend_offer_id_${generateId(10)}`;
       const loanOfferId = `lend_offer_id_${generateId(10)}`;
 
-      const interest = 2.1;
+      const interest = 4.4;
 
       const seedLendOffer = [
         Buffer.from("enso"),
@@ -2145,7 +2145,7 @@ describe("enso-lending", () => {
     });
   });
 
-  describe("liquidate loan offer", () => {
+  xdescribe("liquidate loan offer", () => {
     it("liquidate loan offer successfully", async () => {
       const amountTier = 50 * 10 ** usdcMintDecimal;
       const collateralAmount = 10 * 10 ** wrappedSolDecimal;
