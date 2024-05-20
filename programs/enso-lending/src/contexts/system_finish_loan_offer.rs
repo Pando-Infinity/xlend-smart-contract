@@ -57,12 +57,16 @@ impl<'info> SystemFinishLoanOffer<'info> {
   pub fn system_finish_loan_offer(&mut self, loan_amount: u64, waiting_interest: u64) -> Result<()>  {
     let loan_interest_percent = self.loan_offer.interest / 100.0;
 
-    let time_borrowed = (self.loan_offer.duration / (24 * 60 * 60 * 365)) as f64;
+    let time_borrowed = (self.loan_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
 
-    let interest_loan_amount = ((loan_amount as f64) * loan_interest_percent * time_borrowed) as u64;
-    let lender_fee_amount = (self.loan_offer.lender_fee_percent * loan_amount as f64 / 100.0) as u64;
+    let interest_loan_amount = (loan_amount as f64) * loan_interest_percent * time_borrowed;
+    let lender_fee_amount = self.loan_offer.lender_fee_percent * (loan_amount as f64) / 100.0;
 
-    let total_repay_to_lender = loan_amount + waiting_interest + interest_loan_amount - lender_fee_amount;
+    let total_repay_to_lender = (loan_amount as f64 
+      + waiting_interest as f64 
+      + interest_loan_amount 
+      - lender_fee_amount
+    ) as u64;
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
     let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;

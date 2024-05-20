@@ -68,15 +68,16 @@ impl<'info> RepayLoanOffer<'info> {
     pub fn repay_loan_offer(&mut self) -> Result<()> {
       self.validate_loan_offer()?;
 
-      let borrower_fee_percent = self.setting_account.borrower_fee_percent;
-      let fee_amount = ((self.loan_offer.borrow_amount as f64) * borrower_fee_percent) as u64;
+      let borrower_fee_percent = self.setting_account.borrower_fee_percent / 100.0;
+      let fee_amount = (self.loan_offer.borrow_amount as f64) * borrower_fee_percent;
 
       let loan_interest_percent = self.loan_offer.interest / 100.0;
 
-      let time_borrowed = (self.loan_offer.duration / (24 * 60 * 60 * 365)) as f64;
-      let interest_amount = ((self.loan_offer.borrow_amount as f64) * loan_interest_percent * time_borrowed) as u64;
+      let time_borrowed = (self.loan_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
 
-      let total_amount = self.setting_account.amount + fee_amount + interest_amount;
+      let interest_amount = (self.loan_offer.borrow_amount as f64) * loan_interest_percent * time_borrowed;
+
+      let total_amount = (self.setting_account.amount as f64 + fee_amount + interest_amount) as u64;
 
       if total_amount > self.loan_ata_asset.amount {
         return err!(RepayOfferError::NotEnoughAmount);
