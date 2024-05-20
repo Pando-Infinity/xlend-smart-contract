@@ -24,7 +24,7 @@ import { generateId } from '../utils';
 
 const enso_lending_idl_string = JSON.stringify(enso_lending_idl);
 const enso_lending_idl_obj = JSON.parse(enso_lending_idl_string);
-const PROGRAM_ID_DEV_NET = 'BderhzujHHQNjhCZGRjLWnN2XQ66q4EZnZx2p5WLJnBV';
+const PROGRAM_ID_DEV_NET = '8kUmtqX7FazYXZTWE6vA4BCqtdqFwJ8ETkdrHtBcqVu6';
 
 const programId = new PublicKey(PROGRAM_ID_DEV_NET);
 const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
@@ -202,7 +202,6 @@ xdescribe('enso-lending-devnet', () => {
 				loanOffer: loanOfferAccount,
 				collateralPriceFeedAccount: sol_usd_price_feed,
 				lendPriceFeedAccount: usdc_usd_price_feed,
-				receiver: hotWallet.publicKey,
 				settingAccount,
 				systemProgram: SystemProgram.programId,
         collateralMintAsset: mintSolWrappedAccount,

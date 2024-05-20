@@ -24,8 +24,8 @@ pub const SETTING_ACCOUNT_SEED: &[u8] = b"setting_account";
 pub const LEND_OFFER_ACCOUNT_SEED: &[u8] = b"lend_offer";
 pub const LOAN_OFFER_ACCOUNT_SEED: &[u8] = b"loan_offer";
 
-pub const OPERATE_SYSTEM_PUBKEY: &str = "opty8HWBKX3wW8c9qMPkmB4xnrCpMWWmQwqq7yGzmr4";
-pub const HOT_WALLET_PUBKEY: &str = "Hot7zcvBTa3NybAnKrKtjcW1yJcoDWao39ZAoBn4mfPu";
+pub const OPERATE_SYSTEM_PUBKEY: &str = "7zg7E4rssmATuNjFgXACZAiGYAq82zYr2LcDoyrtsXQJ";
+pub const HOT_WALLET_PUBKEY: &str = "5ckEzUDHBHimjcQqYK22pcu9fJX6T8RCYTjnSbPsexCc";
 
 pub const STALENESS_THRESHOLD : u64 = 60; // staleness threshold in seconds
 
