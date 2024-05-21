@@ -47,9 +47,7 @@ pub struct WithdrawCollateral<'info> {
       bump = loan_offer.bump
     )]
     pub loan_offer: Account<'info, LoanOfferAccount>,
-    /// CHECK: This is the account used to convert lend asset price to USD price
     pub lend_price_feed_account: Account<'info, PriceUpdateV2>,
-    /// CHECK: This is the account used to convert collateral asset price to USD price
     pub collateral_price_feed_account: Account<'info, PriceUpdateV2>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
