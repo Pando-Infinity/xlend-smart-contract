@@ -9,7 +9,7 @@ use common::*;
 mod utils;
 use utils::*;
 
-declare_id!("BderhzujHHQNjhCZGRjLWnN2XQ66q4EZnZx2p5WLJnBV");
+declare_id!("8kUmtqX7FazYXZTWE6vA4BCqtdqFwJ8ETkdrHtBcqVu6");
 
 #[program]
 pub mod enso_lending {
