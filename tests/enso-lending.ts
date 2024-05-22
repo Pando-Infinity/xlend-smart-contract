@@ -24,10 +24,9 @@ import {
 
 import { confirm, log, getAmountDifference, generateId } from "./utils";
 import { assert } from "chai";
-import { OPERATE_SYSTEM_SECRET_KEY } from "./accounts/operate-system";
-import { HOT_WALLET_SECRET_KEY } from "./accounts/hot-wallet";
+import { OPERATE_SYSTEM_SECRET_KEY, HOT_WALLET_SECRET_KEY } from "../accounts/dev"
 
-xdescribe("enso-lending", () => {
+describe("enso-lending", () => {
   async function checkWalletBalance(tokenAccount: PublicKey): Promise<number> {
     let info = await provider.connection.getAccountInfo(tokenAccount);
     let amount = info.lamports;
@@ -457,7 +456,8 @@ xdescribe("enso-lending", () => {
       .signers([borrower])
       .rpc()
       .then((sig) => confirm(connection, sig))
-      .then((sig) => log(connection, sig));
+      .then((sig) => log(connection, sig))
+      .catch((err) => console.log(err));
   };
 
   const repayLoanOffer = async (params: {
@@ -574,6 +574,52 @@ xdescribe("enso-lending", () => {
       .then((sig) => confirm(connection, sig))
       .then((sig) => log(connection, sig));
   };
+
+  const withdrawCollateral = async (params: {
+    loanOfferId: string,
+    withdrawAmount: number,
+    borrower: Keypair,
+    collateralMintAsset: PublicKey;
+    collateralPriceFeedAccount: PublicKey;
+    lendMintAsset: PublicKey;
+    lendPriceFeedAccount: PublicKey;
+    loanOffer: PublicKey;
+    settingAccount: PublicKey;
+  }) => {
+    const {
+      loanOfferId,
+      withdrawAmount,
+      borrower,
+      collateralMintAsset,
+      collateralPriceFeedAccount, 
+      lendMintAsset,
+      lendPriceFeedAccount, 
+      loanOffer, 
+      settingAccount
+    } = params;
+
+
+    await program.methods
+      .withdrawCollateral(
+        loanOfferId,
+        new anchor.BN(withdrawAmount),
+      )
+      .accounts({
+        borrower: borrower.publicKey,
+        loanOffer,
+        collateralMintAsset,
+        collateralPriceFeedAccount,
+        lendMintAsset,
+        lendPriceFeedAccount,
+        settingAccount,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([borrower])
+      .rpc()
+      .then((sig) => confirm(connection, sig))
+      .then((sig) => log(connection, sig));
+  }
 
   xdescribe("account setting", () => {
     it("Init Account Setting successfully", async () => {
@@ -1899,7 +1945,7 @@ xdescribe("enso-lending", () => {
     });
   });
 
-  describe("repay loan offer", () => {
+  xdescribe("repay loan offer", () => {
     it("repay loan offer successfully", async () => {
       const amountTier = 200 * 10 ** usdcMintDecimal; // 200 USDC
       const collateralAmount = 10 * 10 ** wrappedSolDecimal; // 10 SOL
@@ -2144,6 +2190,246 @@ xdescribe("enso-lending", () => {
       );
     });
   });
+
+
+  describe("Withdraw collateral", () => {
+    it("withdraw collateral success", async () => {
+      const amountTier = 50 * 10 ** usdcMintDecimal;
+      const collateralAmount = 10 * 10 ** wrappedSolDecimal;
+      const duration = 14;
+      const tierId = `tier_id_${generateId(10)}`;
+      const lenderFeePercent = 0;
+      const borrowerFeePercent = 0;
+
+      const seedSettingAccount = [
+        Buffer.from("enso"),
+        Buffer.from("setting_account"),
+        Buffer.from(tierId),
+        program.programId.toBuffer(),
+      ];
+
+      const settingAccount = PublicKey.findProgramAddressSync(
+        seedSettingAccount,
+        program.programId
+      )[0];
+
+      const sol_usd_price_feed = new PublicKey(sol_usd_price_feed_id);
+      const usdc_usd_price_feed = new PublicKey(usdc_usd_price_feed_id);
+
+      await initSettingAccount({
+        amount: amountTier,
+        duration,
+        tierId,
+        lenderFeePercent,
+        borrowerFeePercent,
+        lendMintAsset: usdcMint.publicKey,
+        collateralMintAsset: wrappedSol.publicKey,
+        settingAccount,
+        collateralPriceFeedAccount: sol_usd_price_feed,
+        lendPriceFeedAccount: usdc_usd_price_feed,
+      });
+
+      const lendOfferId = `lend_offer_id_${generateId(10)}`;
+      const loanOfferId = `lend_offer_id_${generateId(10)}`;
+
+      const interest = 2.1;
+
+      const seedLendOffer = [
+        Buffer.from("enso"),
+        Buffer.from("lend_offer"),
+        lender.publicKey.toBuffer(),
+        Buffer.from(lendOfferId),
+        program.programId.toBuffer(),
+      ];
+
+      const lendOfferAccount = PublicKey.findProgramAddressSync(
+        seedLendOffer,
+        program.programId
+      )[0];
+
+      const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        hotWallet.publicKey
+      );
+
+      const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        lender.publicKey
+      );
+
+      const borrowerAtaUsdc = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        borrower.publicKey
+      );
+
+      await createLendOffer({
+        hotWalletAta: hotWalletUsdcAta.address,
+        lender,
+        lenderAtaAsset: lenderAtaUsdc.address,
+        lendOffer: lendOfferAccount,
+        mintAsset: usdcMint.publicKey,
+        settingAccount,
+        interest,
+        offerId: lendOfferId,
+        tierId,
+      });
+
+      const seedLoanOffer = [
+        Buffer.from("enso"),
+        Buffer.from("loan_offer"),
+        borrower.publicKey.toBuffer(),
+        Buffer.from(loanOfferId),
+        program.programId.toBuffer(),
+      ];
+
+      const loanOfferAccount = PublicKey.findProgramAddressSync(
+        seedLoanOffer,
+        program.programId
+      )[0];
+
+      const balanceLoanOfferPdaBeforeCreateLoan = +(await connection.getBalance(
+        loanOfferAccount
+      ));
+      console.log(
+        `🚀 ~ it ~ balanceLoanOfferPdaBeforeCreateLoan: ${
+          balanceLoanOfferPdaBeforeCreateLoan / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+
+      const loanOfferDataSize = 439;
+      const loanOfferRentLamports =
+        await program.provider.connection.getMinimumBalanceForRentExemption(
+          loanOfferDataSize
+        );
+
+      await createLoanOfferNative({
+        borrower,
+        collateralAmount,
+        settingAccount,
+        lender: lender.publicKey,
+        lendPriceFeedAccount: usdc_usd_price_feed,
+        collateralPriceFeedAccount: sol_usd_price_feed,
+        lendOffer: lendOfferAccount,
+        loanOffer: loanOfferAccount,
+        lendMintAsset: usdcMint.publicKey,
+        offerId: loanOfferId,
+        lendOfferId,
+        tierId,
+        collateralMintAsset: wrappedSol.publicKey,
+      });
+
+      const balanceLoanOfferPdaAfterCreateLoan = +(await connection.getBalance(
+        loanOfferAccount
+      ));
+      console.log(
+        `🚀 ~ it ~ balanceLoanOfferPdaAfterCreateLoan: ${
+          balanceLoanOfferPdaAfterCreateLoan / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+
+      assert.equal(
+        collateralAmount,
+        balanceLoanOfferPdaAfterCreateLoan -
+          loanOfferRentLamports -
+          balanceLoanOfferPdaBeforeCreateLoan
+      );
+
+      const borrowerUsdcAmountBeforeReceiveLendAsset = +(
+        await connection.getTokenAccountBalance(borrowerAtaUsdc.address)
+      ).value.amount;
+      console.log(
+        `🚀 ~ it ~ borrowerUsdcAmountBeforeReceiveLendAsset: ${
+          borrowerUsdcAmountBeforeReceiveLendAsset / 10 ** usdcMintDecimal
+        } USDC`
+      );
+
+      await systemUpdateLoanOffer({
+        borrowAmount: amountTier,
+        borrower: borrower.publicKey,
+        borrowerAtaAsset: borrowerAtaUsdc.address,
+        hotWallet,
+        hotWalletAta: hotWalletUsdcAta.address,
+        loanOffer: loanOfferAccount,
+        mintAsset: usdcMint.publicKey,
+        offerId: loanOfferId,
+        tierId,
+      });
+
+      const { status: loanOfferStatusAfterSystemTransferLendAsset } =
+        await program.account.loanOfferAccount.fetch(loanOfferAccount);
+
+      console.log(
+        "🚀 ~ it ~ loanOfferStatusAfterSystemTransferLendAsset:",
+        loanOfferStatusAfterSystemTransferLendAsset
+      );
+      assert.isTrue(
+        loanOfferStatusAfterSystemTransferLendAsset.hasOwnProperty(
+          "fundTransferred"
+        )
+      );
+
+      const borrowerUsdcAmountAfterReceiveLendAsset = +(
+        await connection.getTokenAccountBalance(borrowerAtaUsdc.address)
+      ).value.amount;
+      console.log(
+        `🚀 ~ it ~ borrowerUsdcAmountAfterReceiveLendAsset: ${
+          borrowerUsdcAmountAfterReceiveLendAsset / 10 ** usdcMintDecimal
+        } USDC`
+      );
+
+      assert.equal(
+        amountTier,
+        borrowerUsdcAmountAfterReceiveLendAsset -
+          borrowerUsdcAmountBeforeReceiveLendAsset
+      );
+
+      const borrowerSolBalanceBeforeWithdraw = await connection.getBalance(borrower.publicKey);
+      console.log(
+        `🚀 ~ it ~ borrowerSolBalanceBeforeWithdraw: ${
+          borrowerSolBalanceBeforeWithdraw / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+      const loanOfferCollateralBeforeWithdraw = await connection.getBalance(loanOfferAccount);
+      console.log(
+        `🚀 ~ it ~ loanOfferCollateralBeforeWithdraw: ${
+          loanOfferCollateralBeforeWithdraw / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+
+      const withdrawAmount = 2 * 10 ** wrappedSolDecimal // 2 SOL
+
+      await withdrawCollateral({
+        borrower,
+        collateralMintAsset: wrappedSol.publicKey, 
+        collateralPriceFeedAccount: sol_usd_price_feed,
+        lendMintAsset: usdcMint.publicKey, 
+        lendPriceFeedAccount: usdc_usd_price_feed,
+        loanOffer: loanOfferAccount,
+        loanOfferId,
+        settingAccount,
+        withdrawAmount
+      });
+
+      const borrowerSolBalanceAfterWithdraw = await connection.getBalance(borrower.publicKey);
+      console.log(
+        `🚀 ~ it ~ borrowerSolBalanceAfterWithdraw: ${
+          borrowerSolBalanceAfterWithdraw / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+      const loanOfferCollateralAfterWithdraw = await connection.getBalance(loanOfferAccount);
+      console.log(
+        `🚀 ~ it ~ loanOfferCollateralAfterWithdraw: ${
+          loanOfferCollateralAfterWithdraw / 10 ** wrappedSolDecimal
+        } SOL`
+      );
+    });
+  });  
 
   xdescribe("liquidate loan offer", () => {
     it("liquidate loan offer successfully", async () => {
