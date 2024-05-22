@@ -47,9 +47,7 @@ pub struct WithdrawCollateral<'info> {
       bump = loan_offer.bump
     )]
     pub loan_offer: Account<'info, LoanOfferAccount>,
-    /// CHECK: This is the account used to convert lend asset price to USD price
     pub lend_price_feed_account: Account<'info, PriceUpdateV2>,
-    /// CHECK: This is the account used to convert collateral asset price to USD price
     pub collateral_price_feed_account: Account<'info, PriceUpdateV2>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
@@ -84,7 +82,10 @@ impl<'info> WithdrawCollateral<'info> {
       return err!(LoanOfferError::LoanOfferExpired)?;
     }
 
+    // TODO: Remove redundant line after beta test
     self.loan_offer.request_withdraw_amount = Some(withdraw_amount);
+    self.loan_offer.sub_lamports(withdraw_amount)?;
+    self.borrower.add_lamports(withdraw_amount)?;
 
     self.emit_event_withdraw_collateral(
       String::from("withdraw_collateral"),
