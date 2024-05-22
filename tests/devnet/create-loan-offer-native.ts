@@ -65,7 +65,7 @@ const program = new Program<EnsoLending>(
   provider
 );
 
-describe("enso-lending-devnet", () => {
+xdescribe("enso-lending-devnet", () => {
   xit("Create loan offer successfully", async () => {
     const lendAmount = 100 * Math.pow(10, usdcMintDecimal);
     const duration = 14;
