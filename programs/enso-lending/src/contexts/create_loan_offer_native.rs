@@ -137,8 +137,6 @@ impl<'info> CreateLoanOfferNative<'info> {
   }
 
   fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
-    // self.validate_price_feed_account()?;
-
     let convert_collateral_amount_to_usd = convert_to_usd_price(
       &self.collateral_price_feed_account, 
       SOL_USD_PRICE_FEED_ID,
