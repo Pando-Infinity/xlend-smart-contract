@@ -2,9 +2,10 @@ use std::str::FromStr;
 
 use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
 use anchor_spl::token::{Mint, Token};
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::{
-  common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, convert_to_usd_price, LoanOfferCreateRequestEvent, LendOfferAccount, LendOfferStatus, LoanOfferAccount, LoanOfferError, LoanOfferStatus, SettingAccount, MIN_BORROW_HEALTH_RATIO, NATIVE_MINT
+  common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, convert_to_usd_price, LendOfferAccount, LendOfferStatus, LoanOfferAccount, LoanOfferCreateRequestEvent, LoanOfferError, LoanOfferStatus, SettingAccount, MIN_BORROW_HEALTH_RATIO, NATIVE_MINT, SOL_USD_PRICE_FEED_ID, USDC_USD_PRICE_FEED_ID
 };
 
 #[derive(Accounts)]
@@ -54,10 +55,8 @@ pub struct CreateLoanOfferNative<'info> {
     bump = lend_offer.bump
   )]
   pub lend_offer: Account<'info, LendOfferAccount>,
-  /// CHECK: This is the account used to convert lend asset price to USD price
-  pub lend_price_feed_account: AccountInfo<'info>,
-  /// CHECK: This is the account used to convert collateral asset price to USD price
-  pub collateral_price_feed_account: AccountInfo<'info>,
+  pub lend_price_feed_account: Account<'info, PriceUpdateV2>,
+  pub collateral_price_feed_account: Account<'info, PriceUpdateV2>,
   #[account(
     seeds = [
         ENSO_SEED.as_ref(), 
@@ -138,14 +137,14 @@ impl<'info> CreateLoanOfferNative<'info> {
   }
 
   fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
-    self.validate_price_feed_account()?;
-
     let convert_collateral_amount_to_usd = convert_to_usd_price(
-      &self.collateral_price_feed_account.to_account_info(), 
+      &self.collateral_price_feed_account, 
+      SOL_USD_PRICE_FEED_ID,
       collateral_amount as f64 / 10f64.powf(self.collateral_mint_asset.decimals as f64)
     ).unwrap();
     let convert_lend_amount_to_usd = convert_to_usd_price(
-      &self.lend_price_feed_account.to_account_info(), 
+      &self.lend_price_feed_account, 
+      USDC_USD_PRICE_FEED_ID,
       self.setting_account.amount as f64 / 10f64.powf(self.lend_mint_asset.decimals as f64)
     ).unwrap();
     let health_ratio = convert_collateral_amount_to_usd / convert_lend_amount_to_usd;
@@ -173,18 +172,6 @@ impl<'info> CreateLoanOfferNative<'info> {
       ],
       &[],  
     )?;
-
-    Ok(())
-  }
-
-  fn validate_price_feed_account(&self) -> Result<()> {
-    if self.setting_account.lend_price_feed.key() != self.lend_price_feed_account.key() {
-      return err!(LoanOfferError::InvalidPriceFeedAccountForLendAsset);
-    }
-
-    if self.setting_account.collateral_price_feed.key() != self.collateral_price_feed_account.key() {
-      return err!(LoanOfferError::InvalidPriceFeedAccountForCollateralAsset);
-    }
 
     Ok(())
   }

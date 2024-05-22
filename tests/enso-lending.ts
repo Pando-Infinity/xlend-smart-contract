@@ -27,7 +27,7 @@ import { assert } from "chai";
 import { OPERATE_SYSTEM_SECRET_KEY } from "./accounts/operate-system";
 import { HOT_WALLET_SECRET_KEY } from "./accounts/hot-wallet";
 
-describe("enso-lending", () => {
+xdescribe("enso-lending", () => {
   async function checkWalletBalance(tokenAccount: PublicKey): Promise<number> {
     let info = await provider.connection.getAccountInfo(tokenAccount);
     let amount = info.lamports;

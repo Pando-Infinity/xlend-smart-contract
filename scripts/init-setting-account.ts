@@ -3,20 +3,19 @@ import { AnchorProvider } from '@project-serum/anchor';
 import {
 	OPERATE_SYSTEM_SECRET_KEY,
 	HOT_WALLET_SECRET_KEY,
-} from '../tests/accounts';
+	PROGRAM_ID
+} from '../accounts/dev';
 
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { EnsoLending } from "../target/types/enso_lending";
-import { confirm, log } from "../tests/utils";
 
 import enso_lending_idl from '../target/idl/enso_lending.json';
 
 const enso_lending_idl_string = JSON.stringify(enso_lending_idl);
 const enso_lending_idl_obj = JSON.parse(enso_lending_idl_string);
-const PROGRAM_ID_DEV_NET = 'BderhzujHHQNjhCZGRjLWnN2XQ66q4EZnZx2p5WLJnBV';
 
-const programId = new PublicKey(PROGRAM_ID_DEV_NET);
+const programId = new PublicKey(PROGRAM_ID);
 const connection = new Connection(clusterApiUrl('devnet'), 'confirmed')
 
 const ownerAccountSetting = Keypair.fromSecretKey(
@@ -24,7 +23,6 @@ const ownerAccountSetting = Keypair.fromSecretKey(
 );
 const hotWallet = Keypair.fromSecretKey(Uint8Array.from(HOT_WALLET_SECRET_KEY));
 
-const usdcMintDecimal = 6;
 const sol_usd_price_feed_id = 'J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix'
 const usdc_usd_price_feed_id = '5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7'
 const mintSolWrappedAccount = new PublicKey(
@@ -101,9 +99,15 @@ const initSettingAccount = async (params: {
     .transaction();
 };
 
+const DURATION_TO_SECOND = 1209600; // 14 days 
+
+const log = (tx: string) => {
+	console.log(`https://explorer.solana.com/transaction/${tx}?cluster=custom&customUrl=${connection.rpcEndpoint}`);
+}
+
 (async () => {
-	const amount = 100000000;
-	const duration = 1209600;
+	const amount = 100000000; // 100 USDC
+	const duration = DURATION_TO_SECOND;
 	const tierId = 'tier_001';
 	const lenderFeePercent = 0;
 	const borrowerFeePercent = 0;
@@ -140,13 +144,13 @@ const initSettingAccount = async (params: {
   await sendAndConfirmTransaction(connection, transaction, [
 		ownerAccountSetting,
   ]).then((tx) => {
-    console.log(tx);
+    log(tx);
   });
 })();
 
 (async () => {
-	const amount = 200000000;
-	const duration = 1209600;
+	const amount = 200000000; // 200 USDC
+	const duration = DURATION_TO_SECOND;
 	const tierId = 'tier_002';
 	const lenderFeePercent = 0;
 	const borrowerFeePercent = 0;
@@ -183,13 +187,13 @@ const initSettingAccount = async (params: {
 	await sendAndConfirmTransaction(connection, transaction, [
 		ownerAccountSetting,
 	]).then((tx) => {
-		console.log(tx);
+		log(tx)
 	});
 })();
 
 (async () => {
-	const amount = 500000000;
-	const duration = 1209600;
+	const amount = 500000000; // 500 USDC
+	const duration = DURATION_TO_SECOND;
 	const tierId = 'tier_003';
 	const lenderFeePercent = 0;
 	const borrowerFeePercent = 0;
@@ -226,13 +230,13 @@ const initSettingAccount = async (params: {
 	await sendAndConfirmTransaction(connection, transaction, [
 		ownerAccountSetting,
 	]).then((tx) => {
-		console.log(tx);
+		log(tx)
 	});
 })();
 
 (async () => {
-	const amount = 1000000000;
-	const duration = 1209600;
+	const amount = 1000000000; // 1000 USDC
+	const duration = DURATION_TO_SECOND;
 	const tierId = 'tier_004';
 	const lenderFeePercent = 0;
 	const borrowerFeePercent = 0;
@@ -269,14 +273,14 @@ const initSettingAccount = async (params: {
 	await sendAndConfirmTransaction(connection, transaction, [
 		ownerAccountSetting,
 	]).then((tx) => {
-		console.log(tx);
+		log(tx)
 	});
 })();
 
 
 (async () => {
-	const amount = 2000000000;
-	const duration = 1209600;
+	const amount = 2000000000; // 2000 USDC
+	const duration = DURATION_TO_SECOND;
 	const tierId = 'tier_005';
 	const lenderFeePercent = 0;
 	const borrowerFeePercent = 0;
@@ -313,13 +317,13 @@ const initSettingAccount = async (params: {
 	await sendAndConfirmTransaction(connection, transaction, [
 		ownerAccountSetting,
 	]).then((tx) => {
-		console.log(tx);
+		log(tx)
 	});
 })();
 
 (async () => {
-	const amount = 5000000000;
-	const duration = 1209600;
+	const amount = 5000000000; // 5000 USDC
+	const duration = DURATION_TO_SECOND;
 	const tierId = 'tier_006';
 	const lenderFeePercent = 0;
 	const borrowerFeePercent = 0;
@@ -356,6 +360,6 @@ const initSettingAccount = async (params: {
 	await sendAndConfirmTransaction(connection, transaction, [
 		ownerAccountSetting,
 	]).then((tx) => {
-		console.log(tx);
+		log(tx)
 	});
 })();
