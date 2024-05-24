@@ -94,7 +94,6 @@ impl<'info> SystemRepayLoadOfferNative<'info> {
     collateral_amount: u64
   ) -> Result<()> {
     emit!(SystemRepayLoadOfferNativeEvent {
-      system: self.system.key(),
       lender: self.loan_offer.lender.key(),
       borrower: self.borrower.key(),
       interest: self.loan_offer.interest,
