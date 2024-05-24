@@ -198,7 +198,6 @@ pub struct LiquidatedCollateralEvent {
 
 #[event]
 pub struct SystemRepayLoadOfferNativeEvent {
-    pub system: Pubkey,
     pub lender: Pubkey,
     pub borrower: Pubkey,
     pub interest: f64,
