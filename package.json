@@ -2,7 +2,7 @@
 	"scripts": {
 		"lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
 		"lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-		"precommit": "anchor test",
+		"precommit": "anchor test -- --features 'devnet'",
 		"prepare": "husky install",
 		"init-setting-accounts": "ts-node ./scripts/init-setting-account.ts"
 	},
@@ -22,11 +22,6 @@
 		"ts-mocha": "^10.0.0",
 		"typescript": "^4.3.5",
 		"husky": "^9.0.11"
-	},
-	"engines": {
-		"node": ">=18.12.0",
-		"npm": "please-use-yarn",
-		"pnpm": "please-use-yarn"
 	},
 	"husky": {
 		"hooks": {
