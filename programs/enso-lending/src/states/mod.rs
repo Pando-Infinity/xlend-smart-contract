@@ -6,3 +6,6 @@ pub use lend_offer::*;
 
 pub mod loan_offer;
 pub use loan_offer::*;
+
+pub mod loan_offer_crosschain;
+pub use loan_offer_crosschain::*;

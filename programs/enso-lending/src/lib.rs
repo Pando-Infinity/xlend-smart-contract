@@ -293,4 +293,24 @@ pub mod enso_lending {
 
       Ok(())
     }
+
+    pub fn create_loan_offer_crosschain(
+        ctx: Context<CreateLoanOfferCrosschain>,
+        tier_id: String,
+        loan_offer_id: String,
+        lend_offer_id: String,
+    ) -> Result<()> {
+        ctx.accounts.create_loan_offer_crosschain(
+            &ctx.bumps,
+            tier_id,
+            loan_offer_id,
+            lend_offer_id
+        )?;
+
+        ctx.accounts.emit_event_create_loan_offer_crosschain(
+            String::from("create_loan_offer_crosschain")
+        )?;
+
+        Ok(())
+    }
 }
