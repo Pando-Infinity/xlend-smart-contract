@@ -81,7 +81,7 @@ pub struct CreateLoanOffer<'info> {
   )]
   pub vault: Box<Account<'info, TokenAccount>>,
   /// CHECK: This account is used to check the validate of lend offer account
-  pub lender: AccountInfo<'info>,
+  pub lender: UncheckedAccount<'info>,
   #[account(
     mut,
     constraint = lend_offer.status == LendOfferStatus::Created @ LoanOfferError::LendOfferIsNotAvailable,
