@@ -1,9 +1,25 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount, TransferChecked, transfer_checked};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked},
+};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::{
-  common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, convert_to_usd_price, LendOfferAccount, LendOfferStatus, LoanOfferAccount, LoanOfferCreateRequestEvent, LoanOfferError, LoanOfferStatus, SettingAccount, MIN_BORROW_HEALTH_RATIO, SOL_USD_PRICE_FEED_ID, USDC_USD_PRICE_FEED_ID
+    common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED}, 
+    convert_to_usd_price, 
+    LendOfferAccount, 
+    LendOfferStatus, 
+    LoanOfferAccount, 
+    LoanOfferCreateRequestEvent, 
+    LoanOfferError, 
+    LoanOfferStatus, 
+    SettingAccount, 
+    VaultAuthority, 
+    MIN_BORROW_HEALTH_RATIO, 
+    SOL_USD_PRICE_FEED_ID, 
+    USDC_USD_PRICE_FEED_ID, 
+    VAULT_AUTHORITY_LOAN_OFFER_ACCOUNT_SEED
 };
 
 #[derive(Accounts)]
@@ -19,20 +35,20 @@ pub struct CreateLoanOffer<'info> {
   #[account(
     constraint = collateral_mint_asset.key() == setting_account.collateral_mint_asset @ LoanOfferError::InvalidCollateralMintAsset,
   )]
-  pub collateral_mint_asset: Account<'info, Mint>,
+  pub collateral_mint_asset: Box<Account<'info, Mint>>,
   #[account(
     constraint = lend_mint_asset.key() == setting_account.lend_mint_asset @ LoanOfferError::InvalidLendMintAsset,
   )]
-  pub lend_mint_asset: Account<'info, Mint>,
+  pub lend_mint_asset: Box<Account<'info, Mint>>,
   #[account(
     mut,
     constraint = borrower_ata_asset.amount >= collateral_amount @ LoanOfferError::NotEnoughAmount,
     associated_token::mint = collateral_mint_asset,
     associated_token::authority = borrower
   )]
-  pub borrower_ata_asset: Account<'info, TokenAccount>,
+  pub borrower_ata_asset: Box<Account<'info, TokenAccount>>,
   #[account(
-    init_if_needed,
+    init,
     payer = borrower,
     space = LoanOfferAccount::INIT_SPACE,
     seeds = [
@@ -44,7 +60,26 @@ pub struct CreateLoanOffer<'info> {
     ],
     bump
   )]
-  pub loan_offer: Account<'info, LoanOfferAccount>,
+  pub loan_offer: Box<Account<'info, LoanOfferAccount>>,
+  #[account(
+    mut,
+    constraint = vault_authority.initializer.key() == borrower.key() @ LoanOfferError::InvalidInitializerVaultAuthority,
+    seeds = [
+      ENSO_SEED.as_ref(), 
+      borrower.key().as_ref(),
+      VAULT_AUTHORITY_LOAN_OFFER_ACCOUNT_SEED.as_ref(), 
+      crate::ID.key().as_ref(), 
+    ],
+    bump = vault_authority.bump
+  )]
+  pub vault_authority: Box<Account<'info, VaultAuthority>>,
+  #[account(
+    init_if_needed,
+    payer = borrower,
+    associated_token::mint = collateral_mint_asset,
+    associated_token::authority = vault_authority
+  )]
+  pub vault: Box<Account<'info, TokenAccount>>,
   /// CHECK: This account is used to check the validate of lend offer account
   pub lender: AccountInfo<'info>,
   #[account(
@@ -59,27 +94,20 @@ pub struct CreateLoanOffer<'info> {
     ],
     bump = lend_offer.bump
   )]
-  pub lend_offer: Account<'info, LendOfferAccount>,
-  /// CHECK: This is the account used to convert lend asset price to USD price
+  pub lend_offer: Box<Account<'info, LendOfferAccount>>,
   pub lend_price_feed_account: Account<'info, PriceUpdateV2>,
-  /// CHECK: This is the account used to convert collateral asset price to USD price
   pub collateral_price_feed_account: Account<'info, PriceUpdateV2>,
   #[account(
     seeds = [
-        ENSO_SEED.as_ref(), 
-        SETTING_ACCOUNT_SEED.as_ref(),
-        tier_id.as_bytes(), 
-        crate::ID.key().as_ref(), 
+      ENSO_SEED.as_ref(), 
+      SETTING_ACCOUNT_SEED.as_ref(),
+      tier_id.as_bytes(), 
+      crate::ID.key().as_ref(), 
     ],
     bump = setting_account.bump
   )]
-  pub setting_account: Account<'info, SettingAccount>,
-  #[account(
-    mut,
-    associated_token::mint = collateral_mint_asset,
-    associated_token::authority = setting_account.receiver
-  )]
-  pub hot_wallet_ata: Account<'info, TokenAccount>,
+  pub setting_account: Box<Account<'info, SettingAccount>>,
+  pub associated_token_program: Program<'info, AssociatedToken>,
   pub token_program: Program<'info, Token>,
   pub system_program: Program<'info, System>,
 }
@@ -122,10 +150,45 @@ impl<'info> CreateLoanOffer<'info> {
       liquidated_price: None,
     });
 
+    self.emit_event_create_loan_offer()?;
+
     Ok(())
   }
 
-  pub fn emit_event_create_loan_offer(&self, label: String) -> Result<()> {
+  fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
+    let convert_collateral_amount_to_usd = convert_to_usd_price(
+      &self.collateral_price_feed_account, 
+      SOL_USD_PRICE_FEED_ID,
+      collateral_amount as f64 / 10f64.powf(self.collateral_mint_asset.decimals as f64)
+    ).unwrap();
+    let convert_lend_amount_to_usd = convert_to_usd_price(
+      &self.lend_price_feed_account, 
+      USDC_USD_PRICE_FEED_ID,
+      self.setting_account.amount as f64 / 10f64.powf(self.lend_mint_asset.decimals as f64)
+    ).unwrap();
+    let health_ratio = convert_collateral_amount_to_usd / convert_lend_amount_to_usd;
+    if health_ratio < MIN_BORROW_HEALTH_RATIO {
+        return err!(LoanOfferError::CanNotTakeALoanBecauseHealthRatioIsNotValid);
+    }
+    Ok(())
+  }
+
+  fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
+    let cpi_context = CpiContext::new(self.token_program.to_account_info(), TransferChecked {
+      from: self.borrower_ata_asset.to_account_info(),
+      mint: self.collateral_mint_asset.to_account_info(),
+      to: self.vault.to_account_info(),
+      authority: self.borrower.to_account_info(),
+    });
+
+    transfer_checked(
+      cpi_context,
+      collateral_amount,
+      self.collateral_mint_asset.decimals,
+    )
+  }
+
+  pub fn emit_event_create_loan_offer(&self) -> Result<()> {
     emit!(LoanOfferCreateRequestEvent {
       tier_id: self.loan_offer.tier_id.clone(),
       lend_offer_id: self.loan_offer.lend_offer_id.clone(),
@@ -143,47 +206,7 @@ impl<'info> CreateLoanOffer<'info> {
       borrower_fee_percent: self.loan_offer.borrower_fee_percent,
       started_at: self.loan_offer.started_at,
     });
-
-    msg!(&label.clone());
     
-    Ok(())
-  }
-
-  fn deposit_collateral(&self, collateral_amount: u64) -> Result<()> {
-    transfer_checked(
-      self.into_deposit_context(),
-      collateral_amount,
-      self.collateral_mint_asset.decimals,
-    )
-  }
-
-  fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-    let cpi_accounts = TransferChecked {
-        from: self.borrower_ata_asset.to_account_info(),
-        mint: self.collateral_mint_asset.to_account_info(),
-        to: self.hot_wallet_ata.to_account_info(),
-        authority: self.borrower.to_account_info(),
-    };
-    CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
-  }
-
-  fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
-    let convert_collateral_amount_to_usd = convert_to_usd_price(
-      &self.collateral_price_feed_account, 
-      SOL_USD_PRICE_FEED_ID,
-      collateral_amount as f64 / 10f64.powf(self.collateral_mint_asset.decimals as f64)
-    ).unwrap();
-    let convert_lend_amount_to_usd = convert_to_usd_price(
-      &self.lend_price_feed_account, 
-      USDC_USD_PRICE_FEED_ID,
-      self.setting_account.amount as f64 / 10f64.powf(self.lend_mint_asset.decimals as f64)
-    ).unwrap();
-    let health_ratio = convert_collateral_amount_to_usd / convert_lend_amount_to_usd;
-
-    if health_ratio < MIN_BORROW_HEALTH_RATIO {
-        return err!(LoanOfferError::CanNotTakeALoanBecauseHealthRatioIsNotValid);
-    }
-
     Ok(())
   }
 }

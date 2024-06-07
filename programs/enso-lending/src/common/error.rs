@@ -65,7 +65,9 @@ pub enum LoanOfferError {
     #[msg("Invalid borrow amount")]
     InvalidBorrowAmount,
     #[msg("Loan offer not available to withdraw")]
-    NotAvailableToWithdraw
+    NotAvailableToWithdraw,
+    #[msg("Invalid initializer vault authority")]
+    InvalidInitializerVaultAuthority
 }
 
 #[error_code]

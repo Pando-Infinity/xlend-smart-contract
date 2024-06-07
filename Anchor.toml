@@ -5,6 +5,9 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
+enso_lending = "G3LQL3DpD8Bd5q3ERGZwqAgkgyFKJTbt9ViCpu1hVd6o"
+
+[programs.devnet]
 enso_lending = "BderhzujHHQNjhCZGRjLWnN2XQ66q4EZnZx2p5WLJnBV"
 
 [registry]
