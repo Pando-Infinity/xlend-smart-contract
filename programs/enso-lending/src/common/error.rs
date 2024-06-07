@@ -123,3 +123,11 @@ pub enum LiquidateOfferError {
     #[msg("Invalid operator system account")]
     InvalidSystem,
 }
+
+#[error_code]
+pub enum WormholeError {
+    #[msg("Invalid wormhole system account")]
+    InvalidSystem,
+    #[msg("Invalid foreign emitter")]
+    InvalidForeignEmitter,
+}

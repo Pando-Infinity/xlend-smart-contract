@@ -245,3 +245,9 @@ pub struct SystemRevertEvent {
     pub offer_id: String,
     pub status: LoanOfferStatus,
 }
+
+//For testing only
+#[event]
+pub struct WormholeReceiveEvent {
+    pub data: Vec<String>
+}

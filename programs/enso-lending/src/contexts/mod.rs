@@ -50,3 +50,6 @@ pub use system_finish_loan_offer::*;
 
 pub mod system_revert_status;
 pub use system_revert_status::*;
+
+pub mod wormhole_receive;
+pub use wormhole_receive::*;
