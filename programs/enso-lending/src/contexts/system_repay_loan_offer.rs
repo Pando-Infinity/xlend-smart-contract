@@ -56,11 +56,11 @@ impl<'info> SystemRepayLoadOfferNative<'info> {
 
   fn transfer_asset_to_borrower(&mut self, collateral_amount: u64) -> Result<()> {
     if self.borrower.key() != self.loan_offer.borrower.key() {
-      return Err(RepayOfferError::InvalidBorrower)?;
+      return err!(RepayOfferError::InvalidBorrower);
     }
 
     if collateral_amount != self.loan_offer.collateral_amount {
-      return Err(RepayOfferError::InvalidCollateralAmount)?;
+      return err!(RepayOfferError::InvalidCollateralAmount);
     }
 
     self.process_transfer_collateral(collateral_amount)?;
@@ -94,7 +94,6 @@ impl<'info> SystemRepayLoadOfferNative<'info> {
     collateral_amount: u64
   ) -> Result<()> {
     emit!(SystemRepayLoadOfferNativeEvent {
-      system: self.system.key(),
       lender: self.loan_offer.lender.key(),
       borrower: self.borrower.key(),
       interest: self.loan_offer.interest,

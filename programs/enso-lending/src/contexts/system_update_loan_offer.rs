@@ -54,7 +54,7 @@ pub struct SystemUpdateLoanOffer<'info> {
 impl<'info> SystemUpdateLoanOffer<'info> {
   pub fn system_update_loan_offer(&mut self, borrow_amount: u64) -> Result<()>  {
     if borrow_amount != self.loan_offer.borrow_amount {
-      return Err(LoanOfferError::InvalidBorrowAmount)?;
+      return err!(LoanOfferError::InvalidBorrowAmount)?;
     }
 
     self.transfer_lend_asset_to_borrower(borrow_amount)?;

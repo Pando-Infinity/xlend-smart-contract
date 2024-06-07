@@ -49,7 +49,7 @@ pub struct DepositCollateralLoanOfferNative<'info> {
 impl<'info> DepositCollateralLoanOfferNative<'info> {
   pub fn deposit_collateral_loan_offer(&mut self, amount: u64) -> Result<()> {
     if self.receiver.key() != self.setting_account.receiver.key() {
-      return Err(LoanOfferError::InvalidReceiver)?;
+      return err!(LoanOfferError::InvalidReceiver);
     }
 
     self.deposit_collateral(amount)?;

@@ -1,4 +1,4 @@
-use anchor_lang::{prelude::*};
+use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
 use crate::{
   common::{
@@ -55,16 +55,24 @@ pub struct SystemFinishLoanOffer<'info> {
 
 impl<'info> SystemFinishLoanOffer<'info> {
   pub fn system_finish_loan_offer(&mut self, loan_amount: u64, waiting_interest: u64) -> Result<()>  {
-    let interest_loan_amount = (self.loan_offer.interest * loan_amount as f64 / 100.0) as u64;
-    let lender_fee_amount = (self.loan_offer.lender_fee_percent * loan_amount as f64 / 100.0) as u64;
+    let loan_interest_percent = self.loan_offer.interest / 100.0;
 
-    let total_repay_to_lender = loan_amount + waiting_interest + interest_loan_amount - lender_fee_amount;
+    let time_borrowed = (self.loan_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
+
+    let interest_loan_amount = (loan_amount as f64) * loan_interest_percent * time_borrowed;
+    let lender_fee_amount = self.loan_offer.lender_fee_percent * (loan_amount as f64) / 100.0;
+
+    let total_repay_to_lender = (loan_amount as f64 
+      + waiting_interest as f64 
+      + interest_loan_amount 
+      - lender_fee_amount
+    ) as u64;
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
     let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
     if current_timestamp < end_borrowed_loan_offer {
-      return Err(RepayOfferError::TimeUnmetException)?;
+      return err!(RepayOfferError::TimeUnmetException);
     }
 
     self.transfer_asset_to_lender(loan_amount, total_repay_to_lender)?;
@@ -80,11 +88,11 @@ impl<'info> SystemFinishLoanOffer<'info> {
 
   fn transfer_asset_to_lender(&mut self, loan_amount: u64, total_repay_to_lender: u64) -> Result<()> {
     if loan_amount != self.loan_offer.borrow_amount {
-      return Err(RepayOfferError::InvalidLendAmount)?;
+      return err!(RepayOfferError::InvalidLendAmount);
     }
 
     if total_repay_to_lender > self.system_ata_asset.amount {
-      return Err(RepayOfferError::NotEnoughAmount)?;
+      return err!(RepayOfferError::NotEnoughAmount);
     }
 
     self.process_transfer_lend_asset(total_repay_to_lender)?;

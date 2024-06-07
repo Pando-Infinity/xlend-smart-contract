@@ -2,17 +2,12 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
 
 use crate::{
-  states::{
+  common::{
+    ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
+  }, states::{
     loan_offer::LoanOfferAccount,
     setting_account::SettingAccount
-  }, 
-  RepayOfferError,
-  LoanOfferStatus,
-  LoanOfferError,
-  common::{
-    ENSO_SEED, SETTING_ACCOUNT_SEED,
-    LOAN_OFFER_ACCOUNT_SEED, RepayLoanOfferEvent,
-  }
+  }, LoanOfferError, LoanOfferStatus, RepayOfferError, SystemRepayLoadOfferNativeEvent
 };
 
 
@@ -68,29 +63,44 @@ impl<'info> RepayLoanOffer<'info> {
     pub fn repay_loan_offer(&mut self) -> Result<()> {
       self.validate_loan_offer()?;
 
-      let borrower_fee_percent = self.setting_account.borrower_fee_percent;
-      let fee_amount = ((self.loan_offer.borrow_amount as f64) * borrower_fee_percent) as u64;
+      let borrower_fee_percent = self.setting_account.borrower_fee_percent / 100.0;
+      let fee_amount = (self.loan_offer.borrow_amount as f64) * borrower_fee_percent;
 
-      let loan_interest = self.loan_offer.interest;
-      let interest_amount = ((self.loan_offer.borrow_amount as f64) * loan_interest / 100.0) as u64;
+      let loan_interest_percent = self.loan_offer.interest / 100.0;
 
-      let total_amount = self.setting_account.amount + fee_amount + interest_amount;
+      let time_borrowed = (self.loan_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
+
+      let interest_amount = (self.loan_offer.borrow_amount as f64) * loan_interest_percent * time_borrowed;
+
+      let total_amount = (self.setting_account.amount as f64 + fee_amount + interest_amount) as u64;
 
       if total_amount > self.loan_ata_asset.amount {
-        return Err(RepayOfferError::NotEnoughAmount.into());
+        return err!(RepayOfferError::NotEnoughAmount);
       }
 
       self.deposit(total_amount)?;
-      self.loan_offer.status = LoanOfferStatus::Repay;
 
-      self.emit_event_repay_loan_offer( "repay_loan_offer".to_string(), self.loan_offer.offer_id.clone(), total_amount)?;
+      self.loan_offer.sub_lamports(self.loan_offer.collateral_amount)?;
+      self.borrower.add_lamports(self.loan_offer.collateral_amount)?;
+      self.loan_offer.status = LoanOfferStatus::BorrowerPaid;
+
+      self.emit_event_repay_loan_offer( "repay_loan_offer".to_string(), self.loan_offer.collateral_amount)?;
       
       Ok(())
     }
 
     pub fn deposit(&mut self, repay_amount: u64) -> Result<()> {
+      let cpi_accounts = TransferChecked {
+        from: self.loan_ata_asset.to_account_info(),
+        mint: self.mint_asset.to_account_info(),
+        to: self.hot_wallet_ata.to_account_info(),
+        authority: self.borrower.to_account_info(),
+      };
+      
+      let cpi_ctx = CpiContext::new(self.token_program.to_account_info(), cpi_accounts);
+
       transfer_checked(
-        self.into_deposit_context(),
+        cpi_ctx,
         repay_amount,
         self.mint_asset.decimals,
       )
@@ -101,29 +111,22 @@ impl<'info> RepayLoanOffer<'info> {
       let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
       if current_timestamp > end_borrowed_loan_offer {
-        return Err(LoanOfferError::LoanOfferExpired)?;
+        return err!(LoanOfferError::LoanOfferExpired);
       }
 
       Ok(())
     }
 
-    fn into_deposit_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-      let cpi_accounts = TransferChecked {
-        from: self.loan_ata_asset.to_account_info(),
-        mint: self.mint_asset.to_account_info(),
-        to: self.hot_wallet_ata.to_account_info(),
-        authority: self.borrower.to_account_info(),
-      };
-      CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
-    }
-
-    pub fn emit_event_repay_loan_offer(&mut self, label: String, loan_offer_id: String, repay_amount: u64) -> Result<()> {
-      emit!(RepayLoanOfferEvent {
+    pub fn emit_event_repay_loan_offer(&mut self, label: String, collateral_amount: u64) -> Result<()> {
+      emit!(SystemRepayLoadOfferNativeEvent {
+        lender: self.loan_offer.lender.key(),
         borrower: self.borrower.key(),
-        loan_offer_id,
-        repay_amount,
-        borrower_fee_percent: self.setting_account.borrower_fee_percent,
-        status: self.loan_offer.status
+        interest: self.loan_offer.interest,
+        loan_amount: self.loan_offer.collateral_amount,
+        loan_offer_id: self.loan_offer.offer_id.clone(),
+        tier_id: self.loan_offer.tier_id.clone(),
+        collateral_amount,
+        status: self.loan_offer.status,
       });
       
       msg!(&label.clone());

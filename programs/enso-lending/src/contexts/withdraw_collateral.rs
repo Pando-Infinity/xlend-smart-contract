@@ -1,18 +1,14 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token};
+use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::{
-  convert_to_usd_price,
-  states::{
+  common::{
+    constant::MIN_BORROW_HEALTH_RATIO, WithdrawCollateralEvent, ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
+  }, convert_to_usd_price, states::{
     loan_offer::LoanOfferAccount,
     setting_account::SettingAccount
-  },
-  LoanOfferStatus,
-  LoanOfferError,
-  common::{
-    ENSO_SEED, SETTING_ACCOUNT_SEED,
-    LOAN_OFFER_ACCOUNT_SEED, constant::MIN_BORROW_HEALTH_RATIO, WithdrawCollateralEvent,
-  }
+  }, LoanOfferError, LoanOfferStatus, SOL_USD_PRICE_FEED_ID, USDC_USD_PRICE_FEED_ID
 };
 
 #[derive(Accounts)]
@@ -51,10 +47,8 @@ pub struct WithdrawCollateral<'info> {
       bump = loan_offer.bump
     )]
     pub loan_offer: Account<'info, LoanOfferAccount>,
-    /// CHECK: This is the account used to convert lend asset price to USD price
-    pub lend_price_feed_account: AccountInfo<'info>,
-    /// CHECK: This is the account used to convert collateral asset price to USD price
-    pub collateral_price_feed_account: AccountInfo<'info>,
+    pub lend_price_feed_account: Account<'info, PriceUpdateV2>,
+    pub collateral_price_feed_account: Account<'info, PriceUpdateV2>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
@@ -62,31 +56,36 @@ pub struct WithdrawCollateral<'info> {
 impl<'info> WithdrawCollateral<'info> {
   pub fn withdraw_collateral(&mut self, loan_offer_id: String, withdraw_amount: u64) -> Result<()> {
     let lend_amount_to_usd = convert_to_usd_price(
-      &self.lend_price_feed_account.to_account_info(), 
+      &self.lend_price_feed_account, 
+      USDC_USD_PRICE_FEED_ID,
       self.setting_account.amount as f64 / 10f64.powf(self.lend_mint_asset.decimals as f64)
     ).unwrap();
 
     let remaining_collateral = self.loan_offer.collateral_amount - withdraw_amount;
 
     let remaining_collateral_in_usd = convert_to_usd_price(
-      &self.collateral_price_feed_account.to_account_info(), 
+      &self.collateral_price_feed_account, 
+      SOL_USD_PRICE_FEED_ID,
       remaining_collateral as f64 / 10f64.powf(self.collateral_mint_asset.decimals as f64)
     ).unwrap();
 
     let health_ratio = remaining_collateral_in_usd / lend_amount_to_usd;
 
     if health_ratio < MIN_BORROW_HEALTH_RATIO {
-      return Err(LoanOfferError::HealthRatioLimit)?;
+      return err!(LoanOfferError::HealthRatioLimit);
     }
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
     let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
     if current_timestamp > end_borrowed_loan_offer {
-      return Err(LoanOfferError::LoanOfferExpired)?;
+      return err!(LoanOfferError::LoanOfferExpired)?;
     }
 
+    // TODO: Remove redundant line after beta test
     self.loan_offer.request_withdraw_amount = Some(withdraw_amount);
+    self.loan_offer.sub_lamports(withdraw_amount)?;
+    self.borrower.add_lamports(withdraw_amount)?;
 
     self.emit_event_withdraw_collateral(
       String::from("withdraw_collateral"),
