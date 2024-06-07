@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token};
+use anchor_spl::token::Mint;
 use wormhole_anchor_sdk::wormhole;
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
@@ -29,7 +29,7 @@ pub struct CreateLoanOfferCrosschain<'info> {
     #[account(
         init,
         payer = system_wormhole,
-        space = LoanOfferCrosschainAccount::INIT_SPACE,
+        space = 8 + LoanOfferCrosschainAccount::INIT_SPACE,
         seeds = [
           ENSO_SEED.as_ref(),
           LOAN_OFFER_CROSSCHAIN_ACCOUNT_SEED.as_ref(),
@@ -41,9 +41,9 @@ pub struct CreateLoanOfferCrosschain<'info> {
       )] 
     pub loan_offer: Account<'info, LoanOfferCrosschainAccount>,
     /// CHECK: This account is used to check the validate of lend offer account
-    pub lender: AccountInfo<'info>,
+    pub lender: UncheckedAccount<'info>,
     /// CHECK: This account is used to check the validate of loan offer account
-    pub borrower: AccountInfo<'info>,
+    pub borrower: UncheckedAccount<'info>,
     #[account(
         mut,
         constraint = lend_offer.status == LendOfferStatus::Created @ LoanOfferCrosschainError::LendOfferIsNotAvailable,
@@ -79,7 +79,6 @@ pub struct CreateLoanOfferCrosschain<'info> {
     )]
       pub posted: Account<'info, wormhole::PostedVaaData>,
       pub wormhole_program: Program<'info, wormhole::program::Wormhole>,
-      pub token_program: Program<'info, Token>,
       pub system_program: Program<'info, System>,
 }
 
@@ -125,11 +124,14 @@ impl<'info> CreateLoanOfferCrosschain<'info> {
         liquidated_tx: None,
         liquidated_price: None,
       });
+
+      self.emit_event_create_loan_offer_crosschain()?;
+
       Ok(())
     }
 
-    pub fn emit_event_create_loan_offer_crosschain(
-      &self, label: String
+    fn emit_event_create_loan_offer_crosschain(
+      &self
     ) -> Result<()> {
       emit!(LoanOfferCrosschainCreateRequestEvent {
         tier_id: self.loan_offer.tier_id.clone(),
@@ -149,8 +151,6 @@ impl<'info> CreateLoanOfferCrosschain<'info> {
         borrower_fee_percent: self.loan_offer.borrower_fee_percent,
         started_at: self.loan_offer.started_at,
       });
-      
-      msg!(&label.clone());
 
       Ok(())
     }

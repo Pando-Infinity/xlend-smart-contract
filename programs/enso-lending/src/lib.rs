@@ -307,10 +307,6 @@ pub mod enso_lending {
             lend_offer_id
         )?;
 
-        ctx.accounts.emit_event_create_loan_offer_crosschain(
-            String::from("create_loan_offer_crosschain")
-        )?;
-
         Ok(())
     }
 }
