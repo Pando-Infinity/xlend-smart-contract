@@ -648,6 +648,55 @@ describe("enso-lending", () => {
       .catch((err) => console.log(err));
   };
 
+  const depositCollateralLoanOffer = async (params: {
+    offerId: string;
+    tierId: string;
+    amount: number;
+    borrower: Keypair;
+    collateralMintAsset: PublicKey;
+    loanOffer: PublicKey;
+    settingAccount: PublicKey;
+    vault: PublicKey;
+    vaultAuthority: PublicKey;
+    borrowerAtaAsset: PublicKey;
+  }) => {
+    const {
+      offerId,
+      amount,
+      tierId,
+      borrower,
+      collateralMintAsset,
+      loanOffer,
+      settingAccount,
+      vault,
+      borrowerAtaAsset,
+      vaultAuthority,
+    } = params;
+
+    await program.methods
+      .depositCollateralLoanOffer(
+        offerId,
+        tierId,
+        new anchor.BN(amount)
+      )
+      .accounts({
+        borrower: borrower.publicKey,
+        collateralMintAsset,
+        borrowerAtaAsset,
+        loanOffer,
+        vaultAuthority,
+        vault,
+        settingAccount,
+        systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([borrower])
+      .rpc()
+      .then((sig) => confirm(connection, sig))
+      .then((sig) => log(connection, sig))
+      .catch((err) => console.log(err));
+  };
+  
   const repayLoanOffer = async (params: {
     loanOfferId: string;
     borrower: Keypair;
@@ -2128,7 +2177,7 @@ describe("enso-lending", () => {
     });
   });
 
-  describe("create loan offer with Bonk is Collateral", () => {
+  xdescribe("create loan offer with Bonk is Collateral", () => {
     it("create loan offer successfully", async () => {
       const amountTier = 50 * 10 ** usdcMintDecimal;
       const collateralAmount = 10 * 10 ** bonkMintDecimal;
@@ -2280,6 +2329,188 @@ describe("enso-lending", () => {
         } Bonk`
       );
       assert.equal(vaultBonkBalance, collateralAmount, 'vault bonk balance need to equal collateral amount');
+    });
+  });
+
+  describe("deposit loan offer with Bonk is Collateral", () => {
+    it("deposit loan offer successfully", async () => {
+      const amountTier = 50 * 10 ** usdcMintDecimal;
+      const collateralAmount = 10 * 10 ** bonkMintDecimal;
+      const duration = 14;
+      const tierId = `tier_id_${generateId(10)}`;
+      const lenderFeePercent = 0;
+      const borrowerFeePercent = 0;
+
+      const seedSettingAccount = [
+        Buffer.from("enso"),
+        Buffer.from("setting_account"),
+        Buffer.from(tierId),
+        program.programId.toBuffer(),
+      ];
+
+      const settingAccount = PublicKey.findProgramAddressSync(
+        seedSettingAccount,
+        program.programId
+      )[0];
+
+      const bonkUsdPriceFeed = new PublicKey(bonk_usd_price_feed_id);
+      const usdcUsdPriceFeed = new PublicKey(usdc_usd_price_feed_id);
+
+      await initSettingAccount({
+        amount: amountTier,
+        duration,
+        tierId,
+        lenderFeePercent,
+        borrowerFeePercent,
+        lendMintAsset: usdcMint.publicKey,
+        collateralMintAsset: bonkMint.publicKey,
+        settingAccount,
+        collateralPriceFeedAccount: bonkUsdPriceFeed,
+        lendPriceFeedAccount: usdcUsdPriceFeed,
+      });
+      console.log("🚀 ~ init setting account success");
+
+      const lendOfferId = `lend_offer_id_${generateId(10)}`;
+      const loanOfferId = `lend_offer_id_${generateId(10)}`;
+
+      const interest = 2.1;
+
+      const seedLendOffer = [
+        Buffer.from("enso"),
+        Buffer.from("lend_offer"),
+        lender.publicKey.toBuffer(),
+        Buffer.from(lendOfferId),
+        program.programId.toBuffer(),
+      ];
+
+      const lendOfferAccount = PublicKey.findProgramAddressSync(
+        seedLendOffer,
+        program.programId
+      )[0];
+
+      const hotWalletUsdcAta = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        hotWallet.publicKey
+      );
+
+      const lenderAtaUsdc = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        usdcMint.publicKey,
+        lender.publicKey
+      );
+
+      await createLendOffer({
+        hotWalletAta: hotWalletUsdcAta.address,
+        lender,
+        lenderAtaAsset: lenderAtaUsdc.address,
+        lendOffer: lendOfferAccount,
+        mintAsset: usdcMint.publicKey,
+        settingAccount,
+        interest,
+        offerId: lendOfferId,
+        tierId,
+      });
+      console.log("🚀 ~ create lend offer success");
+
+      const seedVaultAuthority = [
+        Buffer.from("enso"),
+        borrower.publicKey.toBuffer(),
+        Buffer.from("vault_authority_loan_offer"),
+        program.programId.toBuffer(),
+      ];
+
+      const vaultAuthorityPdaAccount = PublicKey.findProgramAddressSync(
+        seedVaultAuthority,
+        program.programId
+      )[0];
+
+      await initVaultAuthority(borrower, vaultAuthorityPdaAccount);
+      console.log("🚀 ~ init vault authority success");
+
+      const seedLoanOffer = [
+        Buffer.from("enso"),
+        Buffer.from("loan_offer"),
+        borrower.publicKey.toBuffer(),
+        Buffer.from(loanOfferId),
+        program.programId.toBuffer(),
+      ];
+
+      const loanOfferAccount = PublicKey.findProgramAddressSync(
+        seedLoanOffer,
+        program.programId
+      )[0];
+
+      const vault = getAssociatedTokenAddressSync(
+        bonkMint.publicKey,
+        vaultAuthorityPdaAccount,
+        true
+      );
+
+      const borrowerAtaBonk = await getOrCreateAssociatedTokenAccount(
+        connection,
+        providerWallet,
+        bonkMint.publicKey,
+        borrower.publicKey
+      );
+
+      await createLoanOffer({
+        borrower,
+        collateralAmount,
+        settingAccount,
+        lender: lender.publicKey,
+        lendPriceFeedAccount: usdcUsdPriceFeed,
+        collateralPriceFeedAccount: bonkUsdPriceFeed,
+        lendOffer: lendOfferAccount,
+        loanOffer: loanOfferAccount,
+        lendMintAsset: usdcMint.publicKey,
+        offerId: loanOfferId,
+        lendOfferId,
+        tierId,
+        collateralMintAsset: bonkMint.publicKey,
+        borrowerAtaAsset: borrowerAtaBonk.address,
+        vault: vault,
+        vaultAuthority: vaultAuthorityPdaAccount,
+      });
+      console.log("🚀 ~ create loan offer success");
+
+      const vaultBonkBalance = +(await connection.getTokenAccountBalance(vault))
+        .value.amount;
+      console.log(
+        `🚀 ~ it ~ vaultBonkBalance: ${
+          vaultBonkBalance / 10 ** bonkMintDecimal
+        } Bonk`
+      );
+      assert.equal(vaultBonkBalance, collateralAmount, 'vault bonk balance need to equal collateral amount');
+    
+      const depositAmount = 10 * 10 ** bonkMintDecimal
+
+      await depositCollateralLoanOffer({
+        amount: depositAmount,
+        borrower,
+        borrowerAtaAsset: borrowerAtaBonk.address,
+        collateralMintAsset: bonkMint.publicKey, 
+        loanOffer: loanOfferAccount,
+        offerId: loanOfferId,
+        settingAccount,
+        tierId, 
+        vault,
+        vaultAuthority: vaultAuthorityPdaAccount
+      })
+
+      console.log("🚀 ~ create loan offer success");
+
+      const vaultBonkBalanceAfterDeposit = +(await connection.getTokenAccountBalance(vault))
+      .value.amount;
+    console.log(
+      `🚀 ~ it ~ vaultBonkBalanceAfterDeposit: ${
+        vaultBonkBalanceAfterDeposit / 10 ** bonkMintDecimal
+      } Bonk`
+    );
+    assert.equal(vaultBonkBalanceAfterDeposit, collateralAmount + depositAmount, 'vault bonk balance need to equal collateral amount');
+
     });
   });
 

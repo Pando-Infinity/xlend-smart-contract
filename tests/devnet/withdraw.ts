@@ -13,7 +13,7 @@ import {
   HOT_WALLET_SECRET_KEY,
   LENDER_SECRET_KEY,
   BORROWER_SECRET_KEY,
-} from "../accounts";
+} from "../../accounts/dev";
 
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";

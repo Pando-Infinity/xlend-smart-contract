@@ -181,10 +181,6 @@ pub mod enso_lending {
         amount: u64,
     ) -> Result<()> {
         ctx.accounts.deposit_collateral_loan_offer(amount)?;
-        ctx.accounts
-            .emit_event_deposit_collateral_loan_offer(String::from(
-                "deposit_collateral_loan_offer",
-            ))?;
 
         Ok(())
     }
