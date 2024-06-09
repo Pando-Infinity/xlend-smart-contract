@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+mod program_id;
+use program_id::PROGRAM_ID;
 mod contexts;
 use contexts::*;
 mod states;
@@ -9,7 +11,7 @@ use common::*;
 mod utils;
 use utils::*;
 
-declare_id!("BderhzujHHQNjhCZGRjLWnN2XQ66q4EZnZx2p5WLJnBV");
+declare_id!(PROGRAM_ID);
 
 #[program]
 pub mod enso_lending {
@@ -119,6 +121,11 @@ pub mod enso_lending {
         Ok(())
     }
 
+    pub fn init_vault_authority(ctx: Context<InitVaultAuthority>) -> Result<()> {
+        ctx.accounts.initialize_vault_authority(&ctx.bumps)?;
+        Ok(())
+    }
+
     pub fn create_loan_offer(
         ctx: Context<CreateLoanOffer>,
         offer_id: String,
@@ -133,9 +140,6 @@ pub mod enso_lending {
             tier_id,
             collateral_amount,
         )?;
-        ctx.accounts
-            .emit_event_create_loan_offer(String::from("create_loan_offer"))?;
-
         Ok(())
     }
 
@@ -177,10 +181,6 @@ pub mod enso_lending {
         amount: u64,
     ) -> Result<()> {
         ctx.accounts.deposit_collateral_loan_offer(amount)?;
-        ctx.accounts
-            .emit_event_deposit_collateral_loan_offer(String::from(
-                "deposit_collateral_loan_offer",
-            ))?;
 
         Ok(())
     }
