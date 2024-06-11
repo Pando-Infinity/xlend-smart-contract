@@ -200,6 +200,12 @@ pub mod enso_lending {
         Ok(())
     }
 
+    pub fn repay_loan_offer_native(ctx: Context<RepayLoanOfferNative>, _loan_offer_id: String) -> Result<()> {
+        ctx.accounts.repay_loan_offer_native()?;
+
+        Ok(())
+    }
+
     pub fn repay_loan_offer(ctx: Context<RepayLoanOffer>, _loan_offer_id: String) -> Result<()> {
         ctx.accounts.repay_loan_offer()?;
 
