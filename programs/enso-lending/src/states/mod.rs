@@ -9,3 +9,6 @@ pub use loan_offer::*;
 
 pub mod loan_offer_crosschain;
 pub use loan_offer_crosschain::*;
+
+pub mod wormhole_message;
+pub use wormhole_message::*;

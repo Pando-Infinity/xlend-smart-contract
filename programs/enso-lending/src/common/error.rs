@@ -130,4 +130,6 @@ pub enum WormholeError {
     InvalidSystem,
     #[msg("Invalid foreign emitter")]
     InvalidForeignEmitter,
+    #[msg("Invalid message")]
+    InvalidMessage,
 }
