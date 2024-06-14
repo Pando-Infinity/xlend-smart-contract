@@ -35,15 +35,16 @@ impl<'info> WormholeReceive<'info> {
 	) -> Result<()> {
 		let posted_vaa = self.posted.clone().into_inner();
 		if let WormholeMessage::Message { payload } = posted_vaa.data() {
-		let payload_data = self.get_data_from_vaa(payload).unwrap();
+			let payload_data = self.get_data_from_vaa(payload).unwrap();
+			msg!("{:?}", payload_data);
 
-		emit!(WormholeReceiveEvent {
-			data: payload_data
-		});
+			emit!(WormholeReceiveEvent {
+				data: payload_data
+			});
 	
-		Ok(())
+			Ok(())
 		} else {
-		Err(WormholeError::InvalidMessage.into())
+			Err(WormholeError::InvalidMessage.into())
 		}
 	}
 
@@ -51,7 +52,7 @@ impl<'info> WormholeReceive<'info> {
 		&self,
 		payload: &Vec<u8>
 	) -> Result<Vec<String>> {
-		let message = String::from_utf8(payload.clone()).unwrap();
+		let message = String::from_utf8_lossy(payload).into_owned();
 		let splited_data: Vec<&str> = message.split(',').collect();
 
 		Ok(splited_data.into_iter().map(String::from).collect())

@@ -1,9 +1,7 @@
-use anchor_lang::{prelude::Pubkey, AnchorDeserialize, AnchorSerialize};
-use std::io::{self, *};
+use anchor_lang::{prelude::Pubkey, solana_program::msg, AnchorDeserialize, AnchorSerialize};
+use std::{fs::read, io::{self, *}, str};
 
-const PAYLOAD_ID_MESSAGE: u8 = 0;
-
-pub const MESSAGE_PAYLOAD_MAX_LENGTH: usize = 512;
+pub const MESSAGE_PAYLOAD_MAX_LENGTH: usize = 255;
 
 #[derive(Clone)]
 pub enum WormholeMessage {
@@ -22,7 +20,6 @@ impl AnchorSerialize for WormholeMessage {
               format!("message payload exceeds {MESSAGE_PAYLOAD_MAX_LENGTH}")
             ))
         } else {
-            PAYLOAD_ID_MESSAGE.serialize(writer)?;
             (payload.len() as u16).to_be_bytes().serialize(writer)?;
             for element in payload {
               element.serialize(writer)?;
@@ -36,18 +33,20 @@ impl AnchorSerialize for WormholeMessage {
 
 impl AnchorDeserialize for WormholeMessage {
   fn deserialize(buf: &mut &[u8]) -> io::Result<Self> {
-    let length = buf.len();
+    msg!("deserialize");
+    Self::deserialize_reader(&mut *buf)
+  }
+  
+  fn deserialize_reader<R: Read>(reader: &mut R) -> Result<Self> {
+    let mut buffer: [u8; 255] = [0; 255];
+    let length = reader.read(&mut buffer[..])?;
     if length > MESSAGE_PAYLOAD_MAX_LENGTH {
       Err(Error::new(
         ErrorKind::InvalidInput,
         format!("message payload exceeds {MESSAGE_PAYLOAD_MAX_LENGTH}")
       ))
     } else {
-      Ok(WormholeMessage::Message { payload: buf[length].to_vec() })
+      Ok(WormholeMessage::Message { payload: buffer[..length].to_vec() })
     }
-  }
-  
-  fn deserialize_reader<R: Read>(reader: &mut R) -> Result<Self> {
-    Ok(WormholeMessage::Message { payload: b"".to_vec() })
   }
 }
