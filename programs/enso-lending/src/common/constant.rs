@@ -46,9 +46,9 @@ pub const USDC_USD_PRICE_FEED_ID: &str = "eaa020c61cc479712813461ce153894a96a6c0
 pub const SUI_USD_PRICE_FEED_ID: &str = "23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744";
 
 pub const SUI_USD_SYMBOL: &str = "Crypto.SUI/USD";
-#[cfg(feature = "devnet")]
+#[cfg(feature = "maximum-age-price-updater")]
 pub const MAXIMUM_AGE_PRICE_UPDATE: u64 = 100_000;
-#[cfg(not(feature = "devnet"))]
+#[cfg(not(feature = "maximum-age-price-updater"))]
 pub const MAXIMUM_AGE_PRICE_UPDATE: u64 = 75;
 
 pub const MIN_BORROW_HEALTH_RATIO: f64 = 1.1;
