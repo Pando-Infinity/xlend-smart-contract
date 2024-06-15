@@ -1,9 +1,9 @@
 pub use anchor_lang::prelude::*;
-use crate::LoanOfferCrosschainStatus;
+use crate::LoanOfferCrossChainStatus;
 
 #[account]
 #[derive(InitSpace, Debug)]
-pub struct LoanOfferCrosschainAccount {
+pub struct LoanOfferCrossChainAccount {
     #[max_len(50)]
     pub tier_id: String,
     #[max_len(50)]
@@ -23,7 +23,7 @@ pub struct LoanOfferCrosschainAccount {
     pub collateral_token_decimal: u8,
     pub lend_mint_token: Pubkey,
     pub request_withdraw_amount: Option<u64>,
-    pub status: LoanOfferCrosschainStatus,
+    pub status: LoanOfferCrossChainStatus,
     pub borrower_fee_percent: f64,
     pub started_at: i64,
     pub liquidating_at: Option<u64>,

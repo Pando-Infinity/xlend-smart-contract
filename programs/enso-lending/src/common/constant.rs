@@ -20,7 +20,7 @@ pub enum LoanOfferStatus {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, PartialEq, Eq, InitSpace, Debug)]
-pub enum LoanOfferCrosschainStatus {
+pub enum LoanOfferCrossChainStatus {
     WaitingCollateral,
     Matched,
     FundTransferred,
@@ -35,7 +35,7 @@ pub const ENSO_SEED: &[u8] = b"enso";
 pub const SETTING_ACCOUNT_SEED: &[u8] = b"setting_account";
 pub const LEND_OFFER_ACCOUNT_SEED: &[u8] = b"lend_offer";
 pub const LOAN_OFFER_ACCOUNT_SEED: &[u8] = b"loan_offer";
-pub const LOAN_OFFER_CROSSCHAIN_ACCOUNT_SEED: &[u8] = b"loan_offer_crosschain";
+pub const LOAN_OFFER_CROSS_CHAIN_ACCOUNT_SEED: &[u8] = b"loan_offer_crosschain";
 
 pub const OPERATE_SYSTEM_PUBKEY: &str = "opty8HWBKX3wW8c9qMPkmB4xnrCpMWWmQwqq7yGzmr4";
 pub const HOT_WALLET_PUBKEY: &str = "Hot7zcvBTa3NybAnKrKtjcW1yJcoDWao39ZAoBn4mfPu";

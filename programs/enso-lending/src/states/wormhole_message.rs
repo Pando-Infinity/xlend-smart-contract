@@ -1,5 +1,5 @@
-use anchor_lang::{prelude::Pubkey, solana_program::msg, AnchorDeserialize, AnchorSerialize};
-use std::{fs::read, io::{self, *}, str};
+use anchor_lang::{prelude, solana_program::msg, AnchorDeserialize, AnchorSerialize};
+use std::io::{self, *};
 
 pub const MESSAGE_PAYLOAD_MAX_LENGTH: usize = 255;
 

@@ -69,7 +69,7 @@ pub enum LoanOfferError {
 }
 
 #[error_code]
-pub enum LoanOfferCrosschainError {
+pub enum LoanOfferCrossChainError {
     #[msg("Invalid receiver")]
     InvalidReceiver,
     #[msg("Invalid Lend mint asset")]

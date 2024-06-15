@@ -1,10 +1,10 @@
 use std::str::FromStr;
 
 use anchor_lang::prelude::*;
-use wormhole_anchor_sdk::wormhole::{self, PostedVaa};
+use wormhole_anchor_sdk::wormhole;
 
 use crate::{
-    common::WORMHOLE_SYSTEM_PUBKEY, instruction, WormholeError, WormholeMessage, WormholeReceiveEvent
+    common::WORMHOLE_SYSTEM_PUBKEY, WormholeError, WormholeMessage, WormholeReceiveEvent
 };
 
 #[derive(Accounts)]
@@ -31,7 +31,7 @@ pub struct WormholeReceive<'info> {
 impl<'info> WormholeReceive<'info> {
 	pub fn receive_message(
 		&self,
-		vaa_hash: [u8; 32]
+		_vaa_hash: [u8; 32]
 	) -> Result<()> {
 		let posted_vaa = self.posted.clone().into_inner();
 		if let WormholeMessage::Message { payload } = posted_vaa.data() {

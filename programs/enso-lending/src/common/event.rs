@@ -3,7 +3,7 @@ use anchor_lang::{
     prelude::{borsh, AnchorDeserialize, AnchorSerialize, Pubkey},
 };
 
-use crate::{LoanOfferStatus, LoanOfferCrosschainStatus};
+use crate::{LoanOfferStatus, LoanOfferCrossChainStatus};
 
 #[event]
 pub struct InitSettingAccountEvent {
@@ -98,7 +98,7 @@ pub struct LoanOfferCreateRequestEvent {
 }
 
 #[event]
-pub struct LoanOfferCrosschainCreateRequestEvent {
+pub struct LoanOfferCrossChainCreateRequestEvent {
     pub tier_id: String,
     pub lend_offer_id: String,
     pub interest: f64,
@@ -112,7 +112,7 @@ pub struct LoanOfferCrosschainCreateRequestEvent {
     pub collateral_amount: u64,
     pub collateral_token_symbol: String,
     pub collateral_token_decimal: u8,
-    pub status: LoanOfferCrosschainStatus,
+    pub status: LoanOfferCrossChainStatus,
     pub borrower_fee_percent: f64,
     pub started_at: i64,
 }

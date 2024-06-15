@@ -7,8 +7,8 @@ pub use lend_offer::*;
 pub mod loan_offer;
 pub use loan_offer::*;
 
-pub mod loan_offer_crosschain;
-pub use loan_offer_crosschain::*;
+pub mod loan_offer_cross_chain;
+pub use loan_offer_cross_chain::*;
 
 pub mod wormhole_message;
 pub use wormhole_message::*;
