@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+mod program_id;
+use program_id::PROGRAM_ID;
 mod contexts;
 use contexts::*;
 mod states;
@@ -9,7 +11,7 @@ use common::*;
 mod utils;
 use utils::*;
 
-declare_id!("BderhzujHHQNjhCZGRjLWnN2XQ66q4EZnZx2p5WLJnBV");
+declare_id!(PROGRAM_ID);
 
 #[program]
 pub mod enso_lending {
