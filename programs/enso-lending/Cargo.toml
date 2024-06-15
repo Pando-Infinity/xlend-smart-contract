@@ -15,6 +15,7 @@ no-log-ix-name = []
 cpi = ["no-entrypoint"]
 maximum-age-price-updater = []
 beta-test = []
+dev-test = []
 default = []
 devnet = ["wormhole-anchor-sdk/solana-devnet", "maximum-age-price-updater"]
 
