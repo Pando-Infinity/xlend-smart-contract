@@ -301,6 +301,7 @@ pub mod enso_lending {
         tier_id: String,
         loan_offer_id: String,
         lend_offer_id: String,
+        vaa_hash: [u8; 32],
     ) -> Result<()> {
         ctx.accounts.create_loan_offer_cross_chain(
             &ctx.bumps,
