@@ -1,4 +1,3 @@
-use std::str::FromStr;
 use anchor_lang::prelude::{borsh, AnchorDeserialize, AnchorSerialize, InitSpace};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, PartialEq, Eq, InitSpace, Debug)]
@@ -45,7 +44,9 @@ pub const SOL_USD_PRICE_FEED_ID: &str = "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8
 pub const USDC_USD_PRICE_FEED_ID: &str = "eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a";
 pub const SUI_USD_PRICE_FEED_ID: &str = "23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744";
 
-pub const EMITTER_ADDRESSES: &str = ","; 
+pub const EMITTER_ADDRESSES: [&str; 1] = ["b8a670a2ec853084ed025b254037e287072df81984e1cd73a473ec62033c0c89"]; 
+
+pub const WORMHOLE_SUI_CHAIN_ID: u16 = 21;
 
 pub const SUI_USD_SYMBOL: &str = "Crypto.SUI/USD";
 #[cfg(feature = "maximum-age-price-updater")]

@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::format, str::FromStr};
 
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
@@ -6,7 +6,7 @@ use wormhole_anchor_sdk::wormhole;
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::{
-    common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_CROSS_CHAIN_ACCOUNT_SEED, MIN_BORROW_HEALTH_RATIO, SETTING_ACCOUNT_SEED, EMITTER_ADDRESSES}, convert_to_usd_price, LendOfferAccount, LendOfferStatus, LoanOfferCrossChainAccount, LoanOfferCrossChainCreateRequestEvent, LoanOfferCrossChainError, LoanOfferCrossChainStatus, SettingAccount, WormholeError, WormholeMessage
+    common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_CROSS_CHAIN_ACCOUNT_SEED, MIN_BORROW_HEALTH_RATIO, SETTING_ACCOUNT_SEED, EMITTER_ADDRESSES, WORMHOLE_SUI_CHAIN_ID}, convert_to_usd_price, LendOfferAccount, LendOfferStatus, LoanOfferCrossChainAccount, LoanOfferCrossChainCreateRequestEvent, LoanOfferCrossChainError, LoanOfferCrossChainStatus, SettingAccount, WormholeError, WormholeMessage
 };
 
 #[derive(Accounts)]
@@ -127,11 +127,25 @@ impl<'info> CreateLoanOfferCrossChain<'info> {
     fn validate_vaa(
       &self,
     ) -> Result<()> {
-      let emitter_address = String::from_utf8(self.posted.meta.emitter_address.to_vec().to_owned()).unwrap();
+      let emitter_chain = self.posted.meta.emitter_chain;
+      let emitter_address ;
+      if emitter_chain == WORMHOLE_SUI_CHAIN_ID {
+        emitter_address = self.posted.meta.emitter_address.iter().map(|&c| {
+          //have no idea
+          if c < 16 {
+            return format!("0{:x}", c);
+          } else {
+            return format!("{:x}", c);
+          }
+        }).collect::<String>();
+      } else {
+        emitter_address = String::new();
+      }
 
-      if !EMITTER_ADDRESSES.split(',').collect::<Vec<&str>>().contains(&emitter_address.as_ref()) {
+      if !EMITTER_ADDRESSES.contains(&emitter_address.as_str()) {
         return err!(LoanOfferCrossChainError::InvalidVaa);
       }
+
       Ok(())
     }
 
