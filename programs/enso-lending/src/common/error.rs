@@ -82,6 +82,8 @@ pub enum LoanOfferCrossChainError {
     CanNotTakeALoanBecauseHealthRatioIsNotValid,
     #[msg("Invalid wormhole system account")]
     InvalidSystem,
+    #[msg("Invalid vaa")]
+    InvalidVaa,
 }
 
 #[error_code]

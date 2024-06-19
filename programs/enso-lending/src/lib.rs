@@ -312,13 +312,4 @@ pub mod enso_lending {
 
         Ok(())
     }
-
-    pub fn wormhole_receive_message(
-        ctx: Context<WormholeReceive>,
-        vaa_hash: [u8; 32],
-    ) -> Result<()> {
-        ctx.accounts.receive_message(vaa_hash)?;
-
-        Ok(())
-    }
 }

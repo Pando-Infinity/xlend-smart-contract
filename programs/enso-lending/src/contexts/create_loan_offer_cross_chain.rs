@@ -6,7 +6,7 @@ use wormhole_anchor_sdk::wormhole;
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
 use crate::{
-    common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_CROSS_CHAIN_ACCOUNT_SEED, MIN_BORROW_HEALTH_RATIO, SETTING_ACCOUNT_SEED, WORMHOLE_SYSTEM_PUBKEY}, convert_to_usd_price, LendOfferAccount, LendOfferStatus, LoanOfferCrossChainAccount, LoanOfferCrossChainCreateRequestEvent, LoanOfferCrossChainError, LoanOfferCrossChainStatus, SettingAccount, WormholeError, WormholeMessage
+    common::{ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, LOAN_OFFER_CROSS_CHAIN_ACCOUNT_SEED, MIN_BORROW_HEALTH_RATIO, SETTING_ACCOUNT_SEED, EMITTER_ADDRESSES}, convert_to_usd_price, LendOfferAccount, LendOfferStatus, LoanOfferCrossChainAccount, LoanOfferCrossChainCreateRequestEvent, LoanOfferCrossChainError, LoanOfferCrossChainStatus, SettingAccount, WormholeError, WormholeMessage
 };
 
 #[derive(Accounts)]
@@ -14,12 +14,11 @@ use crate::{
     tier_id: String,
     loan_offer_id: String, 
     lend_offer_id: String,
-    vaa_hash: [u8; 32], 
+    vaa_hash: [u8; 32],
 )]
 pub struct CreateLoanOfferCrossChain<'info> {
     #[account(
-      mut,
-      constraint = system_wormhole.key() == Pubkey::from_str(WORMHOLE_SYSTEM_PUBKEY).unwrap() @ LoanOfferCrossChainError::InvalidSystem
+      mut
     )]
     pub system_wormhole: Signer<'info>,
     #[account( 
@@ -34,7 +33,7 @@ pub struct CreateLoanOfferCrossChain<'info> {
           ENSO_SEED.as_ref(),
           LOAN_OFFER_CROSS_CHAIN_ACCOUNT_SEED.as_ref(),
           borrower.key().as_ref(),
-          loan_offer_id.as_bytes(),
+          lend_offer_id.as_bytes(),
           crate::ID.key().as_ref()
         ],
         bump
@@ -90,6 +89,8 @@ impl<'info> CreateLoanOfferCrossChain<'info> {
         loan_offer_id: String, 
         lend_offer_id: String, 
     ) -> Result<()> {
+      self.validate_vaa()?;
+
       let posted_vaa = &self.posted.clone().into_inner();
       let WormholeMessage::Message { payload } = posted_vaa.data();
       let ( collateral_amount, collateral_token_symbol, collateral_token_decimal ) = self.get_data_from_vaa(&payload).unwrap();
@@ -125,6 +126,17 @@ impl<'info> CreateLoanOfferCrossChain<'info> {
       Ok(())
     }
 
+    fn validate_vaa(
+      &self,
+    ) -> Result<()> {
+      let emitter_address = String::from_utf8(self.posted.meta.emitter_address.to_vec().to_owned()).unwrap();
+
+      if !EMITTER_ADDRESSES.split(',').collect::<Vec<&str>>().contains(&emitter_address.as_ref()) {
+        return err!(LoanOfferCrossChainError::InvalidVaa);
+      }
+      Ok(())
+    }
+
     fn emit_event_create_loan_offer_cross_chain(
       &self,
     ) -> Result<()> {
@@ -157,9 +169,9 @@ impl<'info> CreateLoanOfferCrossChain<'info> {
       let message = String::from_utf8_lossy(posted_vaa).into_owned();
       let data: Vec<&str> = message.split(',').collect();
       msg!("Message received: {:?}", data);
-      let collateral_amount = data[3].parse::<u64>().unwrap();
-      let collateral_token_symbol = data[4].to_string();
-      let collateral_token_decimal = data[5].parse::<u8>().unwrap();
+      let collateral_amount = data[5].parse::<u64>().unwrap();
+      let collateral_token_symbol = data[6].to_string();
+      let collateral_token_decimal = data[7].parse::<u8>().unwrap();
 
       Ok((collateral_amount, collateral_token_symbol, collateral_token_decimal))
     }
