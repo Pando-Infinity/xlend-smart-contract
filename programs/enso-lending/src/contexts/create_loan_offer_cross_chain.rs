@@ -17,17 +17,15 @@ use crate::{
     vaa_hash: [u8; 32],
 )]
 pub struct CreateLoanOfferCrossChain<'info> {
-    #[account(
-      mut
-    )]
-    pub system_wormhole: Signer<'info>,
+    #[account(mut)]
+    pub signer: Signer<'info>,
     #[account( 
         constraint = lend_mint_asset.key() == setting_account.lend_mint_asset @ LoanOfferCrossChainError::InvalidLendMintAsset,
       )]
     pub lend_mint_asset: Account<'info, Mint>,
     #[account(
         init,
-        payer = system_wormhole,
+        payer = signer,
         space = 8 + LoanOfferCrossChainAccount::INIT_SPACE,
         seeds = [
           ENSO_SEED.as_ref(),
