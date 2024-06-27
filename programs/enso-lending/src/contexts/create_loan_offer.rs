@@ -32,7 +32,7 @@ pub struct CreateLoanOffer<'info> {
   )]
   pub borrower_ata_asset: Account<'info, TokenAccount>,
   #[account(
-    init_if_needed,
+    init,
     payer = borrower,
     space = LoanOfferAccount::INIT_SPACE,
     seeds = [
