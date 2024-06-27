@@ -32,6 +32,9 @@ pub use withdraw_collateral::*;
 pub mod system_withdraw_native;
 pub use system_withdraw_native::*;
 
+pub mod repay_loan_offer_native;
+pub use repay_loan_offer_native::*;
+
 pub mod repay_loan_offer;
 pub use repay_loan_offer::*;
 

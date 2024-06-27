@@ -89,7 +89,9 @@ pub enum RepayOfferError {
     #[msg("Loan offer not belong to lender")]
     InvalidLender,
     #[msg("Invalid repay lender time")]
-    TimeUnmetException
+    TimeUnmetException,
+    #[msg("Not enough collateral to repay")]
+    NotEnoughCollateralToRepay
 }
 
 #[error_code]
