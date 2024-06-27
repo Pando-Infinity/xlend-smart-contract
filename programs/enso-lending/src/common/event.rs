@@ -3,7 +3,7 @@ use anchor_lang::{
     prelude::{borsh, AnchorDeserialize, AnchorSerialize, Pubkey},
 };
 
-use crate::LoanOfferStatus;
+use crate::{LoanOfferStatus, LoanOfferCrossChainStatus};
 
 #[event]
 pub struct InitSettingAccountEvent {
@@ -93,6 +93,26 @@ pub struct LoanOfferCreateRequestEvent {
     pub collateral_mint_token: Pubkey,
     pub collateral_amount: u64,
     pub status: LoanOfferStatus,
+    pub borrower_fee_percent: f64,
+    pub started_at: i64,
+}
+
+#[event]
+pub struct LoanOfferCrossChainCreateRequestEvent {
+    pub tier_id: String,
+    pub lend_offer_id: String,
+    pub interest: f64,
+    pub borrow_amount: u64,
+    pub lender_fee_percent: f64,
+    pub duration: u64,
+    pub lend_mint_token: Pubkey,
+    pub lender: Pubkey,
+    pub loan_offer_id: String,
+    pub borrower: Pubkey,
+    pub collateral_amount: u64,
+    pub collateral_token_symbol: String,
+    pub collateral_token_decimal: u8,
+    pub status: LoanOfferCrossChainStatus,
     pub borrower_fee_percent: f64,
     pub started_at: i64,
 }
@@ -224,4 +244,10 @@ pub struct SystemFinishLoanOfferEvent {
 pub struct SystemRevertEvent {
     pub offer_id: String,
     pub status: LoanOfferStatus,
+}
+
+//For testing only
+#[event]
+pub struct WormholeReceiveEvent {
+    pub data: Vec<String>
 }

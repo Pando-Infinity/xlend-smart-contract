@@ -69,6 +69,24 @@ pub enum LoanOfferError {
 }
 
 #[error_code]
+pub enum LoanOfferCrossChainError {
+    #[msg("Invalid receiver")]
+    InvalidReceiver,
+    #[msg("Invalid Lend mint asset")]
+    InvalidLendMintAsset,
+    #[msg("lend offer is not available")]
+    LendOfferIsNotAvailable,
+    #[msg("Invlaid collateral token symbol")]
+    InvalidCollateralTokenSymbol,
+    #[msg("Can not take a loan because health ratio is not valid")]
+    CanNotTakeALoanBecauseHealthRatioIsNotValid,
+    #[msg("Invalid wormhole system account")]
+    InvalidSystem,
+    #[msg("Invalid vaa")]
+    InvalidVaa,
+}
+
+#[error_code]
 pub enum RepayOfferError {
     #[msg("Invalid mint asset of loan offer")]
     InvalidMintAsset,
@@ -106,4 +124,14 @@ pub enum LiquidateOfferError {
     InvalidMintAsset,
     #[msg("Invalid operator system account")]
     InvalidSystem,
+}
+
+#[error_code]
+pub enum WormholeError {
+    #[msg("Invalid wormhole system account")]
+    InvalidSystem,
+    #[msg("Invalid foreign emitter")]
+    InvalidForeignEmitter,
+    #[msg("Invalid message")]
+    InvalidMessage,
 }

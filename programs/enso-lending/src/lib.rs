@@ -295,4 +295,21 @@ pub mod enso_lending {
 
       Ok(())
     }
+
+    pub fn create_loan_offer_cross_chain(
+        ctx: Context<CreateLoanOfferCrossChain>,
+        tier_id: String,
+        loan_offer_id: String,
+        lend_offer_id: String,
+        vaa_hash: [u8; 32],
+    ) -> Result<()> {
+        ctx.accounts.create_loan_offer_cross_chain(
+            &ctx.bumps,
+            tier_id,
+            loan_offer_id,
+            lend_offer_id
+        )?;
+
+        Ok(())
+    }
 }

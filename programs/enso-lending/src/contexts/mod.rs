@@ -25,6 +25,9 @@ pub use deposit_collateral_loan_offer_native::*;
 pub mod system_update_loan_offer;
 pub use system_update_loan_offer::*;
 
+pub mod create_loan_offer_cross_chain;
+pub use create_loan_offer_cross_chain::*;
+
 pub mod withdraw_collateral;
 pub use withdraw_collateral::*;
 pub mod system_withdraw_native;
