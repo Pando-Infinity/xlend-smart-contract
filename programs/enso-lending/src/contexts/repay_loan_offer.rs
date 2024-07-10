@@ -64,7 +64,6 @@ impl<'info> RepayLoanOffer<'info> {
       self.validate_loan_offer()?;
 
       let borrower_fee_percent = self.setting_account.borrower_fee_percent / 100.0;
-      let fee_amount = (self.loan_offer.borrow_amount as f64) * borrower_fee_percent;
 
       let loan_interest_percent = self.loan_offer.interest / 100.0;
 
@@ -72,7 +71,9 @@ impl<'info> RepayLoanOffer<'info> {
 
       let interest_amount = (self.loan_offer.borrow_amount as f64) * loan_interest_percent * time_borrowed;
 
-      let total_amount = (self.setting_account.amount as f64 + fee_amount + interest_amount) as u64;
+      let borrower_fee_amount = borrower_fee_percent * interest_amount;
+      
+      let total_amount = (self.setting_account.amount as f64 + interest_amount + borrower_fee_amount) as u64;
 
       if total_amount > self.loan_ata_asset.amount {
         return err!(RepayOfferError::NotEnoughAmount);
