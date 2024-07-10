@@ -3,7 +3,7 @@ use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChe
 use crate::{
   common::{
     LendOfferError, LendOfferStatus
-  }, states::lend_offer::LendOfferAccount, SettingAccount, LendOfferCanceledEvent, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
+  }, states::lend_offer::LendOfferAccount, LendOfferCanceledEvent, SettingAccount, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
 };
 
 #[derive(Accounts)]
@@ -67,7 +67,16 @@ impl<'info> SystemCancelLendOffer<'info> {
       return err!(LendOfferError::InvalidLendAmount);
     }
 
-    let total_repay = lend_amount + waiting_interest;
+    let lender_fee_percent = self.lend_offer.lender_fee_percent / 100.0;
+    let lend_interest_percent = self.lend_offer.interest / 100.0;
+  
+    let time_borrowed = (self.lend_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
+
+    let interest_lend_amount = (lend_amount as f64) * lend_interest_percent * time_borrowed;
+  
+    let lender_fee_amount = lender_fee_percent * interest_lend_amount;
+
+    let total_repay = lend_amount + waiting_interest - (lender_fee_amount as u64);
 
     if total_repay > self.hot_wallet_ata.amount {
       return err!(LendOfferError::NotEnoughAmount);
