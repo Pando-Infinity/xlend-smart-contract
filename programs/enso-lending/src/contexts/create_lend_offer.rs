@@ -30,7 +30,7 @@ pub struct CreateLendOffer<'info> {
     )]
     pub setting_account: Account<'info, SettingAccount>,
     #[account(
-        init_if_needed,
+        init,
         payer = lender,
         space = LendOfferAccount::INIT_SPACE,
         seeds = [

@@ -76,7 +76,9 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
       - interest_loan_amount
       - borrower_fee_amount) as u64;
 
-    self.transfer_asset_to_borrower(remaining_fund_to_borrower)?;
+    if remaining_fund_to_borrower > 0 {
+      self.transfer_asset_to_borrower(remaining_fund_to_borrower)?;
+    }
 
     let loan_offer = &mut self.loan_offer;
     loan_offer.liquidated_price = Some(liquidated_price);
