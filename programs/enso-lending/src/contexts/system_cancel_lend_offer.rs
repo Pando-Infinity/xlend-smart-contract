@@ -67,16 +67,7 @@ impl<'info> SystemCancelLendOffer<'info> {
       return err!(LendOfferError::InvalidLendAmount);
     }
 
-    let lender_fee_percent = self.lend_offer.lender_fee_percent / 100.0;
-    let lend_interest_percent = self.lend_offer.interest / 100.0;
-  
-    let time_borrowed = (self.lend_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
-
-    let interest_lend_amount = (lend_amount as f64) * lend_interest_percent * time_borrowed;
-  
-    let lender_fee_amount = lender_fee_percent * interest_lend_amount;
-
-    let total_repay = lend_amount + waiting_interest - (lender_fee_amount as u64);
+    let total_repay = self.get_total_lend_amount(lend_amount, waiting_interest);
 
     if total_repay > self.hot_wallet_ata.amount {
       return err!(LendOfferError::NotEnoughAmount);
@@ -122,5 +113,18 @@ impl<'info> SystemCancelLendOffer<'info> {
     msg!(&label.clone());
 
     Ok(())
+  }
+
+  fn get_total_lend_amount(&self, lend_amount: u64, waiting_interest: u64) -> u64 {
+    let lender_fee_percent = self.lend_offer.lender_fee_percent / 100.0;
+    let lend_interest_percent = self.lend_offer.interest / 100.0;
+  
+    let time_borrowed = (self.lend_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
+
+    let interest_lend_amount = (lend_amount as f64) * lend_interest_percent * time_borrowed;
+  
+    let lender_fee_amount = lender_fee_percent * interest_lend_amount;
+
+    return lend_amount + waiting_interest - (lender_fee_amount as u64);
   }
 }

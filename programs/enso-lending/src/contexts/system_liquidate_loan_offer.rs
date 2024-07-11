@@ -63,19 +63,7 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
     liquidated_price: u64,
     liquidated_tx: String,
   ) -> Result<()> {
-    let loan_interest_percent = self.loan_offer.interest / 100.0;
-    let borrower_fee_percent = self.loan_offer.borrower_fee_percent / 100.0;
-    let time_borrowed = (self.loan_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
-    let interest_loan_amount =
-        loan_interest_percent * self.loan_offer.borrow_amount as f64 * time_borrowed;
-
-    let borrower_fee_amount =
-        borrower_fee_percent * interest_loan_amount;
-
-    let remaining_fund_to_borrower = (collateral_swapped_amount as f64
-      - self.loan_offer.borrow_amount as f64
-      - interest_loan_amount
-      - borrower_fee_amount) as u64;
+    let remaining_fund_to_borrower = self.get_total_borrow_amount(collateral_swapped_amount);
 
     if remaining_fund_to_borrower > 0 {
       self.transfer_asset_to_borrower(remaining_fund_to_borrower)?;
@@ -138,5 +126,21 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
     });
     msg!(&label.clone());
     Ok(())
+  }
+
+  fn get_total_borrow_amount(&self, collateral_swapped_amount: u64) -> u64 {
+    let loan_interest_percent = self.loan_offer.interest / 100.0;
+    let borrower_fee_percent = self.loan_offer.borrower_fee_percent / 100.0;
+    let time_borrowed = (self.loan_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
+    let interest_loan_amount =
+        loan_interest_percent * self.loan_offer.borrow_amount as f64 * time_borrowed;
+
+    let borrower_fee_amount =
+        borrower_fee_percent * interest_loan_amount;
+
+    return (collateral_swapped_amount as f64
+      - self.loan_offer.borrow_amount as f64
+      - interest_loan_amount
+      - borrower_fee_amount) as u64;
   }
 }
