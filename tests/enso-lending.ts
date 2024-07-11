@@ -357,8 +357,8 @@ describe("enso-lending", () => {
     lendOffer: PublicKey;
     lender: PublicKey;
     lenderAtaAsset: PublicKey;
-    hotWallet: Keypair;
-    hotWalletAta: PublicKey;
+    systemKeypair: Keypair;
+    systemAta: PublicKey;
     mintAsset: PublicKey;
     settingAccount: PublicKey;
   }): Promise<void> => {
@@ -370,8 +370,8 @@ describe("enso-lending", () => {
       lendOffer,
       lender,
       lenderAtaAsset,
-      hotWallet,
-      hotWalletAta,
+      systemKeypair,
+      systemAta,
       mintAsset,
       settingAccount,
     } = params;
@@ -387,8 +387,8 @@ describe("enso-lending", () => {
         lender,
         lenderAtaAsset,
         lendOffer,
-        system: hotWallet.publicKey,
-        systemAta: hotWalletAta,
+        system: systemKeypair.publicKey,
+        systemAta,
         mintAsset,
         settingAccount,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -504,8 +504,8 @@ describe("enso-lending", () => {
     borrowAmount: number;
     borrower: PublicKey;
     borrowerAtaAsset: PublicKey;
-    hotWallet: Keypair;
-    hotWalletAta: PublicKey;
+    systemKeypair: Keypair;
+    systemAta: PublicKey;
     loanOffer: PublicKey;
     mintAsset: PublicKey;
   }) => {
@@ -515,8 +515,8 @@ describe("enso-lending", () => {
       borrowAmount,
       borrower,
       borrowerAtaAsset,
-      hotWallet,
-      hotWalletAta,
+      systemKeypair,
+      systemAta,
       loanOffer,
       mintAsset,
     } = params;
@@ -526,8 +526,8 @@ describe("enso-lending", () => {
       .accounts({
         borrower,
         borrowerAtaAsset,
-        system: hotWallet.publicKey,
-        systemAta: hotWalletAta,
+        system: systemKeypair.publicKey,
+        systemAta,
         loanOffer,
         mintAsset,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -1685,8 +1685,8 @@ describe("enso-lending", () => {
 
         // System transfer lend asset back to lender
         await systemCancelLendOffer({
-          hotWallet,
-          hotWalletAta: hotWalletUsdcAta.address,
+          systemKeypair: hotWallet,
+          systemAta: hotWalletUsdcAta.address,
           lendAmount: amountTier,
           waitingInterest: 0, // assume waiting interest is 0
           lender: lender.publicKey,
@@ -2106,8 +2106,8 @@ describe("enso-lending", () => {
         borrowAmount: amountTier,
         borrower: borrower.publicKey,
         borrowerAtaAsset: borrowerAtaUsdc.address,
-        hotWallet,
-        hotWalletAta: hotWalletUsdcAta.address,
+        systemKeypair: hotWallet,
+        systemAta: hotWalletUsdcAta.address,
         loanOffer: loanOfferAccount,
         mintAsset: usdcMint.publicKey,
         offerId: loanOfferId,
@@ -2353,8 +2353,8 @@ describe("enso-lending", () => {
         borrowAmount: amountTier,
         borrower: borrower.publicKey,
         borrowerAtaAsset: borrowerAtaUsdc.address,
-        hotWallet,
-        hotWalletAta: hotWalletUsdcAta.address,
+        systemKeypair:hotWallet,
+        systemAta: hotWalletUsdcAta.address,
         loanOffer: loanOfferAccount,
         mintAsset: usdcMint.publicKey,
         offerId: loanOfferId,
@@ -2592,8 +2592,8 @@ describe("enso-lending", () => {
         borrowAmount: amountTier,
         borrower: borrower.publicKey,
         borrowerAtaAsset: borrowerAtaUsdc.address,
-        hotWallet,
-        hotWalletAta: hotWalletUsdcAta.address,
+        systemKeypair: hotWallet,
+        systemAta: hotWalletUsdcAta.address,
         loanOffer: loanOfferAccount,
         mintAsset: usdcMint.publicKey,
         offerId: loanOfferId,
