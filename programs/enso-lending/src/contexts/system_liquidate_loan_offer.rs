@@ -24,7 +24,7 @@ pub struct SystemLiquidateLoanOffer<'info> {
     associated_token::mint = mint_asset,
     associated_token::authority = system
   )]
-  pub system_ata_asset: Account<'info, TokenAccount>,
+  pub system_ata: Account<'info, TokenAccount>,
   #[account(
     constraint = mint_asset.key() == loan_offer.lend_mint_token @ LiquidateOfferError::InvalidMintAsset,
   )]
@@ -92,6 +92,7 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
     )?;
     Ok(())
   }
+
   fn transfer_asset_to_borrower(&mut self, remaining_fund_to_borrower: u64) -> Result<()> {
     self.process_transfer(
       remaining_fund_to_borrower,
@@ -99,25 +100,24 @@ impl<'info> SystemLiquidateLoanOffer<'info> {
     )?;
     Ok(())
   }
+
   fn process_transfer(&mut self, amount: u64, to: AccountInfo<'info>) -> Result<()> {
+    let ctx = CpiContext::new(
+      self.token_program.to_account_info(), 
+      TransferChecked {
+        from: self.system_ata.to_account_info(),
+        mint: self.mint_asset.to_account_info(),
+        to,
+        authority: self.system.to_account_info(),
+    });
+
     transfer_checked(
-      self.into_transfer_context(to),
+      ctx,
       amount,
       self.mint_asset.decimals,
     )
   }
-  fn into_transfer_context(
-    &self,
-    to: AccountInfo<'info>,
-  ) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-    let cpi_accounts = TransferChecked {
-      from: self.system_ata_asset.to_account_info(),
-      mint: self.mint_asset.to_account_info(),
-      to,
-      authority: self.system.to_account_info(),
-    };
-    CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
-  }
+
   fn emit_event_system_liquidate_loan_offer(
     &mut self,
     label: String,

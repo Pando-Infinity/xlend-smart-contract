@@ -16,7 +16,7 @@ pub struct SystemFinishLoanOffer<'info> {
     associated_token::mint = mint_asset,
     associated_token::authority = system
   )]
-  pub system_ata_asset: Account<'info, TokenAccount>,
+  pub system_ata: Account<'info, TokenAccount>,
   #[account(
     constraint = mint_asset.key() == loan_offer.lend_mint_token @ RepayOfferError::InvalidMintAsset,
   )]
@@ -91,7 +91,7 @@ impl<'info> SystemFinishLoanOffer<'info> {
       return err!(RepayOfferError::InvalidLendAmount);
     }
 
-    if total_repay_to_lender > self.system_ata_asset.amount {
+    if total_repay_to_lender > self.system_ata.amount {
       return err!(RepayOfferError::NotEnoughAmount);
     }
 
@@ -101,21 +101,20 @@ impl<'info> SystemFinishLoanOffer<'info> {
   }
 
   fn process_transfer_lend_asset(&mut self, total_repay: u64) -> Result<()> {
-    transfer_checked(
-        self.into_transfer_back_lend_asset_context(),
-        total_repay,
-        self.mint_asset.decimals,
-    )
-  }
-
-  fn into_transfer_back_lend_asset_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-    let cpi_accounts = TransferChecked {
-        from: self.system_ata_asset.to_account_info(),
+    let ctx = CpiContext::new(
+      self.token_program.to_account_info(),  
+      TransferChecked {
+        from: self.system_ata.to_account_info(),
         mint: self.mint_asset.to_account_info(),
         to: self.lender_ata_asset.to_account_info(),
         authority: self.system.to_account_info(),
-    };
-    CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
+    });
+
+    transfer_checked(
+      ctx,
+      total_repay,
+      self.mint_asset.decimals,
+    )
   }
 
   fn emit_event_system_finish_loan_offer(

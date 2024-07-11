@@ -51,13 +51,13 @@ pub struct SystemCancelLendOffer<'info> {
   )]
   pub setting_account: Account<'info, SettingAccount>,
   #[account(mut)]
-  pub hot_wallet: Signer<'info>,
+  pub system: Signer<'info>,
   #[account(
     mut,
     associated_token::mint = mint_asset,
-    associated_token::authority = hot_wallet
+    associated_token::authority = system
   )]
-  pub hot_wallet_ata: Account<'info, TokenAccount>,
+  pub system_ata: Account<'info, TokenAccount>,
   pub token_program: Program<'info, Token>
 }
 
@@ -69,7 +69,7 @@ impl<'info> SystemCancelLendOffer<'info> {
 
     let total_repay = lend_amount + waiting_interest;
 
-    if total_repay > self.hot_wallet_ata.amount {
+    if total_repay > self.system_ata.amount {
       return err!(LendOfferError::NotEnoughAmount);
     }
 
@@ -83,21 +83,21 @@ impl<'info> SystemCancelLendOffer<'info> {
   }
 
   fn transfer_back_lend_asset(&mut self, total_repay: u64) -> Result<()> {
+    let ctx = CpiContext::new(
+      self.token_program.to_account_info(), 
+      TransferChecked {
+        from: self.system_ata.to_account_info(),
+        mint: self.mint_asset.to_account_info(),
+        to: self.lender_ata_asset.to_account_info(),
+        authority: self.system.to_account_info(),
+      }
+    );
+
     transfer_checked(
-        self.into_transfer_back_lend_asset_context(),
+        ctx,
         total_repay,
         self.mint_asset.decimals,
     )
-  }
-
-  fn into_transfer_back_lend_asset_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-    let cpi_accounts = TransferChecked {
-        from: self.hot_wallet_ata.to_account_info(),
-        mint: self.mint_asset.to_account_info(),
-        to: self.lender_ata_asset.to_account_info(),
-        authority: self.hot_wallet.to_account_info(),
-    };
-    CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
   }
 
   fn emit_event_cancel_lend_offer(&mut self, label: String, total_repay: u64) -> Result<()> {
