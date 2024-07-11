@@ -40,14 +40,14 @@ pub struct SystemUpdateLoanOffer<'info> {
   )]
   pub loan_offer: Account<'info, LoanOfferAccount>,
   #[account(mut)]
-  pub hot_wallet: Signer<'info>,
+  pub system: Signer<'info>,
   #[account(
     mut,
-    constraint = hot_wallet_ata.amount >= borrow_amount @ LoanOfferError::NotEnoughAmount,
+    constraint = system_ata.amount >= borrow_amount @ LoanOfferError::NotEnoughAmount,
     associated_token::mint = mint_asset,
-    associated_token::authority = hot_wallet
+    associated_token::authority = system
   )]
-  pub hot_wallet_ata: Account<'info, TokenAccount>,
+  pub system_ata: Account<'info, TokenAccount>,
   pub token_program: Program<'info, Token>
 }
 
@@ -67,21 +67,20 @@ impl<'info> SystemUpdateLoanOffer<'info> {
   }
 
   fn transfer_lend_asset_to_borrower(&mut self, borrow_amount: u64) -> Result<()> {
-    transfer_checked(
-        self.into_transfer_lend_asset_to_borrower_context(),
-        borrow_amount,
-        self.mint_asset.decimals,
-    )
-  }
-
-  fn into_transfer_lend_asset_to_borrower_context(&self) -> CpiContext<'_, '_, '_, 'info, TransferChecked<'info>> {
-    let cpi_accounts = TransferChecked {
-        from: self.hot_wallet_ata.to_account_info(),
+    let ctx = CpiContext::new(
+      self.token_program.to_account_info(), 
+      TransferChecked {
+        from: self.system_ata.to_account_info(),
         mint: self.mint_asset.to_account_info(),
         to: self.borrower_ata_asset.to_account_info(),
-        authority: self.hot_wallet.to_account_info(),
-    };
-    CpiContext::new(self.token_program.to_account_info(), cpi_accounts)
+        authority: self.system.to_account_info(),
+    });
+
+    transfer_checked(
+      ctx,
+      borrow_amount,
+      self.mint_asset.decimals,
+    )
   }
 
   fn emit_event_system_update_loan_offer(&mut self, label: String) -> Result<()> {
