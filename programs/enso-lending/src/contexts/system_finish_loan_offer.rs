@@ -112,8 +112,8 @@ impl<'info> SystemFinishLoanOffer<'info> {
 
     transfer_checked(
       ctx,
-        total_repay,
-        self.mint_asset.decimals,
+      total_repay,
+      self.mint_asset.decimals,
     )
   }
 
