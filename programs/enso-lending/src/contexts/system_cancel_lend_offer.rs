@@ -3,7 +3,7 @@ use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChe
 use crate::{
   common::{
     LendOfferError, LendOfferStatus
-  }, states::lend_offer::LendOfferAccount, LendOfferCanceledEvent, SettingAccount, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
+  }, duration_to_year, states::lend_offer::LendOfferAccount, LendOfferCanceledEvent, SettingAccount, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
 };
 
 #[derive(Accounts)]
@@ -119,7 +119,7 @@ impl<'info> SystemCancelLendOffer<'info> {
     let lender_fee_percent = self.lend_offer.lender_fee_percent / 100.0;
     let lend_interest_percent = self.lend_offer.interest / 100.0;
   
-    let time_borrowed = (self.lend_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
+    let time_borrowed = duration_to_year(self.lend_offer.duration);
 
     let interest_lend_amount = (lend_amount as f64) * lend_interest_percent * time_borrowed;
   
