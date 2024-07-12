@@ -67,7 +67,7 @@ impl<'info> SystemCancelLendOffer<'info> {
       return err!(LendOfferError::InvalidLendAmount);
     }
 
-    let total_repay = self.get_total_lend_amount(lend_amount, waiting_interest);
+    let total_repay = self.get_total_repay(lend_amount, waiting_interest);
 
     if total_repay > self.hot_wallet_ata.amount {
       return err!(LendOfferError::NotEnoughAmount);
@@ -115,7 +115,7 @@ impl<'info> SystemCancelLendOffer<'info> {
     Ok(())
   }
 
-  fn get_total_lend_amount(&self, lend_amount: u64, waiting_interest: u64) -> u64 {
+  fn get_total_repay(&self, lend_amount: u64, waiting_interest: u64) -> u64 {
     let lender_fee_percent = self.lend_offer.lender_fee_percent / 100.0;
     let lend_interest_percent = self.lend_offer.interest / 100.0;
   
