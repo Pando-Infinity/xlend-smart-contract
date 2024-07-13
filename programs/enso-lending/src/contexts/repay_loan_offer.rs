@@ -4,7 +4,7 @@ use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChe
 use crate::{
   common::{
     ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
-  }, states::{
+  }, duration_to_year, states::{
     loan_offer::LoanOfferAccount,
     setting_account::SettingAccount
   }, LoanOfferError, LoanOfferStatus, RepayOfferError, SystemRepayLoadOfferNativeEvent
@@ -62,17 +62,8 @@ pub struct RepayLoanOffer<'info> {
 impl<'info> RepayLoanOffer<'info> {
     pub fn repay_loan_offer(&mut self) -> Result<()> {
       self.validate_loan_offer()?;
-
-      let borrower_fee_percent = self.setting_account.borrower_fee_percent / 100.0;
-      let fee_amount = (self.loan_offer.borrow_amount as f64) * borrower_fee_percent;
-
-      let loan_interest_percent = self.loan_offer.interest / 100.0;
-
-      let time_borrowed = (self.loan_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
-
-      let interest_amount = (self.loan_offer.borrow_amount as f64) * loan_interest_percent * time_borrowed;
-
-      let total_amount = (self.setting_account.amount as f64 + fee_amount + interest_amount) as u64;
+      
+      let total_amount = self.get_total_repay();
 
       if total_amount > self.loan_ata_asset.amount {
         return err!(RepayOfferError::NotEnoughAmount);
@@ -132,5 +123,19 @@ impl<'info> RepayLoanOffer<'info> {
       msg!(&label.clone());
       
       Ok(())
+    }
+
+    fn get_total_repay(&self) -> u64 {
+      let borrower_fee_percent = self.setting_account.borrower_fee_percent / 100.0;
+
+      let loan_interest_percent = self.loan_offer.interest / 100.0;
+
+      let time_borrowed = duration_to_year(self.loan_offer.duration);
+
+      let interest_amount = (self.loan_offer.borrow_amount as f64) * loan_interest_percent * time_borrowed;
+
+      let borrower_fee_amount = borrower_fee_percent * interest_amount;
+      
+      return (self.setting_account.amount as f64 + interest_amount + borrower_fee_amount) as u64;
     }
 }

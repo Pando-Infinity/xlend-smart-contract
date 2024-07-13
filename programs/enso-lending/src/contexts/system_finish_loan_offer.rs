@@ -2,8 +2,8 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
 use crate::{
   common::{
-    RepayOfferError, constant::LoanOfferStatus
-  }, SystemFinishLoanOfferEvent, LOAN_OFFER_ACCOUNT_SEED, ENSO_SEED, states::loan_offer::LoanOfferAccount
+    constant::LoanOfferStatus, RepayOfferError
+  }, duration_to_year, states::loan_offer::LoanOfferAccount, SystemFinishLoanOfferEvent, ENSO_SEED, LOAN_OFFER_ACCOUNT_SEED
 };
 
 #[derive(Accounts)]
@@ -55,18 +55,7 @@ pub struct SystemFinishLoanOffer<'info> {
 
 impl<'info> SystemFinishLoanOffer<'info> {
   pub fn system_finish_loan_offer(&mut self, loan_amount: u64, waiting_interest: u64) -> Result<()>  {
-    let loan_interest_percent = self.loan_offer.interest / 100.0;
-
-    let time_borrowed = (self.loan_offer.duration as f64) / ((24 * 60 * 60 * 365) as f64);
-
-    let interest_loan_amount = (loan_amount as f64) * loan_interest_percent * time_borrowed;
-    let lender_fee_amount = self.loan_offer.lender_fee_percent * (loan_amount as f64) / 100.0;
-
-    let total_repay_to_lender = (loan_amount as f64 
-      + waiting_interest as f64 
-      + interest_loan_amount 
-      - lender_fee_amount
-    ) as u64;
+    let total_repay_to_lender = self.get_total_repay(loan_amount, waiting_interest);
 
     let current_timestamp = Clock::get().unwrap().unix_timestamp;
     let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
@@ -136,5 +125,18 @@ impl<'info> SystemFinishLoanOffer<'info> {
     msg!(&label.clone());
 
     Ok(())
+  }
+
+  fn get_total_repay(&self, loan_amount: u64, waiting_interest: u64) -> u64 {
+    let loan_interest_percent = self.loan_offer.interest / 100.0;
+
+    let lender_fee_percent = self.loan_offer.lender_fee_percent / 100.0;
+
+    let time_borrowed = duration_to_year(self.loan_offer.duration);
+
+    let interest_loan_amount = (loan_amount as f64) * loan_interest_percent * time_borrowed;
+    let lender_fee_amount = lender_fee_percent * (interest_loan_amount as f64);
+
+    return (loan_amount as f64 + interest_loan_amount + waiting_interest as f64 - lender_fee_amount) as u64;
   }
 }
