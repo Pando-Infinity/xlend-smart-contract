@@ -7,7 +7,7 @@ use crate::{
   }, duration_to_year, states::{
     loan_offer::LoanOfferAccount,
     setting_account::SettingAccount
-  }, LoanOfferError, LoanOfferStatus, RepayOfferError, SystemRepayLoadOfferNativeEvent
+  }, LoanOfferError, LoanOfferStatus, RepayOfferError, SystemRepayLoanOfferNativeEvent
 };
 
 
@@ -109,7 +109,7 @@ impl<'info> RepayLoanOffer<'info> {
     }
 
     pub fn emit_event_repay_loan_offer(&mut self, label: String, collateral_amount: u64) -> Result<()> {
-      emit!(SystemRepayLoadOfferNativeEvent {
+      emit!(SystemRepayLoanOfferNativeEvent {
         lender: self.loan_offer.lender.key(),
         borrower: self.borrower.key(),
         interest: self.loan_offer.interest,

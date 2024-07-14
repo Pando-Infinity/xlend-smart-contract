@@ -3,7 +3,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 use crate::{
   common::{
     RepayOfferError, constant::LoanOfferStatus
-  }, SystemRepayLoadOfferNativeEvent, LOAN_OFFER_ACCOUNT_SEED, ENSO_SEED, states::loan_offer::LoanOfferAccount
+  }, SystemRepayLoanOfferNativeEvent, LOAN_OFFER_ACCOUNT_SEED, ENSO_SEED, states::loan_offer::LoanOfferAccount
 };
 
 #[derive(Accounts)]
@@ -93,7 +93,7 @@ impl<'info> SystemRepayLoadOfferNative<'info> {
     label: String,
     collateral_amount: u64
   ) -> Result<()> {
-    emit!(SystemRepayLoadOfferNativeEvent {
+    emit!(SystemRepayLoanOfferNativeEvent {
       lender: self.loan_offer.lender.key(),
       borrower: self.borrower.key(),
       interest: self.loan_offer.interest,
