@@ -70,6 +70,7 @@ impl<'info> InitSettingAccount<'info> {
           owner: self.setting_account.owner,
           receiver: self.setting_account.receiver,
           lender_fee_percent: self.setting_account.lender_fee_percent,
+          borrower_fee_percent: self.setting_account.borrower_fee_percent,
           collateral_price_feed: self.setting_account.collateral_price_feed,
           lend_price_feed: self.setting_account.lend_price_feed
       });
