@@ -7,7 +7,7 @@
 Go into Anchor.toml and add the program id mainnet below
 
 ```
-[programs.devnet]
+[programs.mainnet]
 enso_lending = "<program_id_in_mainnet>"
 ```
 
