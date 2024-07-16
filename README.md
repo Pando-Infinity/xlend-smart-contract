@@ -14,7 +14,7 @@ enso_lending = "<program_id_in_mainnet>"
 Update the path file of wallet that is authority of program and change cluster to mainnet
 ```
 [provider]
-cluster = "devnet"
+cluster = "mainnet"
 wallet = "<path_file_of_wallet>"
 ```
 
