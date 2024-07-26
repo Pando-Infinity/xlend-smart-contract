@@ -57,12 +57,13 @@ impl<'info> SystemFinishLoanOffer<'info> {
   pub fn system_finish_loan_offer(&mut self, loan_amount: u64, waiting_interest: u64) -> Result<()>  {
     let total_repay_to_lender = self.get_total_repay(loan_amount, waiting_interest);
 
-    let current_timestamp = Clock::get().unwrap().unix_timestamp;
-    let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
+    // TODO: Allow system finish contract at any time
+    // let current_timestamp = Clock::get().unwrap().unix_timestamp;
+    // let end_borrowed_loan_offer = self.loan_offer.started_at + self.loan_offer.duration as i64;
 
-    if current_timestamp < end_borrowed_loan_offer {
-      return err!(RepayOfferError::TimeUnmetException);
-    }
+    // if current_timestamp < end_borrowed_loan_offer {
+    //   return err!(RepayOfferError::TimeUnmetException);
+    // }
 
     self.transfer_asset_to_lender(loan_amount, total_repay_to_lender)?;
     self.loan_offer.status = LoanOfferStatus::Finished;
