@@ -116,15 +116,6 @@ impl<'info> SystemCancelLendOffer<'info> {
   }
 
   fn get_total_repay(&self, lend_amount: u64, waiting_interest: u64) -> u64 {
-    let lender_fee_percent = self.lend_offer.lender_fee_percent / 100.0;
-    let lend_interest_percent = self.lend_offer.interest / 100.0;
-  
-    let time_borrowed = duration_to_year(self.lend_offer.duration);
-
-    let interest_lend_amount = (lend_amount as f64) * lend_interest_percent * time_borrowed;
-  
-    let lender_fee_amount = lender_fee_percent * interest_lend_amount;
-
-    return lend_amount + waiting_interest - (lender_fee_amount as u64);
+    return lend_amount + waiting_interest;
   }
 }
