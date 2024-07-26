@@ -41,6 +41,9 @@ pub const MAXIMUM_AGE_PRICE_UPDATE: u64 = 100_000;
 #[cfg(not(feature = "maximum-age-price-updater"))]
 pub const MAXIMUM_AGE_PRICE_UPDATE: u64 = 75;
 
+#[cfg(feature = "dev")]
+pub const MIN_BORROW_HEALTH_RATIO: f64 = 1.1;
+#[cfg(not(feature = "dev"))]
 pub const MIN_BORROW_HEALTH_RATIO: f64 = 1.2;
 
 pub const NATIVE_MINT: &str = "So11111111111111111111111111111111111111112";
