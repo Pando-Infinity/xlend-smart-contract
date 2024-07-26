@@ -3,7 +3,7 @@ use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChe
 use crate::{
   common::{
     LendOfferError, LendOfferStatus
-  }, duration_to_year, states::lend_offer::LendOfferAccount, LendOfferCanceledEvent, SettingAccount, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
+  }, states::lend_offer::LendOfferAccount, LendOfferCanceledEvent, SettingAccount, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
 };
 
 #[derive(Accounts)]
