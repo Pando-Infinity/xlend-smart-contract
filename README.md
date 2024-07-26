@@ -74,3 +74,31 @@ $ solana program extend <program_id> <Addition bytes> --keypair <file_path_of_wa
 ```
 
 And the redeployed with the command above
+
+## Note
+### Issue when deploy with Anchor
+- Blockhash expired, and maximum retry is only 5 times
+```bash
+Blockhash expired. 0 retries remaining
+Error: Data writes to account failed: Custom error: Max retries exceeded
+There was a problem deploying: Output { status: ExitStatus(unix_wait_status(256)), stdout: "", stderr: "" }.
+```
+- Cannot resume deploy with buffers
+- To close buffers to get back lamports
+```bash
+solana program close --authority "{deployer wallet.json}" --buffers
+```
+### Deploy with solana cli
+1. Check solana config
+```bash
+solana config get
+```
+2. Set solana config
+```bash
+solana config set -u "{rpc url}" -k "{deployer wallet.json}"
+```
+3. Deploy: set priority fee & increase attempts
+- Refer: https://solana.com/docs/programs/deploying
+```bash
+solana program deploy "{deployer wallet.json}" --with-compute-unit-price 5000 --max-sign-attempts 1000 --use-rpc
+```
