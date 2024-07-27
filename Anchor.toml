@@ -10,6 +10,9 @@ enso_lending = "G3LQL3DpD8Bd5q3ERGZwqAgkgyFKJTbt9ViCpu1hVd6o"
 [programs.devnet]
 enso_lending = "DKUHHKPYbLtPf4pSoURxfJKUXhdwtpoeHAdpknMta5VF"
 
+[programs.mainnet]
+enso_lending = "ensoQXKf4MvNuEC3M9xmcqUqgucFNd5UzAonDdUtgqn"
+
 [registry]
 url = "https://api.apr.dev"
 

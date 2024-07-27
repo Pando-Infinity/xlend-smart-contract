@@ -3,7 +3,7 @@ use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChe
 use crate::{
   common::{
     LendOfferError, LendOfferStatus
-  }, duration_to_year, states::lend_offer::LendOfferAccount, LendOfferCanceledEvent, SettingAccount, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
+  }, states::lend_offer::LendOfferAccount, LendOfferCanceledEvent, SettingAccount, ENSO_SEED, LEND_OFFER_ACCOUNT_SEED, SETTING_ACCOUNT_SEED
 };
 
 #[derive(Accounts)]
@@ -116,15 +116,6 @@ impl<'info> SystemCancelLendOffer<'info> {
   }
 
   fn get_total_repay(&self, lend_amount: u64, waiting_interest: u64) -> u64 {
-    let lender_fee_percent = self.lend_offer.lender_fee_percent / 100.0;
-    let lend_interest_percent = self.lend_offer.interest / 100.0;
-  
-    let time_borrowed = duration_to_year(self.lend_offer.duration);
-
-    let interest_lend_amount = (lend_amount as f64) * lend_interest_percent * time_borrowed;
-  
-    let lender_fee_amount = lender_fee_percent * interest_lend_amount;
-
-    return lend_amount + waiting_interest - (lender_fee_amount as u64);
+    return lend_amount + waiting_interest;
   }
 }
