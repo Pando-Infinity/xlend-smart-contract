@@ -81,11 +81,11 @@ impl<'info> WithdrawCollateral<'info> {
     if current_timestamp > end_borrowed_loan_offer {
       return err!(LoanOfferError::LoanOfferExpired)?;
     }
-
-    // TODO: Remove redundant line after beta test
-    self.loan_offer.request_withdraw_amount = Some(withdraw_amount);
+    
     self.loan_offer.sub_lamports(withdraw_amount)?;
     self.borrower.add_lamports(withdraw_amount)?;
+
+    self.loan_offer.collateral_amount = remaining_collateral;
 
     self.emit_event_withdraw_collateral(
       String::from("withdraw_collateral"),
