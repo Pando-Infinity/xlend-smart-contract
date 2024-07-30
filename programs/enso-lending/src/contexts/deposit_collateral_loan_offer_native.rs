@@ -40,18 +40,11 @@ pub struct DepositCollateralLoanOfferNative<'info> {
     bump = setting_account.bump
   )]
   pub setting_account: Account<'info, SettingAccount>,
-  /// CHECK: This is the account used to receive the collateral amount
-  #[account(mut)]
-  pub receiver: AccountInfo<'info>,
   pub system_program: Program<'info, System>,
 }
 
 impl<'info> DepositCollateralLoanOfferNative<'info> {
   pub fn deposit_collateral_loan_offer(&mut self, amount: u64) -> Result<()> {
-    if self.receiver.key() != self.setting_account.receiver.key() {
-      return err!(LoanOfferError::InvalidReceiver);
-    }
-
     self.deposit_collateral(amount)?;
 
     let before_collateral_amount = self.loan_offer.collateral_amount;
@@ -87,7 +80,7 @@ impl<'info> DepositCollateralLoanOfferNative<'info> {
   fn deposit_collateral(&self, amount: u64) -> Result<()> {
      let transfer_instruction = system_instruction::transfer(
       &self.borrower.key(), 
-      &self.receiver.key(), 
+      &self.loan_offer.key(), 
       amount
     );
     
@@ -95,7 +88,7 @@ impl<'info> DepositCollateralLoanOfferNative<'info> {
        &transfer_instruction,
        &[
          self.borrower.to_account_info(),
-         self.receiver.to_account_info(),          
+         self.loan_offer.to_account_info(),          
          self.system_program.to_account_info()
        ],
        &[],  
