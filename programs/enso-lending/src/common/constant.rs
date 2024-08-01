@@ -12,7 +12,6 @@ pub enum LendOfferStatus {
 pub enum LoanOfferStatus {
     Matched,
     FundTransferred,
-    Repay,
     BorrowerPaid,
     Liquidating,
     Liquidated,

@@ -30,6 +30,8 @@ pub enum LendOfferError {
 
 #[error_code]
 pub enum LoanOfferError {
+    #[msg("Lend interest rate had updated")]
+    LendInterestRateHadUpdated,
     #[msg("Invalid receiver")]
     InvalidReceiver,
     #[msg("Can not deposit collateral to loan offer that not available")]
