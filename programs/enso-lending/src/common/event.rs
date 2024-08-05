@@ -122,14 +122,6 @@ pub struct WithdrawCollateralEvent {
 }
 
 #[event]
-pub struct WithdrawRequestEvent  {
-    pub borrower: Pubkey,
-    pub withdraw_amount: u64,
-    pub loan_offer_id: String,
-    pub collateral_amount: u64,
-}
-
-#[event]
 pub struct UnhealthyRatioDetectedEvent  {
     pub borrower: Pubkey,
     pub withdraw_amount: u64,
