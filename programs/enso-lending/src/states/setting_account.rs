@@ -13,7 +13,5 @@ pub struct SettingAccount {
   pub tier_id: String,
   pub lender_fee_percent: f64,
   pub borrower_fee_percent: f64,
-  pub lend_price_feed: Pubkey,
-  pub collateral_price_feed: Pubkey,
   pub bump: u8
 }

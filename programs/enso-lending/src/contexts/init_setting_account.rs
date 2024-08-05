@@ -14,10 +14,6 @@ pub struct InitSettingAccount<'info> {
   pub receiver: AccountInfo<'info>,
   pub lend_mint_asset: Account<'info, Mint>,
   pub collateral_mint_asset: Account<'info, Mint>,
-  /// CHECK: This is the account used to convert lend asset price to USD price
-  pub lend_price_feed_account: AccountInfo<'info>,
-  /// CHECK: This is the account used to convert collateral asset price to USD price
-  pub collateral_price_feed_account: AccountInfo<'info>,
   #[account(
     init,
     payer = owner,
@@ -50,9 +46,7 @@ impl<'info> InitSettingAccount<'info> {
         tier_id,
         bump: bumps.setting_account,
         lender_fee_percent,
-        borrower_fee_percent,
-        lend_price_feed: self.lend_price_feed_account.key(),
-        collateral_price_feed: self.collateral_price_feed_account.key(),
+        borrower_fee_percent
       });
 
       msg!("Init Setting Account: {:?}", self.setting_account);
@@ -70,9 +64,7 @@ impl<'info> InitSettingAccount<'info> {
           owner: self.setting_account.owner,
           receiver: self.setting_account.receiver,
           lender_fee_percent: self.setting_account.lender_fee_percent,
-          borrower_fee_percent: self.setting_account.borrower_fee_percent,
-          collateral_price_feed: self.setting_account.collateral_price_feed,
-          lend_price_feed: self.setting_account.lend_price_feed
+          borrower_fee_percent: self.setting_account.borrower_fee_percent
       });
       
       msg!(&label.clone());
