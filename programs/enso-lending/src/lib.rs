@@ -220,16 +220,6 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn system_transfer_collateral_request_withdraw(
-        ctx: Context<SystemWithdrawNative>,
-        loan_offer_id: String,
-        withdraw_amount: u64,
-    ) -> Result<()> {
-        ctx.accounts.system_transfer_collateral_request_withdraw(loan_offer_id, withdraw_amount)?;
-        
-        Ok(())
-    }
-
     pub fn start_liquidate_contract(
         ctx: Context<LiquidateCollateral>,
         _offer_id: String,

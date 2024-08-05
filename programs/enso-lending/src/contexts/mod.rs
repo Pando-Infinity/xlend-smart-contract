@@ -27,8 +27,6 @@ pub use system_update_loan_offer::*;
 
 pub mod withdraw_collateral;
 pub use withdraw_collateral::*;
-pub mod system_withdraw_native;
-pub use system_withdraw_native::*;
 
 pub mod repay_loan_offer;
 pub use repay_loan_offer::*;
