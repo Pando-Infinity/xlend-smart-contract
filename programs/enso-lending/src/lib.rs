@@ -147,6 +147,7 @@ pub mod enso_lending {
         lend_offer_id: String,
         tier_id: String,
         collateral_amount: u64,
+        interest: f64,
     ) -> Result<()> {
         ctx.accounts.initialize_loan_offer(
             &ctx.bumps,
@@ -154,6 +155,7 @@ pub mod enso_lending {
             lend_offer_id,
             tier_id,
             collateral_amount,
+            interest
         )?;
         ctx.accounts
             .emit_event_create_loan_offer(String::from("create_loan_offer_native"))?;
