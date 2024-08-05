@@ -19,7 +19,7 @@ pub struct InitSettingAccount<'info> {
   /// CHECK: This is the account used to convert collateral asset price to USD price
   pub collateral_price_feed_account: AccountInfo<'info>,
   #[account(
-    init_if_needed,
+    init,
     payer = owner,
     space = SettingAccount::INIT_SPACE,
     seeds = [
