@@ -39,9 +39,6 @@ pub use liquidate_collateral::*;
 pub mod system_liquidate_loan_offer;
 pub use system_liquidate_loan_offer::*;
 
-pub mod system_repay_loan_offer;
-pub use system_repay_loan_offer::*;
-
 pub mod system_finish_loan_offer;
 pub use system_finish_loan_offer::*;
 

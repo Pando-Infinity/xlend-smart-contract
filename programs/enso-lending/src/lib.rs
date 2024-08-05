@@ -208,16 +208,6 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn system_repay_loan_offer(
-        ctx: Context<SystemRepayLoadOfferNative>,
-        _loan_offer_id: String,
-        collateral_amount: u64,
-    ) -> Result<()> {
-        ctx.accounts.system_repay_loan_offer(collateral_amount)?;
-
-        Ok(())
-    }
-
     pub fn withdraw_collateral(
         ctx: Context<WithdrawCollateral>,
         loan_offer_id: String,
