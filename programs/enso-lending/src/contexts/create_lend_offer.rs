@@ -32,7 +32,7 @@ pub struct CreateLendOffer<'info> {
     #[account(
         init,
         payer = lender,
-        space = LendOfferAccount::INIT_SPACE,
+        space = LendOfferAccount::INIT_SPACE + 8,
         seeds = [
             ENSO_SEED.as_ref(), 
             LEND_OFFER_ACCOUNT_SEED.as_ref(), 

@@ -29,7 +29,7 @@ pub struct CreateLoanOfferNative<'info> {
   #[account(
     init,
     payer = borrower,
-    space = LoanOfferAccount::INIT_SPACE,
+    space = LoanOfferAccount::INIT_SPACE + 8,
     seeds = [
       ENSO_SEED.as_ref(),
       LOAN_OFFER_ACCOUNT_SEED.as_ref(),

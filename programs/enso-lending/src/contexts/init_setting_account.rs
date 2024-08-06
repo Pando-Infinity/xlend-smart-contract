@@ -17,7 +17,7 @@ pub struct InitSettingAccount<'info> {
   #[account(
     init,
     payer = owner,
-    space = SettingAccount::INIT_SPACE,
+    space = SettingAccount::INIT_SPACE + 8,
     seeds = [
       ENSO_SEED.as_ref(), 
       SETTING_ACCOUNT_SEED.as_ref(),
