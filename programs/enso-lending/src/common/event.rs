@@ -15,9 +15,7 @@ pub struct InitSettingAccountEvent {
     pub collateral_mint_asset: Pubkey,
     pub tier_id: String,
     pub lender_fee_percent: f64,
-    pub borrower_fee_percent: f64,
-    pub lend_price_feed: Pubkey,
-    pub collateral_price_feed: Pubkey,
+    pub borrower_fee_percent: f64
 }
 
 #[event]
@@ -29,8 +27,6 @@ pub struct EditSettingAccountEvent {
     pub amount: u64,
     pub duration: u64,
     pub lender_fee_percent: f64,
-    pub lend_price_feed: Pubkey,
-    pub collateral_price_feed: Pubkey,
 }
 
 #[event]
@@ -119,14 +115,6 @@ pub struct LoanOfferUpdateEvent {
 
 #[event]
 pub struct WithdrawCollateralEvent {
-    pub borrower: Pubkey,
-    pub withdraw_amount: u64,
-    pub loan_offer_id: String,
-    pub collateral_amount: u64,
-}
-
-#[event]
-pub struct WithdrawRequestEvent  {
     pub borrower: Pubkey,
     pub withdraw_amount: u64,
     pub loan_offer_id: String,
