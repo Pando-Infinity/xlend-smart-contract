@@ -29,7 +29,7 @@ pub struct CreateLoanOfferNative<'info> {
   #[account(
     init,
     payer = borrower,
-    space = LoanOfferAccount::INIT_SPACE,
+    space = LoanOfferAccount::INIT_SPACE + 8,
     seeds = [
       ENSO_SEED.as_ref(),
       LOAN_OFFER_ACCOUNT_SEED.as_ref(),
@@ -78,9 +78,10 @@ impl<'info> CreateLoanOfferNative<'info> {
     offer_id: String, 
     lend_offer_id: String, 
     tier_id: String, 
-    collateral_amount: u64
+    collateral_amount: u64,
+    interest: f64
   ) -> Result<()> {
-    self.validate_initialize_loan_offer(collateral_amount)?;
+    self.validate_initialize_loan_offer(collateral_amount, interest)?;
 
     self.deposit_collateral(collateral_amount)?;
 
@@ -136,7 +137,11 @@ impl<'info> CreateLoanOfferNative<'info> {
     Ok(())
   }
 
-  fn validate_initialize_loan_offer(&self, collateral_amount: u64) -> Result<()> {
+  fn validate_initialize_loan_offer(&self, collateral_amount: u64, interest: f64) -> Result<()> {
+    if self.lend_offer.interest != interest {
+      return err!(LoanOfferError::CanNotCreateLoanCauseLendInterestUpdated);
+    }
+
     let convert_collateral_amount_to_usd = convert_to_usd_price(
       &self.collateral_price_feed_account, 
       SOL_USD_PRICE_FEED_ID,

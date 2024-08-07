@@ -121,32 +121,13 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn create_loan_offer(
-        ctx: Context<CreateLoanOffer>,
-        offer_id: String,
-        lend_offer_id: String,
-        tier_id: String,
-        collateral_amount: u64,
-    ) -> Result<()> {
-        ctx.accounts.initialize_loan_offer(
-            &ctx.bumps,
-            offer_id,
-            lend_offer_id,
-            tier_id,
-            collateral_amount,
-        )?;
-        ctx.accounts
-            .emit_event_create_loan_offer(String::from("create_loan_offer"))?;
-
-        Ok(())
-    }
-
     pub fn create_loan_offer_native(
         ctx: Context<CreateLoanOfferNative>,
         offer_id: String,
         lend_offer_id: String,
         tier_id: String,
         collateral_amount: u64,
+        interest: f64,
     ) -> Result<()> {
         ctx.accounts.initialize_loan_offer(
             &ctx.bumps,
@@ -154,6 +135,7 @@ pub mod enso_lending {
             lend_offer_id,
             tier_id,
             collateral_amount,
+            interest
         )?;
         ctx.accounts
             .emit_event_create_loan_offer(String::from("create_loan_offer_native"))?;
@@ -168,21 +150,6 @@ pub mod enso_lending {
         borrow_amount: u64,
     ) -> Result<()> {
         ctx.accounts.system_update_loan_offer(borrow_amount)?;
-
-        Ok(())
-    }
-
-    pub fn deposit_collateral_loan_offer(
-        ctx: Context<DepositCollateralLoanOffer>,
-        _offer_id: String,
-        _tier_id: String,
-        amount: u64,
-    ) -> Result<()> {
-        ctx.accounts.deposit_collateral_loan_offer(amount)?;
-        ctx.accounts
-            .emit_event_deposit_collateral_loan_offer(String::from(
-                "deposit_collateral_loan_offer",
-            ))?;
 
         Ok(())
     }
@@ -208,32 +175,12 @@ pub mod enso_lending {
         Ok(())
     }
 
-    pub fn system_repay_loan_offer(
-        ctx: Context<SystemRepayLoadOfferNative>,
-        _loan_offer_id: String,
-        collateral_amount: u64,
-    ) -> Result<()> {
-        ctx.accounts.system_repay_loan_offer(collateral_amount)?;
-
-        Ok(())
-    }
-
     pub fn withdraw_collateral(
         ctx: Context<WithdrawCollateral>,
         loan_offer_id: String,
         withdraw_amount: u64,
     ) -> Result<()> {
         ctx.accounts.withdraw_collateral(loan_offer_id, withdraw_amount)?;
-        
-        Ok(())
-    }
-
-    pub fn system_transfer_collateral_request_withdraw(
-        ctx: Context<SystemWithdrawNative>,
-        loan_offer_id: String,
-        withdraw_amount: u64,
-    ) -> Result<()> {
-        ctx.accounts.system_transfer_collateral_request_withdraw(loan_offer_id, withdraw_amount)?;
         
         Ok(())
     }
